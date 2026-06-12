@@ -1,27 +1,40 @@
+---
+title: "constructing Gauss-Hermite interpolations"
+---
 
-From https://www.ljll.fr/~frey/papers/divers/hermite.pdf:
+From https://www.ljll.fr/~frey/papers/divers/hermite.pdf :
 
 $x_i$ are quadrature points. Lagrange basis is 
 
 $$
-\ell_i(x) = \frac{\prod_{k\neq i} (x - x_k)}{\prod_{k\neq i}(x_i-x_k)
+\ell_i(x) = \frac{\prod_{k\neq i} (x - x_k)}{\prod_{k\neq i}(x_i-x_k)}
 $$
 
-```{r}
+```{r gq1}
 library(lme4)
-gg <-GHrule(3)
+gg <- GHrule(3)
 xvec <- seq(-3, 3, length = 101)
 lagr_basis_i <- function(i, xvec, q) {
   num <- sapply(xvec, \(x) prod(x-q[-i]))
   denom <- prod(q[i]-q[-i])
   num/denom
 }
-lagr_basis <- function(xvec, q) {
-  sapply(seq_along(q), \(i) lagr_basis_i(i, xvec, q))
+lagr_basis_deriv_i <- function(i, xvec, q) {
+  if (q==1) return(rep(0, length(xvec)))
+  f <- function(j) sapply(xvec, \(x) prod(x-q[-c(i,j)]))
+  num <- rowSums(sapply(seq_along(q)[-i], f))
+  denom <- prod(q[i]-q[-i])
+  num/denom
+}
+lagr_basis <- function(xvec, q, deriv = FALSE) {
+  FUN <- if (!deriv) lagr_basis_i else lagr_basis_deriv_i
+  sapply(seq_along(q), \(i) FUN(i, xvec, q))
 }
 X <- lagr_basis(xvec, gg[,"z"])
-par(las=1, bty = "l")
-matplot(X, type = "l", col = c(1,2,4), lty = 1)
+Xd <- lagr_basis(xvec, gg[,"z"], deriv = TRUE)
+par(las=1, bty = "l", mfrow = c(1, 2))
+matplot(X, type = "l", col = c(1,2,4), lty = 1, main = "basis")
+matplot(Xd, type = "l", col = c(1,2,4), lty = 1, main = "derivs")
 ```
 
 With definitions $H = f(x_i)$.
@@ -39,5 +52,88 @@ $$
 
 The integrals of the the $h_i$, $\bar h_i$ functions are $w_i$, $\bar w_i$ (and the $\bar w_i$ terms vanish for the right points).
 
-calculate $h_i(x)$, $\bar h_i(x)$, $df/dx$ by brute force/finite differences?
+Calculate $h_i(x)$, $\bar h_i(x)$, $df/dx$ by brute force/finite differences?
+
+```{r calc_h, echo = FALSE}
+mplot <- function(...) {
+  op <- par(las=1, bty = "l")
+  on.exit(par(op))
+  matplot(..., type = "l", col = c(1, 2, 4), lty = 1)
+}
+smult <- function(x, y) { sweep(x, y, MARGIN = 2, FUN = "*") }
+calc_h <- function(xvec, Q) {
+  gg <- GHrule(Q)
+  ell <- lagr_basis(xvec, gg[,"z"])
+  ## dl_i/dx(x_i)
+  d_ell <- diag(lagr_basis(gg[,"z"], gg[,"z"], deriv = TRUE))
+  xdiff <- outer(xvec, gg[,"z"], "-")
+  h <- (1 - 2*smult(xdiff, d_ell))*ell^2
+  hbar <- xdiff*ell^2
+  list(h = h, hbar = hbar)
+}
+## from glmer.Rnw
+## m is a model
+zeta <- function(m, zmin=-3, zmax=3, npts=301L, rank = FALSE) {
+    stopifnot (is(m, "glmerMod"),
+               length(m@flist) == 1L,    # single grouping factor
+              length(m@cnms[[1]]) == 1L) # single column for that grouping factor
+    pp <- m
+    rr <- m@resp
+    u0 <- getME(pp,"u")
+    sd <- 1/getME(pp,"L")@x
+    ff <- as.integer(getME(pp,"flist")[[1]])
+    fc <- getME(pp,"X") %*% getME(pp,"beta") # fixed-effects contribution to linear predictor
+    ZL <- t(getME(pp,"Lambdat") %*% getME(pp,"Zt"))
+    dc <- function(z) { # evaluate the unscaled conditional density on the deviance scale
+        uu <- u0 + z * sd
+        rr$updateMu(fc + ZL %*% uu)
+        unname(as.vector(tapply(rr$devResid(), ff, sum))) + uu * uu
+    }
+    zvals <- seq(zmin, zmax, length.out = npts)
+    d0 <- dc(0) # because this is the last evaluation, the model is restored to its incoming state
+    # signed square root
+    sqrtmat <- t(sqrt(vapply(zvals, dc, d0, USE.NAMES=FALSE) - d0)) *
+      array(ifelse(zvals < 0, -1, 1), c(npts, length(u0)))
+    if (rank) {
+      ## order by 'badness' (variance of normalized profile)
+      nvals <- exp(-0.5*sqrtmat^2)/sqrt(2*pi)/dnorm(zvals)
+      colnames(sqrtmat) <- seq(ncol(sqrtmat))
+      sqrtmat <- sqrtmat[,order(apply(sqrtmat, 2, var), decreasing = TRUE)]
+    }
+    list(zvals=zvals,
+         sqrtmat= sqrtmat 
+         )
+}
+## fit toenail model
+data("toenail", package = "lme4")
+toemod <- glmer(outcome ~ time*treatment + (1 | patientID), 
+                data = toenail, family = binomial(link = "logit"))
+
+
+## get full conditional-dist curves
+zm <- zeta(toemod, rank = TRUE, zmin = -5, zmax = 5, npts = 501)
+## scaled conditional distribution
+dmat <- exp(-0.5*zm$sqrtmat^2)/sqrt(2*pi)/dnorm(zm$zvals)
+
+k <- 1 ## cluster id
+f <- dmat[,k]
+fbar <- d_dmat[,k]
+Q <- 5
+q <- GHrule(Q)[,"z"]
+H <- calc_h(zm$zvals, Q = Q)
+dz <- diff(zm$zvals[1:2])
+## finite difference (NA to match dimension)
+d_dmat <- rbind(NA,apply(dmat, 2, function(x) diff(x)/dz))
+Qvals <- sapply(q, \(x) which.min(abs(zm$zvals - x)))
+if (any(Qvals == 1)) stop("need to extend zm calculation")
+q_approx <- rowSums(smult(H$h, f[Qvals])) +
+  rowSums(smult(H$hbar, fbar[Qvals]))
+mplot(zm$zvals, cbind(dmat[, k], q_approx),
+      ylim = c(-5, 5))
+abline(h=1, col = 4)
+
+rescaled_z <- sweep(cbind(dmat[, k], q_approx),
+                    dnorm(zm$zvals), MARGIN = 1, FUN = "*")
+mplot(zm$zvals, cbind(rescaled_z, dnorm(zm$zvals)))
+```
 

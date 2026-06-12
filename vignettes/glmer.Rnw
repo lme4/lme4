@@ -584,9 +584,7 @@ evaluating the unscaled conditional density at $u_j(z)=\tilde{u_j} +
 z/{\bm L_{j,j}}$ and comparing the ratio,
 $f_j(\yobs,u)/(\tilde{f_j}\sqrt{2\pi})$, to the standard normal
 density, $\phi(z)=e^{-z^2/2}/\sqrt{2\pi}$, as shown in Figure~\ref{fig:densities}.
-\begin{figure}[tbp]
-  \centering
-<<densities,echo=FALSE,fig.height=5>>=
+<<density-utils, echo = FALSE>>=
 zeta <- function(m, zmin=-3, zmax=3, npts=301L, rank = FALSE) {
     stopifnot (is(m, "glmerMod"),
                length(m@flist) == 1L,    # single grouping factor
@@ -618,26 +616,105 @@ zeta <- function(m, zmin=-3, zmax=3, npts=301L, rank = FALSE) {
          sqrtmat= sqrtmat 
          )
 }
-plot_zeta <- function(z, norm = FALSE,
+smult <- function(x, y) { sweep(x, y, MARGIN = 2, FUN = "*") }
+lagr_basis_i <- function(i, xvec, q) {
+  num <- sapply(xvec, \(x) prod(x-q[-i]))
+  denom <- prod(q[i]-q[-i])
+  num/denom
+}
+lagr_basis_deriv_i <- function(i, xvec, q) {
+  if (length(q)==1) return(rep(0, length(xvec)))
+  f <- function(j) sapply(xvec, \(x) prod(x-q[-c(i,j)]))
+  num <- rowSums(sapply(seq_along(q)[-i], f))
+  denom <- prod(q[i]-q[-i])
+  num/denom
+}
+lagr_basis <- function(xvec, q, deriv = FALSE) {
+  FUN <- if (!deriv) lagr_basis_i else lagr_basis_deriv_i
+  sapply(seq_along(q), \(i) FUN(i, xvec, q))
+}
+calc_h <- function(xvec, Q) {
+  gg <- GHrule(Q)
+  ell <- lagr_basis(xvec, gg[,"z"])
+  ## dl_i/dx(x_i)
+  bb <- lagr_basis(gg[,"z"], gg[,"z"], deriv = TRUE)
+  d_ell <- if (length(bb) == 1) bb else diag(bb)
+  xdiff <- outer(xvec, gg[,"z"], "-")
+  h <- (1 - 2*smult(xdiff, d_ell))*ell^2
+  hbar <- xdiff*ell^2
+  list(h = h, hbar = hbar)
+}
+## FIXME: modify to work when Q = 1
+ghq_fun <- function(Q, zvals, f, fbar, H = NULL) {
+  q <- GHrule(Q)[,"z"]
+  H <- H %||% calc_h(zvals, Q = Q)
+  dz <- diff(zvals[1:2])
+  Qvals <- sapply(q, \(x) which.min(abs(zvals - x)))
+  if (any(Qvals == 1)) stop("need to extend zm calculation")
+  q_approx <- rowSums(smult(H$h, f[Qvals])) +
+    rowSums(smult(H$hbar, fbar[Qvals]))
+  q_approx
+}
+calc_q <- function(Q, zm) {
+  dz <- diff(zm$zvals[1:2])
+  dmat <- exp(-0.5*zm$sqrtmat^2)/sqrt(2*pi)/dnorm(zm$zvals)
+  ## finite difference (NA to match dimension)
+  d_dmat <- rbind(NA,apply(dmat, 2, function(x) diff(x)/dz))
+  H <- calc_h(zm$zvals, Q = Q)
+  res <- sapply(1:ncol(dmat),
+                \(i) ghq_fun(Q, zm$zvals, dmat[,i], d_dmat[,i], H = H)
+                )
+  attr(res, "nAGQ") <- Q
+  res
+}
+plot_zeta <- function(z, q_approx = NULL, norm = FALSE,
                       ylab = if (!norm) "density" else "t(z)",
-                      which = NULL, layout = c(5,3)) {
+                      which = NULL, layout = c(5,3), ylim = NULL,
+                      auto.key = list(lines = TRUE, points = FALSE)) {
   dmat <- exp(-0.5*z$sqrtmat^2)/sqrt(2*pi)
+  Q <- attr(q_approx, "nAGQ") ## rescue attribute before subsetting
   if (!is.null(which)) {
     dmat <- dmat[, which]
+    q_approx <- q_approx[, which]
   }
+  ## columnwise scaling/unscaling
+  ## q_approx is normalized by default
   if (norm) dmat <- dmat/dnorm(z$zvals)
-  xyplot(as.vector(dmat) ~ rep.int(z$zvals, ncol(dmat))|gl(ncol(dmat), nrow(dmat)),
-         type=c("g","l"), aspect=0.6, layout=layout,
-         xlab="z", ylab=ylab,
-         panel=function(...){
-           if (!norm) panel.lines(zm$zvals, dnorm(zm$zvals), lty=2)
-           panel.xyplot(...)}
-         )
+  if (!norm) q_approx <- q_approx*dnorm(z$zvals)
+  
+  nobs   <- nrow(dmat)
+  npanel <- ncol(dmat)
+  idx    <- gl(npanel, nobs)
+  ngrp <- 3
+  
+  ref_val <- if (!norm) dnorm(z$zvals) else rep(1, nobs)
+  ref_val <- rep(ref_val, npanel)
+
+  grps <- c("conditional\ndensity",
+            sprintf("AGQ(%d)", Q),
+            if (!norm) "N(0,1)" else "")
+  groups <- factor(rep(grps, each = nobs * npanel),
+                   levels = grps)
+  resp <- c(as.vector(dmat), as.vector(q_approx), ref_val)
+  ylim <- ylim %||% extendrange(resp)
+  zvec <- rep(z$zvals, ngrp * npanel)
+  xyplot(resp ~ zvec | rep(idx, ngrp),
+         groups = groups,
+         type = c("g", "l"), aspect = 0.6, layout = layout,
+         xlab = "z", ylab = ylab,
+         auto.key = auto.key,
+         par.settings = list(superpose.line = list(lty = 1:3)),
+         ylim = ylim)
 }
-zm <- zeta(m1, -3.750440, 3.750440)
-plot_zeta(zm)                      
 @
-  \caption{Comparison of univariate integrands (solid line) and standard normal density function (dashed line)}
+\begin{figure}[tbp]
+  \centering
+<<densities,echo=FALSE,fig.height=5>>=
+zm <- zeta(m1, -3.750440, 3.750440)
+qq <- calc_q(3, zm)
+plot_zeta(zm, q_approx = qq)
+@
+\caption{Comparison of univariate integrands (solid, blue line); 3-point Gauss-Hermite quadrature (dashed, yellow); and standard normal density function (green, dotted) for the CBPP model. For this model, the three approximations are nearly indistinguishable.}
   \label{fig:densities}
 \end{figure}
 As Figure~\ref{fig:densities} shows, the univariate integrands are very
@@ -690,17 +767,29 @@ conditional density.
 Figure~\ref{fig:tfunc}
 shows $t(z)$ for each of the unidimensional integrals in the
 likelihood for the model \code{m1} at the parameter estimates.
+While this view shows the deficiency of the Laplace approximation
+(deviation from a horizontal reference line at $z=1$ clearly,
+The AGQ(3) approximation fits extremely well over the range shown.
+The tails of the polynomials implied by the AGQ approximation
+can fluctuate widely, but these fluctuations are suppressed by
+multiplying by the thin tails of the Gaussian distribution.
 
 \begin{figure}[tbp]
   \centering
 <<tfunc,echo=FALSE>>=
-plot_zeta(zm, norm = TRUE)
+plot_zeta(zm, q_approx = qq, norm = TRUE, ylim = c(0.5, 1.5))
 @
   \caption{The function $t(z)$, which is the ratio of the normalized
     unscaled conditional density to the standard normal density, for
     each of the univariate integrals in the evaluation of the deviance
-    for model \code{m1}.  These functions should behave like low-order
-    polynomials.}
+    for model \code{m1} (blue, solid line).
+    As in Figure~\ref{fig:densities}, the dashed yellow line shows
+    the approximation for 3-point adaptive Gauss-Hermite quadrature.
+    The horizontal green reference line ($z=1$)
+    gives the reference value that would apply for the Laplace approximation,
+    which assumes the conditional density is exactly equal to the
+    standard normal. The $y$-axis limits are truncated to (0.5, 1.5).
+}
   \label{fig:tfunc}
 \end{figure}
 
@@ -725,12 +814,20 @@ data("toenail", package = "lme4")
 toemod <- glmer(outcome ~ time*treatment + (1 | patientID), 
                      data = toenail, family = binomial(link = "logit"))
 zm <- zeta(toemod)
+q_toe <- calc_q(3, zm)
 set.seed(101); s <- sample(ncol(zm$sqrtmat), size = 9)
-gridExtra::grid.arrange(plot_zeta(zm, which = s, layout = c(3,3)),
-             plot_zeta(zm, which = s, norm = TRUE, layout = c(3,3)), nrow = 1)
+
+gridExtra::grid.arrange(
+             plot_zeta(zm, q_approx = q_toe, which = s, layout = c(3,3), auto.key = FALSE),
+             plot_zeta(zm, which = s, norm = TRUE, q_approx = q_toe, layout = c(3,3),
+                       ylim = c(0, 5)), nrow = 1,
+             ## widths hand-tweaked to equalize plot size with/without scale
+             widths = c(0.5, 0.63))
+
 @
 \caption{Normalized unscaled conditional density (left) and ratio of density to the standard normal density (right)
-for a random sample of 9 patients from the toenail onychomycosis data set.}
+  for a random sample of 9 patients from the toenail onychomycosis data set. The $y$-axis limits in the right panel ($t(z)$) are
+  truncated to $(0,5)$.}
 \label{fig:toenailplot}
 \end{figure}
 
@@ -953,7 +1050,7 @@ plot(gm1,period~resid(.))
 qqmath(gm1)
 @    
 
-<<glmerDiag,fig.cap="Graphical diagnostics",warning=FALSE,echo=FALSE>>=
+<<glmerDiag,fig.cap="Graphical diagnostics (using package built-in functions)",warning=FALSE,echo=FALSE>>=
 p1 <- plot(gm1,type=c("p","smooth"),
     main="Default (Pearson resid vs. fitted)")
 p2 <- plot(gm1,sqrt(abs(resid(.)))~fitted(.),type=c("p","smooth"),
@@ -996,7 +1093,13 @@ The \code{DHARMa} package is also compatible with \code{merMod} objects.
 generalized linear (mixed) models and uses them for graphical
 and statistical tests of model assumptions (Figure~\ref{fig:dharma_mod_cbpp}).
 
-<<dharma_mod_cbpp,fig.cap="Model assumption checks using the DHARMa package. \\code{n.s.} denotes ``not significant''. Other exploration (such as \\code{plot(simulationOutput, form = cbpp2\\$period)}) does not reveal any obvious problems such as nonlinear reponses, so we proceed with the analysis despite the significant adjusted quantile test.",echo=FALSE>>=$
+<<dharma_mod_cbpp,fig.cap="Model assumption checks using the DHARMa package. \\code{n.s.} denotes ``not significant''.",echo=FALSE,warning=FALSE>>=
+## FIXME: versions of DHARMa before 0.5.0 gave a significant nonlinearity test, so the caption
+## included: 'Other exploration (such as \\code{plot(simulationOutput, form = cbpp2\\$period)}) does not reveal any obvious problems such as nonlinear reponses, so we proceed with the analysis despite the significant adjusted quantile test.'
+## Post 0.5.0, there are no test rejections; instead we get the warning 'In getSimulations.merMod(fittedModel, nsim = n, simulateREs = simulateREs,  :
+##  Model was fit with prior weights. These will be ignored in the simulation. See ?getSimulations for details.'
+## (is this a false positive?)
+## 
 simulationOutput <- simulateResiduals(fittedModel = gm1)
 plot(simulationOutput)
 @
