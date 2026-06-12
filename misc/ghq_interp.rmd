@@ -1,0 +1,43 @@
+
+From https://www.ljll.fr/~frey/papers/divers/hermite.pdf:
+
+$x_i$ are quadrature points. Lagrange basis is 
+
+$$
+\ell_i(x) = \frac{\prod_{k\neq i} (x - x_k)}{\prod_{k\neq i}(x_i-x_k)
+$$
+
+```{r}
+library(lme4)
+gg <-GHrule(3)
+xvec <- seq(-3, 3, length = 101)
+lagr_basis_i <- function(i, xvec, q) {
+  num <- sapply(xvec, \(x) prod(x-q[-i]))
+  denom <- prod(q[i]-q[-i])
+  num/denom
+}
+lagr_basis <- function(xvec, q) {
+  sapply(seq_along(q), \(i) lagr_basis_i(i, xvec, q))
+}
+X <- lagr_basis(xvec, gg[,"z"])
+par(las=1, bty = "l")
+matplot(X, type = "l", col = c(1,2,4), lty = 1)
+```
+
+With definitions $H = f(x_i)$.
+
+$$
+H(x) = \sum_{i=1}^Q f(x_i) h_i(x) + \sum \frac{df}{dx}(x_i) \bar h_i(x)
+$$
+
+$$ 
+\begin{split}
+h_i(x) & = \left( 1- 2 \frac{d \ell_i}{d x}(x_i) (x-x_i) \right) \ell_i^2(x) \\
+\bar h_i(x) &= (x-x_i)\ell_i^2(x)
+\end{split}
+$$
+
+The integrals of the the $h_i$, $\bar h_i$ functions are $w_i$, $\bar w_i$ (and the $\bar w_i$ terms vanish for the right points).
+
+calculate $h_i(x)$, $\bar h_i(x)$, $df/dx$ by brute force/finite differences?
+
