@@ -32,6 +32,10 @@ getData.merMod <-  function(object) {
     mCall <- getCall(object)
     data <- eval(mCall$data, environment(formula(object)))
     if (!is.data.frame(data) && !is.matrix(data)) stop(paste(sQuote("data"),"object found is not a data frame or matrix"))
+    ## FIXME: consider applying lapply(data, drop) here to strip 1-col matrix columns
+    ## (e.g. those returned by scale()) before returning; such columns can cause
+    ## downstream failures in functions like poly() that accept matrix input during
+    ## initial model fitting but reject it when re-evaluating with pre-specified coefs
     return(data)
 }
 

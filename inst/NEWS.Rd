@@ -34,6 +34,11 @@
       \item fixed some edge cases where \code{splom} would fail due to
       bad spline fits in profiles: these cases are now dropped, with
       a warning (Michael Chirico, GH #979)
+      \item \code{simulate()} with \code{re.form=NULL} now works when
+      a predictor is a one-column matrix (e.g. from \code{scale()}) used
+      inside \code{poly()}; \code{poly()} with pre-specified coefficients
+      (stored in \code{predvars}) rejected matrix input even though it
+      accepted it during initial model fitting (GH #948)
     } % itemize
   } % bug fixes
   \subsection{NEW FEATURES}{

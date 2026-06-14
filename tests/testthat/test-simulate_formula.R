@@ -149,15 +149,27 @@ test_that("simulate via formula path accepts weights and offset without error", 
   form <- ~x + (1|f)
   d1      <- data.frame(x = rnorm(60), f = factor(rep(1:6, each = 10)), w = rep(10, 60))
   off_val <- rep(0.1, 60)
-  
+
   s_wts <- simulate(form, family = binomial, weights = d1$w,
                     newdata = d1, newparams = list(theta = 0.01, beta = c(1, 1)),
                     seed = 1)[[1]]
   expect_equal(length(s_wts), nrow(d1))
-  
+
   s_off <- simulate(form, family = binomial, weights = d1$w, offset = off_val,
                     newdata = d1, newparams = list(theta = 0.01, beta = c(1, 1)),
                     seed = 1)[[1]]
   expect_equal(length(s_off), nrow(d1))
+})
+
+## GH#948: simulate with re.form=NULL should work when a predictor is a 1-col
+## matrix (e.g. from scale()) used inside poly() -- poly() with pre-specified
+## coefs rejects matrix input, so mkNewReTrms must drop such columns first
+test_that("simulate re.form=NULL works with poly(scale(x)) predictor (GH#948)", {
+  ss_sc <- transform(sleepstudy, Days = scale(Days))
+  fit1  <- lmer(Reaction ~ 1 + poly(Days, 2) + (1|Subject), data = sleepstudy)
+  fit_sc <- update(fit1, data = ss_sc)
+  s1 <- simulate(fit_sc, seed = 101, re.form = NULL)
+  s2 <- simulate(fit_sc, seed = 101, re.form = NULL)
+  expect_equal(s1, s2)
 })
 
