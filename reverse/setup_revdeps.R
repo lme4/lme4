@@ -92,10 +92,11 @@ writeLines(dl[, 2L], PKG_LIST_FILE)
 ## do not chase Suggests recursively.
 cat("\n--- Resolving and installing transitive dependencies ---\n")
 with_suggests <- identical(Sys.getenv("WITH_SUGGESTS", "false"), "true")
-dep_types <- if (with_suggests)
+dep_types <- if (with_suggests) {
     c("Depends", "Imports", "LinkingTo", "Suggests")
-else
+} else {
     c("Depends", "Imports", "LinkingTo")
+}
 cat(sprintf("Recursive dependency types: %s\n", paste(dep_types, collapse = ", ")))
 all_deps <- tools::package_dependencies(
     dl[, 1L], db = ap,
