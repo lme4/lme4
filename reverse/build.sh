@@ -46,14 +46,22 @@ echo "lme4 tarball 2 : $TGZ2  ($VER2)"
 echo "Docker image   : $IMAGE"
 echo "Singularity    : $SIF"
 
-## Copy tarballs into the Docker build context (reverse/ dir) if not already there
-for TGZ in "$TGZ1" "$TGZ2"; do
-    DEST="${SCRIPT_DIR}/$(basename "$TGZ")"
-    [ "$TGZ" -ef "$DEST" ] || cp -f "$TGZ" "$SCRIPT_DIR/"
-done
+## Assemble a minimal build context in a temp directory so that stray
+## lme4_*.tar.gz files that accumulate in reverse/ from local workflow runs
+## are not picked up by the Dockerfile's COPY lme4_*.tar.gz line.
+BUILDCTX="$(mktemp -d)"
+trap 'rm -rf "$BUILDCTX"' EXIT
+
+cp "$TGZ1" "$TGZ2" "$BUILDCTX/"
+cp "$SCRIPT_DIR/Dockerfile" \
+   "$SCRIPT_DIR/setup_revdeps.R" \
+   "$SCRIPT_DIR/check_one.R" \
+   "$SCRIPT_DIR/slurm_submit.sh" \
+   "$SCRIPT_DIR/slurm_job.sh" \
+   "$BUILDCTX/"
 
 ## Build Docker image (setup_revdeps.R inside determines old vs new by version)
-docker build -t "$IMAGE" "$SCRIPT_DIR"
+docker build -t "$IMAGE" "$BUILDCTX"
 
 ## Convert to Singularity .sif
 singularity build "$SIF" "docker-daemon://${IMAGE}"
