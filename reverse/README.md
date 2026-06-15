@@ -44,19 +44,33 @@ of lme4 is pre-installed into its own library directory (`Library_old/` and
 image, selecting the appropriate library via the `REVDEP_LME4` environment
 variable.
 
+### 0. define versions
+
+(example, useful if we want to cut and paste code below)
+```bash
+export NEW=2.0-2
+export OLD=2.0-1
+```
+
 ### 1. Build the Singularity image (locally, needs Docker + Singularity)
+
+`build.sh` can be run from any directory — it uses its own location to find
+the `reverse/` build context and always writes `lme4_revdep.sif` there.
+Tarball arguments (if given) are resolved relative to the current working
+directory; with no arguments it auto-detects the two most recent
+`lme4_*.tar.gz` files in `lme4/` (the parent of `reverse/`).
 
 ```bash
 # Build the dev lme4 tarball if needed
-cd ..
-R CMD build lme4          # produces lme4_NEW.tar.gz
-cd reverse
+cd ../..
+R CMD build lme4 --compact-vignettes=both          # produces lme4_NEW.tar.gz
+cd lme4/reverse
 
 # Download the previous CRAN release for comparison
-wget https://cran.r-project.org/src/contrib/lme4_OLD.tar.gz
+wget https://cran.r-project.org/src/contrib/lme4_${OLD}.tar.gz
 
-# Build one image containing both versions
-bash build.sh lme4_OLD.tar.gz lme4_NEW.tar.gz   # -> lme4_revdep.sif
+# Build one image containing both versions (run from lme4/reverse/)
+bash build.sh lme4_${OLD}.tar.gz lme4_${NEW}.tar.gz   # -> lme4_revdep.sif
 ```
 
 If Docker is available locally but Singularity is not, export and convert
