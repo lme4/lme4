@@ -24,6 +24,8 @@
 
 set -euo pipefail
 
+MYACCOUNT="${MYACCOUNT:-def-bolker}"
+
 CONTAINER="${1:?Usage: $0 CONTAINER RESULTS_DIR old|new [extra sbatch options]}"
 RESULTS_DIR="${2:?Usage: $0 CONTAINER RESULTS_DIR old|new [extra sbatch options]}"
 LME4_VER="${3:?Usage: $0 CONTAINER RESULTS_DIR old|new [extra sbatch options]}"
@@ -51,6 +53,7 @@ sbatch \
     --time=2:00:00 \
     --mem=4G \
     --cpus-per-task=1 \
+    --account="${MYACCOUNT}" \
     --job-name="lme4_revdep_${LME4_VER}" \
     --output="${RESULTS_DIR}/slurm_%A_%a.out" \
     --error="${RESULTS_DIR}/slurm_%A_%a.err" \
