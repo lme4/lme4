@@ -30,8 +30,39 @@ allVarsRec <- function(object)
 ## but we *should* and *can* work with environment(formula(.))
 getData.merMod <-  function(object) {
     mCall <- getCall(object)
-    data <- eval(mCall$data, environment(formula(object)))
-    if (!is.data.frame(data) && !is.matrix(data)) stop(paste(sQuote("data"),"object found is not a data frame or matrix"))
+    dataName <- deparse(mCall$data)
+    startEnv <- environment(formula(object))
+    data <- tryCatch(
+        eval(mCall$data, startEnv),
+        error = function(e) {
+            stop(sprintf(
+                "original data object %s not found; make sure it exists in environment(formula()) of the model or re-load it into the current environment",
+                sQuote(dataName)), call. = FALSE)
+        }
+    )
+    if (!is.data.frame(data) && !is.matrix(data)) {
+        ## walk the parent chain from startEnv to find where the object lives,
+        ## to diagnose the common case of a name like 'data' masking a built-in
+        e <- startEnv
+        foundIn <- NULL
+        while (!identical(e, emptyenv())) {
+            if (exists(dataName, envir = e, inherits = FALSE)) {
+                nm <- environmentName(e)
+                foundIn <- if (nzchar(nm)) nm else "an anonymous environment"
+                break
+            }
+            e <- parent.env(e)
+        }
+        stop(sprintf(
+            "data object %s is not a data frame or matrix (found a %s%s); it may be masked by a built-in R object with the same name",
+            sQuote(dataName), class(data)[[1L]],
+            if (!is.null(foundIn)) paste0(" in ", sQuote(foundIn)) else ""),
+            call. = FALSE)
+    }
+    ## FIXME: consider applying lapply(data, drop) here to strip 1-col matrix columns
+    ## (e.g. those returned by scale()) before returning; such columns can cause
+    ## downstream failures in functions like poly() that accept matrix input during
+    ## initial model fitting but reject it when re-evaluating with pre-specified coefs
     return(data)
 }
 

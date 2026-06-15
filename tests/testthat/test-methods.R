@@ -703,6 +703,33 @@ test_that("plot", {
 
   ## test qqmath/getIDLabels()
   expect_is(q1 <- lattice::qqmath(fm,id=0.05),"trellis")
+})
+
+## GH#808: getData.merMod should give informative errors when the data object
+## cannot be retrieved from the formula environment
+test_that("getData gives informative errors (GH#808)", {
+  form <- Reaction ~ Days + (1|Subject)
+
+  ## case 1: data name not found (object lives only in the function's local env)
+  fit_notfound <- local({
+    dd <- sleepstudy
+    lmer(form, data = dd)
+  })
+  expect_error(getData(fit_notfound),
+               "not found.*re-load it into the current environment",
+               perl = TRUE)
+
+  ## case 2: name resolves to wrong type (shadows a built-in, e.g. 'data')
+  fit_masked <- local({
+    data <- sleepstudy          # shadows utils::data
+    lmer(form, data = data)
+  })
+  expect_error(getData(fit_masked),
+               "is not a data frame or matrix.*masked by a built-in",
+               perl = TRUE)
+})
+
+test_that("plot (continued)", {
 
   cake2 <- transform(cake,replicate=as.numeric(replicate),
                      recipe=as.numeric(recipe))

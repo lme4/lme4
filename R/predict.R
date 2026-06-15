@@ -207,8 +207,13 @@ mkNewReTrms <- function(object, newdata,
     } else {
         if (!identical(na.action,na.pass)) {
             ## only need to re-evaluate for NAs if na.action != na.pass
+            ## drop 1-col matrix columns (e.g. from scale()) before calling model.frame():
+            ## poly() with pre-specified coefs (stored in predvars) rejects matrix input
+            ## even though it accepted it during initial fitting (GH#948)
+            newdata_mf <- newdata
+            newdata_mf[] <- lapply(newdata_mf, drop)
             mfnew <- model.frame(delete.response(terms(object, fixed.only=TRUE)),
-                                 newdata, na.action=na.action)
+                                 newdata_mf, na.action=na.action)
             fixed.na.action <- attr(mfnew,"na.action")
         }
         ## make sure we pass na.action with new data

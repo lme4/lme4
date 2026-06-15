@@ -34,6 +34,11 @@
       \item fixed some edge cases where \code{splom} would fail due to
       bad spline fits in profiles: these cases are now dropped, with
       a warning (Michael Chirico, GH #979)
+      \item \code{simulate()} with \code{re.form=NULL} now works when
+      a predictor is a one-column matrix (e.g. from \code{scale()}) used
+      inside \code{poly()}; \code{poly()} with pre-specified coefficients
+      (stored in \code{predvars}) rejected matrix input even though it
+      accepted it during initial model fitting (GH #948)
     } % itemize
   } % bug fixes
   \subsection{NEW FEATURES}{
@@ -44,6 +49,12 @@
   } % new features
   \subsection{USER-VISIBLE CHANGES}{
     \itemize{
+      \item \code{getData()} now gives more informative error messages
+      when the original data cannot be retrieved: if the object is not
+      found, the message names the object and suggests re-loading it;
+      if an object of the wrong type is found (e.g. the name \code{data}
+      resolving to \code{utils::data}), the message reports the type and
+      location of what was found and notes the likely masking (GH #808)
       \item the Gauss-Hermite quadrature (GH) nodes and weights used when
       \code{nAGQ > 1} are now symmetrized (nodes averaged with their
       negatives in reverse order; weights averaged in forward and reverse

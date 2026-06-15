@@ -1274,15 +1274,21 @@ data(Contraception)
 Contraception <- transform(Contraception, 
                         facet_urban = ifelse(urban=="Y","Urban","Rural"))
 gg0 <- ggplot(Contraception) +
-    geom_smooth(aes(age, ifelse(use == "Y",1,0), colour = livch, fill = livch),
+  geom_smooth(aes(age, ifelse(use == "Y",1,0), colour = livch, fill = livch,
+                  linetype = livch),
                 method = "gam", alpha = 0.1,
                 method.args = list(gamma = 0.6),
                 formula = y ~ s(x, bs = "cs")) +
     facet_wrap(~facet_urban) +
     scale_x_continuous("Centered age") + 
-    scale_y_continuous("Proportion", limits = c(0, 1), expand = c(0,0)) +
-    scale_colour_brewer("Number\nof living\nchildren", palette="Dark2") +
-  scale_fill_brewer("Number\nof living\nchildren", palette="Dark2")
+  scale_y_continuous("Proportion", limits = c(0, 1), expand = c(0,0)) +
+  scale_linetype("Number\nof living\nchildren") +
+  scale_colour_brewer("Number\nof living\nchildren", palette="Dark2") +
+  scale_fill_brewer("Number\nof living\nchildren", palette="Dark2",
+                    guide = guide_legend(override.aes = list(alpha = 0.1))) +
+  ## wider key to see line types:
+  ## https://stackoverflow.com/a/7624378/190277
+  theme(legend.key.width = unit(3, "line"))
 
 ## add marginal density ribbons
 gg0 + geom_density(
@@ -1314,7 +1320,7 @@ contraceptive use as a function of centered age, stratified by number
 of living children and urban/rural residence. In rural areas, women
 with two living children show the highest rates of contraceptive use,
 peaking near 50\% at the average age, while women in urban areas with
-three or more living children show the highest rates near the average
+one living child show the highest rates near the average
 age but with a more pronounced decline at older ages. In both
 settings, women with no living children consistently show the lowest
 rates of contraceptive use. The nonmonotonic effect of age on contraceptive use
@@ -1425,16 +1431,25 @@ c_urb <- unique(with(Contraception, paste(urban, district, sep = ":")))
 pframe2 <- subset(pframe2, dist_urb %in% c_urb)
 pred2  <- predict(cm5, newdata = pframe2, re.form = NULL)
 pframe2$use <- plogis(pred2)
+pframe2$ch <- factor(pframe2$ch,
+                     levels = c("N", "Y"),
+                     labels = c("no", "yes"))
+pframe$ch <- factor(pframe$ch,
+                     levels = c("N", "Y"),
+                     labels = c("no", "yes"))
 
 ggplot(pframe, aes(age)) + 
-    geom_line(aes(y = use, colour = ch)) +
-    geom_ribbon(aes(ymin = lwr, ymax = upr, fill = ch), color = NA, alpha = 0.3) +
-    facet_wrap(~facet_urban) +
-    scale_x_continuous("Centered age") + 
-    scale_y_continuous("Proportion", limits = c(0, 1), expand = c(0,0)) +
-    scale_colour_brewer("Living\nchildren", palette="Dark2") +
-    scale_fill_brewer("Living\nchildren", palette="Dark2") +
-    geom_line(data = pframe2, aes(group = interaction(dist_urb, ch), colour = ch, y = use), alpha = 0.2)
+  geom_line(aes(y = use, colour = ch)) +
+  geom_ribbon(aes(ymin = lwr, ymax = upr, fill = ch), color = NA, alpha = 0.3) +
+  facet_wrap(~facet_urban) +
+  scale_x_continuous("Centered age") + 
+  scale_y_continuous("Proportion", limits = c(0, 1), expand = c(0,0)) +
+  scale_colour_brewer("Living\nchildren", palette="Dark2",
+                      guide = guide_legend(reverse = TRUE)) +
+  scale_fill_brewer("Living\nchildren", palette="Dark2",
+                    guide = guide_legend(reverse = TRUE)) +
+  geom_line(data = pframe2, aes(group = interaction(dist_urb, ch), colour = ch, y = use), alpha = 0.2)
+
 @
 
 As with the CBPP data set, we can also compute
