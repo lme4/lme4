@@ -107,10 +107,46 @@ configure.vars <- list(
               "ARROW_R_DEV=true",
               "ARROW_DEPENDENCY_SOURCE=BUNDLED"))
 
-install.packages(to_install,
-                 configure.vars = configure.vars,
-                 dependencies   = FALSE,   # closure already in to_install
-                 Ncpus          = NCPUS)
+## Try a fast batch install first.  If a single package (e.g. r-cran-micemd)
+## has a broken post-install script it will leave dpkg in an interrupted state
+## and fail the whole call.  In that case, clean up the dpkg state and fall
+## back to per-package installs so individual failures can be skipped.
+batch_ok <- tryCatch({
+    install.packages(to_install,
+                     configure.vars = configure.vars,
+                     dependencies   = FALSE,
+                     Ncpus          = NCPUS)
+    TRUE
+}, error = function(e) {
+    message("Batch install failed: ", conditionMessage(e))
+    FALSE
+})
+
+if (!batch_ok) {
+    message("Fixing broken dpkg state and retrying per-package ...")
+    system2("dpkg", c("--configure", "-a"))
+    system2("apt-get", c("install", "-f", "-y"))
+
+    install_failed <- character(0)
+    still_needed <- setdiff(to_install, rownames(installed.packages()))
+    cat(sprintf("Retrying %d packages individually ...\n", length(still_needed)))
+    for (pkg in still_needed) {
+        tryCatch(
+            install.packages(pkg, dependencies = FALSE, Ncpus = NCPUS),
+            error = function(e) {
+                message(sprintf("  SKIP %s: %s", pkg, conditionMessage(e)))
+                install_failed <<- c(install_failed, pkg)
+            }
+        )
+    }
+    if (length(install_failed)) {
+        warning(sprintf("%d package(s) could not be installed: %s",
+                        length(install_failed),
+                        paste(install_failed, collapse = ", ")))
+        writeLines(install_failed,
+                   file.path(REVDEP_DIR, "install_failures.txt"))
+    }
+}
 
 ## ---- 5 & 6. Install old and new lme4 into separate library dirs ----------
 ## At check time, check_one.R prepends the appropriate library so that the
