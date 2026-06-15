@@ -86,9 +86,15 @@ writeLines(dl[, 2L], PKG_LIST_FILE)
 ## (via dl[, 1L] in to_install) so R CMD check --as-cran can run, but we
 ## do not chase Suggests recursively.
 cat("\n--- Resolving and installing transitive dependencies ---\n")
+with_suggests <- identical(Sys.getenv("WITH_SUGGESTS", "false"), "true")
+dep_types <- if (with_suggests)
+    c("Depends", "Imports", "LinkingTo", "Suggests")
+else
+    c("Depends", "Imports", "LinkingTo")
+cat(sprintf("Recursive dependency types: %s\n", paste(dep_types, collapse = ", ")))
 all_deps <- tools::package_dependencies(
     dl[, 1L], db = ap,
-    which     = c("Depends", "Imports", "LinkingTo"),
+    which     = dep_types,
     recursive = TRUE)
 to_install <- sort(unique(c(dl[, 1L],
                              unlist(all_deps, use.names = FALSE))))

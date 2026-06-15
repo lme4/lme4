@@ -25,6 +25,21 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PARENT_DIR="$(dirname "$SCRIPT_DIR")"
 
+## ---- Parse flags ------------------------------------------------------------
+## --full  : also install Suggests of reverse dependencies recursively
+##           (larger image, ~6-7 GB vs ~2-3 GB, but more faithful to --as-cran)
+WITH_SUGGESTS=false
+SUGGESTS_TAG=""
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --full) WITH_SUGGESTS=true; SUGGESTS_TAG="-full"; shift ;;
+        --) shift; break ;;
+        -*) echo "Unknown flag: $1"; exit 1 ;;
+        *)  break ;;
+    esac
+done
+
 if [ $# -ge 2 ]; then
     TGZ1="$(realpath "$1")"
     TGZ2="$(realpath "$2")"
@@ -38,13 +53,14 @@ fi
 
 VER1="$(basename "$TGZ1" .tar.gz | sed 's/^lme4_//')"
 VER2="$(basename "$TGZ2" .tar.gz | sed 's/^lme4_//')"
-IMAGE="lme4-revdep:${VER1}_vs_${VER2}"
+IMAGE="lme4-revdep:${VER1}_vs_${VER2}${SUGGESTS_TAG}"
 SIF="${SCRIPT_DIR}/lme4_revdep.sif"
 
 echo "lme4 tarball 1 : $TGZ1  ($VER1)"
 echo "lme4 tarball 2 : $TGZ2  ($VER2)"
 echo "Docker image   : $IMAGE"
 echo "Singularity    : $SIF"
+echo "with Suggests  : $WITH_SUGGESTS"
 
 ## Assemble a minimal build context in a temp directory so that stray
 ## lme4_*.tar.gz files that accumulate in reverse/ from local workflow runs
@@ -61,7 +77,7 @@ cp "$SCRIPT_DIR/Dockerfile" \
    "$BUILDCTX/"
 
 ## Build Docker image (setup_revdeps.R inside determines old vs new by version)
-docker build -t "$IMAGE" "$BUILDCTX"
+docker build --build-arg WITH_SUGGESTS="${WITH_SUGGESTS}" -t "$IMAGE" "$BUILDCTX"
 
 ## Convert to Singularity .sif
 singularity build "$SIF" "docker-daemon://${IMAGE}"

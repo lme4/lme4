@@ -43,14 +43,17 @@ COPY setup_revdeps.R check_one.R slurm_submit.sh slurm_job.sh /opt/revdep/
 ## The lme4 source tarball to test (build context must contain lme4_*.tar.gz)
 COPY lme4_*.tar.gz /opt/revdep/
 
+## WITH_SUGGESTS=true  : include Suggests in recursive dep resolution (~6-7 GB)
+## WITH_SUGGESTS=false : Depends/Imports/LinkingTo only          (~2-3 GB)
+ARG WITH_SUGGESTS=false
+
 ## Internet-connected phase (runs at build time, not at check time):
 ##   - discover all CRAN + Bioconductor reverse dependencies of lme4
 ##   - download their source tarballs into /opt/revdep/tarballs/
-##   - install transitive hard dependencies (Depends/Imports/LinkingTo only,
-##     not recursive Suggests -- that balloons to thousands of packages)
+##   - install transitive dependencies (depth controlled by WITH_SUGGESTS)
 ##   - install both lme4 versions into Library_old/ and Library_new/
 ## Clean the apt cache in the same layer to avoid keeping 6+ GB of .deb files.
-RUN Rscript /opt/revdep/setup_revdeps.R && \
+RUN WITH_SUGGESTS=${WITH_SUGGESTS} Rscript /opt/revdep/setup_revdeps.R && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
