@@ -52,7 +52,7 @@
   Laplace approximation or, alternatively, the more computationally
   expensive adaptive Gauss-Hermite quadrature). The package provides
   all the standard features available for GLMs in base \proglang{R},
-  including the the standard set of accessor functions as
+  including the standard set of accessor functions as
   well as the possibility of user-specified distributions 
   (within the exponential dispersion family) and link
   functions.}
@@ -174,7 +174,7 @@ to estimate the dispersion parameter, fitting a negative binomial GLMM with
 a fixed dispersion parameter at each trial value. In practice this
 implementation is slower than those in other R packages (e.g., the \code{glmmTMB} package).}
 The mean, $\bm\mu_{\mc Y }$, of $\mc Y$ depends on
-a linear predictor,
+a linear predictor, which in the case of a GLM is 
 \begin{equation}
   \label{eq:GLMlinpred}
   \bm\eta=\bm X\bm\beta .
@@ -207,7 +207,7 @@ conditional mean of $\mc Y$ given that $\mc B = \bm b$, written
 $\bm\mu_{\mc Y|\mc B = \bm b}$, depends on the linear predictor,
 \begin{equation}
   \label{eq:GLMMlinpred}
-  \bm\eta=\bm Z\bm b+\bm X\bm\beta .
+  \bm\eta=\bm Z\bm b+\bm X\bm\beta ,
 \end{equation}
 where $\bm Z$ is an $n \times q$ random-effects model matrix. Similar
 to the GLM case, the mapping from the conditional mean, $\bm\mu_{\mc
