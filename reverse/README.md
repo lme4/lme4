@@ -91,7 +91,8 @@ Suggests installed for the checks to be meaningful (significantly larger image
 and longer build time).
 
 If Docker is available locally but Singularity is not, export and convert
-on the login node instead:
+on the login node instead
+(in this chunk and others below, container names should also include any tags, e.g. -full, -no_bioc):
 
 ```bash
 docker save -o lme4_revdep.tar lme4-revdep:${OLD}_vs_${NEW}
@@ -118,9 +119,6 @@ docker push myuser/lme4-revdep:${OLD}_vs_${NEW}
 # On the Compute Canada login node: pull and convert
 singularity pull lme4_revdep.sif docker://myuser/lme4-revdep:${OLD}_vs_${NEW}
 ```
-
-Note: Docker Hub images are public by default. If the image should be kept
-private, either use a private Docker Hub repository or use Option A instead.
 
 ### 3. Submit checking job arrays
 

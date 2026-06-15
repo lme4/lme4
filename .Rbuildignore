@@ -46,3 +46,4 @@ Sweave.sty
 ^reverse$
 tests/testthat/test-summary_testlevel.*
 ^vignettes/glmer_old\.Rnw$
+^vignettes/glmer_diff.pdf
