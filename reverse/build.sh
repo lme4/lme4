@@ -26,19 +26,24 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PARENT_DIR="$(dirname "$SCRIPT_DIR")"
 
 ## ---- Parse flags ------------------------------------------------------------
-## --full     : also install Suggests of reverse dependencies recursively
-##              (larger image, ~6-7 GB vs ~2-3 GB, but more faithful to --as-cran)
-## --no-bioc  : skip Bioconductor repositories entirely (faster, avoids flaky
-##              Bioc index fetches; image tagged with -no_bioc suffix)
+## --full        : also install Suggests of reverse dependencies recursively
+##                 (larger image, ~6-7 GB vs ~2-3 GB, but more faithful to --as-cran)
+## --no-bioc     : skip Bioconductor repositories entirely (faster, avoids flaky
+##                 Bioc index fetches; image tagged with -no_bioc suffix)
+## --docker-only : build the Docker image but skip the singularity build step
+##                 (useful when Singularity/Apptainer is not installed locally;
+##                 convert later with: singularity build lme4_revdep.sif docker-daemon://IMAGE)
 WITH_SUGGESTS=false
 WITH_BIOC=true
+DOCKER_ONLY=false
 SUGGESTS_TAG=""
 BIOC_TAG=""
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --full)    WITH_SUGGESTS=true; SUGGESTS_TAG="-full";    shift ;;
-        --no-bioc) WITH_BIOC=false;    BIOC_TAG="-no_bioc";    shift ;;
+        --full)        WITH_SUGGESTS=true; SUGGESTS_TAG="-full";  shift ;;
+        --no-bioc)     WITH_BIOC=false;    BIOC_TAG="-no_bioc";  shift ;;
+        --docker-only) DOCKER_ONLY=true;                          shift ;;
         --) shift; break ;;
         -*) echo "Unknown flag: $1"; exit 1 ;;
         *)  break ;;
@@ -67,6 +72,7 @@ echo "Docker image   : $IMAGE"
 echo "Singularity    : $SIF"
 echo "with Suggests  : $WITH_SUGGESTS"
 echo "with Bioc      : $WITH_BIOC"
+echo "docker only    : $DOCKER_ONLY"
 
 ## Assemble a minimal build context in a temp directory so that stray
 ## lme4_*.tar.gz files that accumulate in reverse/ from local workflow runs
@@ -88,12 +94,20 @@ docker build \
     --build-arg WITH_BIOC="${WITH_BIOC}" \
     -t "$IMAGE" "$BUILDCTX"
 
-## Convert to Singularity .sif
-singularity build "$SIF" "docker-daemon://${IMAGE}"
-
-echo ""
-echo "Done.  Singularity image: $SIF"
-echo ""
-echo "To submit job arrays on Compute Canada:"
-echo "  bash ${SCRIPT_DIR}/slurm_submit.sh $SIF results_old old [--account=...]"
-echo "  bash ${SCRIPT_DIR}/slurm_submit.sh $SIF results_new new [--account=...]"
+## Convert to Singularity .sif (skipped with --docker-only)
+if [ "${DOCKER_ONLY}" = "true" ]; then
+    echo ""
+    echo "Docker image built: ${IMAGE}"
+    echo "Skipping Singularity conversion (--docker-only).  To convert later:"
+    echo "  singularity build ${SIF} docker-daemon://${IMAGE}"
+    echo "  # or transfer with docker save and convert on the login node:"
+    echo "  docker save -o lme4_revdep.tar ${IMAGE}"
+else
+    singularity build "$SIF" "docker-daemon://${IMAGE}"
+    echo ""
+    echo "Done.  Singularity image: $SIF"
+    echo ""
+    echo "To submit job arrays on Compute Canada:"
+    echo "  bash ${SCRIPT_DIR}/slurm_submit.sh $SIF results_old old [--account=...]"
+    echo "  bash ${SCRIPT_DIR}/slurm_submit.sh $SIF results_new new [--account=...]"
+fi
