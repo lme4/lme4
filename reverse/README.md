@@ -9,11 +9,11 @@ Singularity/Apptainer and SLURM (Docker-based workflow).
 | File | Role |
 |---|---|
 | `Dockerfile` | Starts from `rocker/r2u`, installs TeX/tools, runs `setup_revdeps.R` at build time |
-| `setup_revdeps.R` | Build-time: discovers rev deps via CRAN+Bioc, downloads source tarballs, installs all transitive deps + dev lme4 |
-| `check_one.R` | Per-SLURM-task: runs `R CMD check --as-cran` on one tarball; names output `rdepends_PKG.Rcheck` for compatibility with `checkChanges.R` |
-| `slurm_submit.sh` | Queries the container for N packages, submits an `sbatch --array=1-N%50` job |
-| `slurm_job.sh` | Individual SLURM task: loads Apptainer, bind-mounts the results dir, calls `check_one.R` |
-| `build.sh` | Convenience wrapper: finds the tarball, `docker build`, `singularity build` → `.sif` |
+| `setup_revdeps.R` | Build-time: discovers rev deps via CRAN+Bioc, downloads source tarballs, installs all transitive deps, installs both lme4 versions into separate `Library_old/` and `Library_new/` dirs |
+| `check_one.R` | Per-SLURM-task: prepends the appropriate versioned library, runs `R CMD check --as-cran` on one tarball; names output `rdepends_PKG.Rcheck` for compatibility with `checkChanges.R` |
+| `slurm_submit.sh` | Queries the container for N packages, accepts `old`/`new` switch, submits an `sbatch --array=1-N%50` job |
+| `slurm_job.sh` | Individual SLURM task: loads Apptainer, bind-mounts the results dir, passes `REVDEP_LME4` env var, calls `check_one.R` |
+| `build.sh` | Convenience wrapper: copies both lme4 tarballs into build context, `docker build`, `singularity build` → single `lme4_revdep.sif` |
 | `checkReverse.R` | Original local workflow: installs deps and runs `R CMD check` via `tools::check_packages_in_dir` |
 | `checkChanges.R` | Compares two sets of check results (old vs new lme4) using `tools::check_packages_in_dir_changes` |
 
@@ -37,33 +37,41 @@ Compute Canada nodes may not have internet access, so the workflow is split
 into a build phase (internet-connected, runs locally) and a check phase
 (offline, runs on the cluster).
 
-### 1. Build the Singularity images (locally, needs Docker + Singularity)
+Both lme4 versions share a single container image: all reverse dependency
+tarballs and their transitive dependencies are stored once, and each version
+of lme4 is pre-installed into its own library directory (`Library_old/` and
+`Library_new/`) inside the image.  Two job arrays then run against the same
+image, selecting the appropriate library via the `REVDEP_LME4` environment
+variable.
+
+### 1. Build the Singularity image (locally, needs Docker + Singularity)
 
 ```bash
-# Build R CMD build output first if needed
+# Build the dev lme4 tarball if needed
 cd ..
-R CMD build lme4          # produces lme4_VERSION.tar.gz
+R CMD build lme4          # produces lme4_NEW.tar.gz
 cd reverse
 
-# Build one image per lme4 version to compare
-bash build.sh ../lme4_2.0-1.tar.gz   # -> lme4_revdep_2.0-1.sif
-bash build.sh ../lme4_2.0-2.tar.gz   # -> lme4_revdep_2.0-2.sif
+# Download the previous CRAN release for comparison
+wget https://cran.r-project.org/src/contrib/lme4_OLD.tar.gz
+
+# Build one image containing both versions
+bash build.sh lme4_OLD.tar.gz lme4_NEW.tar.gz   # -> lme4_revdep.sif
 ```
 
 If Docker is available locally but Singularity is not, export and convert
 on the login node instead:
 
 ```bash
-docker save -o lme4_revdep_2.0-2.tar lme4-revdep:2.0-2
+docker save -o lme4_revdep.tar lme4-revdep:OLD_vs_NEW
 # transfer to Compute Canada, then:
-singularity build lme4_revdep_2.0-2.sif docker-archive:lme4_revdep_2.0-2.tar
+singularity build lme4_revdep.sif docker-archive:lme4_revdep.tar
 ```
 
-### 2. Transfer images to Compute Canada
+### 2. Transfer the image to Compute Canada
 
 ```bash
-scp lme4_revdep_2.0-1.sif lme4_revdep_2.0-2.sif \
-    username@cedar.computecanada.ca:~/revdep/
+scp lme4_revdep.sif username@cedar.computecanada.ca:~/revdep/
 ```
 
 ### 3. Submit checking job arrays
@@ -71,8 +79,8 @@ scp lme4_revdep_2.0-1.sif lme4_revdep_2.0-2.sif \
 ```bash
 # On the Compute Canada login node:
 cd ~/revdep
-bash slurm_submit.sh lme4_revdep_2.0-1.sif results_old --account=def-yourpi
-bash slurm_submit.sh lme4_revdep_2.0-2.sif results_new --account=def-yourpi
+bash slurm_submit.sh lme4_revdep.sif results_old old --account=def-yourpi
+bash slurm_submit.sh lme4_revdep.sif results_new new --account=def-yourpi
 ```
 
 Each array runs one task per reverse dependency (up to 50 concurrently).

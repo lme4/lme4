@@ -4,19 +4,39 @@
 ##
 ## Adapted from checkReverse.R (the install-only / --no-check phase).
 ##
+## Expects exactly two lme4_*.tar.gz files in /opt/revdep/ (old and new
+## versions to compare).  Determines which is older by version number.
+##
 ## Steps:
 ##   1. Configure CRAN + Bioconductor repositories
 ##   2. Discover all direct reverse dependencies of lme4
 ##   3. Download their source tarballs into /opt/revdep/tarballs/
 ##   4. Install all transitive dependencies into the container R library
-##   5. Install dev lme4 from its tarball (overwrites any CRAN binary)
+##      (lme4 itself is excluded here)
+##   5. Install old lme4 into /opt/revdep/Library_old/
+##   6. Install new lme4 into /opt/revdep/Library_new/
 
 REVDEP_DIR    <- "/opt/revdep"
 TARBALL_DIR   <- file.path(REVDEP_DIR, "tarballs")
 PKG_LIST_FILE <- file.path(REVDEP_DIR, "pkgs_to_check.txt")
+LIB_OLD       <- file.path(REVDEP_DIR, "Library_old")
+LIB_NEW       <- file.path(REVDEP_DIR, "Library_new")
 NCPUS         <- max(1L, parallel::detectCores())
 
-dir.create(TARBALL_DIR, recursive = TRUE, showWarnings = FALSE)
+for (d in c(TARBALL_DIR, LIB_OLD, LIB_NEW))
+    dir.create(d, recursive = TRUE, showWarnings = FALSE)
+
+## ---- Locate and sort the two lme4 tarballs --------------------------------
+lme4_tgz <- Sys.glob(file.path(REVDEP_DIR, "lme4_*.tar.gz"))
+stopifnot("expected exactly two lme4 tarballs (old and new)" =
+              length(lme4_tgz) == 2L)
+lme4_vers <- package_version(
+    sub("^lme4_(.*)\\.tar\\.gz$", "\\1", basename(lme4_tgz)))
+ord      <- order(lme4_vers)
+lme4_old <- lme4_tgz[ord[1L]]
+lme4_new <- lme4_tgz[ord[2L]]
+cat(sprintf("old lme4: %s\nnew lme4: %s\n\n",
+            basename(lme4_old), basename(lme4_new)))
 
 ## ---- 1. Repos -------------------------------------------------------------
 ## Use BiocManager for a consistent CRAN + Bioconductor URL set.
@@ -55,7 +75,7 @@ cat(sprintf("Downloaded %d / %d tarballs to %s\n",
             nrow(dl), length(rdeps), TARBALL_DIR))
 writeLines(dl[, 2L], PKG_LIST_FILE)
 
-## ---- 4. Install all transitive dependencies ------------------------------
+## ---- 4. Install all transitive dependencies (excluding lme4) -------------
 ## Resolve the full dependency closure of the downloaded rev-deps so that
 ## R CMD check can run offline on Compute Canada.
 ## r2u installs binary apt packages where available (fast); falls back to source.
@@ -67,7 +87,8 @@ all_deps <- tools::package_dependencies(
 to_install <- sort(unique(c(dl[, 1L],
                              unlist(all_deps, use.names = FALSE))))
 
-## Drop base/recommended packages already present in every R installation
+## Drop base/recommended packages already present in every R installation,
+## and lme4 itself (installed separately into versioned library dirs below)
 already <- rownames(installed.packages(
     priority = c("base", "recommended")))
 to_install <- setdiff(to_install, c(already, "lme4"))
@@ -85,17 +106,22 @@ install.packages(to_install,
                  dependencies   = FALSE,   # closure already in to_install
                  Ncpus          = NCPUS)
 
-## ---- 5. Install dev lme4 from tarball ------------------------------------
-cat("\n--- Installing dev lme4 from source tarball ---\n")
-lme4_tgz <- Sys.glob(file.path(REVDEP_DIR, "lme4_*.tar.gz"))
-stopifnot("exactly one lme4 tarball expected" = length(lme4_tgz) == 1L)
-install.packages(lme4_tgz, repos = NULL, type = "source", Ncpus = NCPUS)
-cat(sprintf("Installed lme4 from %s\n", basename(lme4_tgz)))
+## ---- 5 & 6. Install old and new lme4 into separate library dirs ----------
+## At check time, check_one.R prepends the appropriate library so that the
+## right lme4 version is found first, without rebuilding the whole image.
+cat("\n--- Installing lme4 versions into versioned library dirs ---\n")
+for (info in list(c(lme4_old, LIB_OLD), c(lme4_new, LIB_NEW))) {
+    tgz <- info[1]; lib <- info[2]
+    cat(sprintf("Installing %s into %s ...\n", basename(tgz), lib))
+    install.packages(tgz, lib = lib, repos = NULL,
+                     type = "source", Ncpus = NCPUS)
+}
 
 ## ---- Summary -------------------------------------------------------------
 n_check <- length(readLines(PKG_LIST_FILE))
 summary_lines <- c(
-    sprintf("lme4 source    : %s", basename(lme4_tgz)),
+    sprintf("old lme4       : %s  -> %s", basename(lme4_old), LIB_OLD),
+    sprintf("new lme4       : %s  -> %s", basename(lme4_new), LIB_NEW),
     sprintf("Revdeps found  : %d", length(rdeps)),
     sprintf("Tarballs saved : %d  (see %s)", n_check, PKG_LIST_FILE),
     sprintf("Install failures: %s",

@@ -6,6 +6,7 @@
 ## Expects these variables to be set (via --export in sbatch):
 ##   CONTAINER    : absolute path to the Singularity/Apptainer .sif file
 ##   RESULTS_DIR  : absolute path to the directory for .Rcheck outputs
+##   REVDEP_LME4  : "old" or "new" -- selects which lme4 library dir to use
 ## SLURM_ARRAY_TASK_ID is set automatically by SLURM.
 ##
 ## Compute Canada uses Apptainer (apptainer/singularity module); adjust the
@@ -15,5 +16,6 @@ module load apptainer
 
 singularity exec \
     --bind "${RESULTS_DIR}:/results" \
+    --env "REVDEP_LME4=${REVDEP_LME4}" \
     "${CONTAINER}" \
     Rscript /opt/revdep/check_one.R "${SLURM_ARRAY_TASK_ID}"
