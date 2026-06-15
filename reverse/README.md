@@ -117,14 +117,15 @@ docker tag lme4-revdep:${OLD}_vs_${NEW} myuser/lme4-revdep:${OLD}_vs_${NEW}
 docker push myuser/lme4-revdep:${OLD}_vs_${NEW}
 
 # On the Compute Canada login node: pull and convert
-singularity pull lme4_revdep.sif docker://myuser/lme4-revdep:${OLD}_vs_${NEW}
+module load apptainer/1.4.5
+singularity pull lme4_revdep.sif docker://bbolker/lme4-revdep:${OLD}_vs_${NEW}-no_bioc
 ```
 
 ### 3. Submit checking job arrays
 
 ```bash
 # On the Compute Canada login node:
-cd ~/revdep
+cd ~/project/bolker/revdep
 bash slurm_submit.sh lme4_revdep.sif results_old old --account=def-yourpi
 bash slurm_submit.sh lme4_revdep.sif results_new new --account=def-yourpi
 ```
