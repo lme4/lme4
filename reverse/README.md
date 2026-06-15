@@ -63,7 +63,7 @@ directory; with no arguments it auto-detects the two most recent
 ```bash
 # Build the dev lme4 tarball if needed
 cd ../..
-R CMD build lme4 --compact-vignettes=both          # produces lme4_NEW.tar.gz
+R CMD build lme4 --compact-vignettes=both          # produces lme4_${NEW}.tar.gz
 cd lme4/reverse
 
 # Download the previous CRAN release for comparison
@@ -82,7 +82,7 @@ bash build.sh lme4_${OLD}.tar.gz lme4_${NEW}.tar.gz   # -> lme4_revdep.sif
 | `--no-bioc` | Skip Bioconductor repositories (avoids flaky index fetches) | `-no_bioc` | ~2–3 GB |
 
 Flags can be combined: `bash build.sh --full --no-bioc ...` produces a tag like
-`lme4-revdep:OLD_vs_NEW-full-no_bioc`.
+`lme4-revdep:${OLD}_vs_${NEW}-full-no_bioc`.
 
 The default build includes Bioconductor but does not recurse into Suggests —
 this is the recommended starting point. Use `--no-bioc` if the Bioconductor
@@ -94,7 +94,7 @@ If Docker is available locally but Singularity is not, export and convert
 on the login node instead:
 
 ```bash
-docker save -o lme4_revdep.tar lme4-revdep:OLD_vs_NEW
+docker save -o lme4_revdep.tar lme4-revdep:${OLD}_vs_${NEW}
 # transfer to Compute Canada, then:
 singularity build lme4_revdep.sif docker-archive:lme4_revdep.tar
 ```
@@ -110,12 +110,13 @@ scp lme4_revdep.sif username@cedar.computecanada.ca:~/revdep/
 **Option B: via Docker Hub**
 
 ```bash
-# Locally: tag and push to Docker Hub (replace 'myuser' with your Docker Hub username)
-docker tag lme4-revdep:OLD_vs_NEW myuser/lme4-revdep:OLD_vs_NEW
-docker push myuser/lme4-revdep:OLD_vs_NEW
+# Locally: log in, tag, and push (replace 'myuser' with your Docker Hub username)
+docker login
+docker tag lme4-revdep:${OLD}_vs_${NEW} myuser/lme4-revdep:${OLD}_vs_${NEW}
+docker push myuser/lme4-revdep:${OLD}_vs_${NEW}
 
 # On the Compute Canada login node: pull and convert
-singularity pull lme4_revdep.sif docker://myuser/lme4-revdep:OLD_vs_NEW
+singularity pull lme4_revdep.sif docker://myuser/lme4-revdep:${OLD}_vs_${NEW}
 ```
 
 Note: Docker Hub images are public by default. If the image should be kept
