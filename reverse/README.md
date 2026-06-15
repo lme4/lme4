@@ -73,6 +73,23 @@ wget https://cran.r-project.org/src/contrib/lme4_${OLD}.tar.gz
 bash build.sh lme4_${OLD}.tar.gz lme4_${NEW}.tar.gz   # -> lme4_revdep.sif
 ```
 
+#### Build flags
+
+| Flag | Effect | Image tag suffix | Approx. size |
+|---|---|---|---|
+| *(none)* | Deps/Imports/LinkingTo only; includes Bioconductor repos | *(none)* | ~2–3 GB |
+| `--full` | Also resolves Suggests recursively | `-full` | ~6–7 GB |
+| `--no-bioc` | Skip Bioconductor repositories (avoids flaky index fetches) | `-no_bioc` | ~2–3 GB |
+
+Flags can be combined: `bash build.sh --full --no-bioc ...` produces a tag like
+`lme4-revdep:OLD_vs_NEW-full-no_bioc`.
+
+The default build includes Bioconductor but does not recurse into Suggests —
+this is the recommended starting point. Use `--no-bioc` if the Bioconductor
+index is consistently unreachable during build. Use `--full` only if you need
+Suggests installed for the checks to be meaningful (significantly larger image
+and longer build time).
+
 If Docker is available locally but Singularity is not, export and convert
 on the login node instead:
 

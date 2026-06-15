@@ -26,14 +26,19 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PARENT_DIR="$(dirname "$SCRIPT_DIR")"
 
 ## ---- Parse flags ------------------------------------------------------------
-## --full  : also install Suggests of reverse dependencies recursively
-##           (larger image, ~6-7 GB vs ~2-3 GB, but more faithful to --as-cran)
+## --full     : also install Suggests of reverse dependencies recursively
+##              (larger image, ~6-7 GB vs ~2-3 GB, but more faithful to --as-cran)
+## --no-bioc  : skip Bioconductor repositories entirely (faster, avoids flaky
+##              Bioc index fetches; image tagged with -no_bioc suffix)
 WITH_SUGGESTS=false
+WITH_BIOC=true
 SUGGESTS_TAG=""
+BIOC_TAG=""
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --full) WITH_SUGGESTS=true; SUGGESTS_TAG="-full"; shift ;;
+        --full)    WITH_SUGGESTS=true; SUGGESTS_TAG="-full";    shift ;;
+        --no-bioc) WITH_BIOC=false;    BIOC_TAG="-no_bioc";    shift ;;
         --) shift; break ;;
         -*) echo "Unknown flag: $1"; exit 1 ;;
         *)  break ;;
@@ -53,7 +58,7 @@ fi
 
 VER1="$(basename "$TGZ1" .tar.gz | sed 's/^lme4_//')"
 VER2="$(basename "$TGZ2" .tar.gz | sed 's/^lme4_//')"
-IMAGE="lme4-revdep:${VER1}_vs_${VER2}${SUGGESTS_TAG}"
+IMAGE="lme4-revdep:${VER1}_vs_${VER2}${SUGGESTS_TAG}${BIOC_TAG}"
 SIF="${SCRIPT_DIR}/lme4_revdep.sif"
 
 echo "lme4 tarball 1 : $TGZ1  ($VER1)"
@@ -61,6 +66,7 @@ echo "lme4 tarball 2 : $TGZ2  ($VER2)"
 echo "Docker image   : $IMAGE"
 echo "Singularity    : $SIF"
 echo "with Suggests  : $WITH_SUGGESTS"
+echo "with Bioc      : $WITH_BIOC"
 
 ## Assemble a minimal build context in a temp directory so that stray
 ## lme4_*.tar.gz files that accumulate in reverse/ from local workflow runs
@@ -77,7 +83,10 @@ cp "$SCRIPT_DIR/Dockerfile" \
    "$BUILDCTX/"
 
 ## Build Docker image (setup_revdeps.R inside determines old vs new by version)
-docker build --build-arg WITH_SUGGESTS="${WITH_SUGGESTS}" -t "$IMAGE" "$BUILDCTX"
+docker build \
+    --build-arg WITH_SUGGESTS="${WITH_SUGGESTS}" \
+    --build-arg WITH_BIOC="${WITH_BIOC}" \
+    -t "$IMAGE" "$BUILDCTX"
 
 ## Convert to Singularity .sif
 singularity build "$SIF" "docker-daemon://${IMAGE}"

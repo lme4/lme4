@@ -41,16 +41,19 @@ cat(sprintf("old lme4: %s\nnew lme4: %s\n\n",
             basename(lme4_old), basename(lme4_new)))
 
 ## ---- 1. Repos -------------------------------------------------------------
-## Use BiocManager for a consistent CRAN + Bioconductor URL set.
-## (mirrors utils:::.expand_BioC_repository_URLs used in checkReverse.R but
-##  without depending on an internal function)
-if (!requireNamespace("BiocManager", quietly = TRUE))
-    install.packages("BiocManager")
-repos <- BiocManager::repositories()
+with_bioc <- identical(Sys.getenv("WITH_BIOC", "true"), "true")
+if (with_bioc) {
+    if (!requireNamespace("BiocManager", quietly = TRUE))
+        install.packages("BiocManager")
+    repos <- BiocManager::repositories()
+} else {
+    repos <- c(CRAN = "https://cloud.r-project.org")
+}
 options(repos = repos,
         Ncpus = NCPUS,
         install.packages.compile.from.source = "always",
         useFancyQuotes = FALSE)
+cat(sprintf("Bioconductor   : %s\n", if (with_bioc) "included" else "skipped"))
 cat("Repositories:\n"); print(repos); cat("\n")
 
 ## ---- 2. Discover reverse dependencies of lme4 ----------------------------
