@@ -16,6 +16,8 @@
 ##   5. Install old lme4 into /opt/revdep/Library_old/
 ##   6. Install new lme4 into /opt/revdep/Library_new/
 
+options(timeout = 120)   # default 60s can time out on slow connections
+
 REVDEP_DIR    <- "/opt/revdep"
 TARBALL_DIR   <- file.path(REVDEP_DIR, "tarballs")
 PKG_LIST_FILE <- file.path(REVDEP_DIR, "pkgs_to_check.txt")
