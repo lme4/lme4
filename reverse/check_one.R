@@ -49,13 +49,8 @@ cat(sprintf("               tarball : %s\n", tarball))
 cat(sprintf("               output  : %s\n", file.path(out_parent, out_name)))
 
 ## ---- Run R CMD check ------------------------------------------------------
-## Match the check environment used in checkReverse.R
-old_sug <- Sys.getenv("_R_CHECK_FORCE_SUGGESTS_", unset = NA_character_)
-Sys.setenv("_R_CHECK_FORCE_SUGGESTS_" = "false")
-on.exit({
-    if (is.na(old_sug)) Sys.unsetenv("_R_CHECK_FORCE_SUGGESTS_")
-    else Sys.setenv("_R_CHECK_FORCE_SUGGESTS_" = old_sug)
-}, add = TRUE)
+## _R_CHECK_FORCE_SUGGESTS_=false is set by slurm_job.sh so that missing
+## Suggests do not cause check failures; it is inherited by R CMD check.
 
 ## R CMD check places PKGNAME.Rcheck under the directory given by -o;
 ## rename to rdepends_PKGNAME.Rcheck afterwards for checkChanges.R compat.

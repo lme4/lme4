@@ -17,5 +17,6 @@ module load apptainer
 singularity exec \
     --bind "${RESULTS_DIR}:/results" \
     --env "REVDEP_LME4=${REVDEP_LME4}" \
+    --env "_R_CHECK_FORCE_SUGGESTS_=false" \
     "${CONTAINER}" \
     Rscript /opt/revdep/check_one.R "${SLURM_ARRAY_TASK_ID}"

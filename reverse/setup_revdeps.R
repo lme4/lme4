@@ -79,10 +79,16 @@ writeLines(dl[, 2L], PKG_LIST_FILE)
 ## Resolve the full dependency closure of the downloaded rev-deps so that
 ## R CMD check can run offline on Compute Canada.
 ## r2u installs binary apt packages where available (fast); falls back to source.
+##
+## Recursive resolution uses only hard deps (Depends/Imports/LinkingTo) to
+## avoid pulling in the enormous transitive closure of all Suggests.
+## Suggests of the rev-dep packages themselves are included one level deep
+## (via dl[, 1L] in to_install) so R CMD check --as-cran can run, but we
+## do not chase Suggests recursively.
 cat("\n--- Resolving and installing transitive dependencies ---\n")
 all_deps <- tools::package_dependencies(
     dl[, 1L], db = ap,
-    which     = c("Depends", "Imports", "LinkingTo", "Suggests"),
+    which     = c("Depends", "Imports", "LinkingTo"),
     recursive = TRUE)
 to_install <- sort(unique(c(dl[, 1L],
                              unlist(all_deps, use.names = FALSE))))

@@ -46,8 +46,12 @@ COPY lme4_*.tar.gz /opt/revdep/
 ## Internet-connected phase (runs at build time, not at check time):
 ##   - discover all CRAN + Bioconductor reverse dependencies of lme4
 ##   - download their source tarballs into /opt/revdep/tarballs/
-##   - install all transitive dependencies into the container's R library
-##   - install the dev lme4 from the tarball, overwriting any CRAN version
-RUN Rscript /opt/revdep/setup_revdeps.R
+##   - install transitive hard dependencies (Depends/Imports/LinkingTo only,
+##     not recursive Suggests -- that balloons to thousands of packages)
+##   - install both lme4 versions into Library_old/ and Library_new/
+## Clean the apt cache in the same layer to avoid keeping 6+ GB of .deb files.
+RUN Rscript /opt/revdep/setup_revdeps.R && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 CMD ["bash"]
