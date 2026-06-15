@@ -46,8 +46,11 @@ echo "lme4 tarball 2 : $TGZ2  ($VER2)"
 echo "Docker image   : $IMAGE"
 echo "Singularity    : $SIF"
 
-## Copy both tarballs into the Docker build context (reverse/ dir)
-cp -f "$TGZ1" "$TGZ2" "$SCRIPT_DIR/"
+## Copy tarballs into the Docker build context (reverse/ dir) if not already there
+for TGZ in "$TGZ1" "$TGZ2"; do
+    DEST="${SCRIPT_DIR}/$(basename "$TGZ")"
+    [ "$TGZ" -ef "$DEST" ] || cp -f "$TGZ" "$SCRIPT_DIR/"
+done
 
 ## Build Docker image (setup_revdeps.R inside determines old vs new by version)
 docker build -t "$IMAGE" "$SCRIPT_DIR"
