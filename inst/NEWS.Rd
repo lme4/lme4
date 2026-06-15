@@ -49,6 +49,12 @@
   } % new features
   \subsection{USER-VISIBLE CHANGES}{
     \itemize{
+      \item \code{getData()} now gives more informative error messages
+      when the original data cannot be retrieved: if the object is not
+      found, the message names the object and suggests re-loading it;
+      if an object of the wrong type is found (e.g. the name \code{data}
+      resolving to \code{utils::data}), the message reports the type and
+      location of what was found and notes the likely masking (GH #808)
       \item the Gauss-Hermite quadrature (GH) nodes and weights used when
       \code{nAGQ > 1} are now symmetrized (nodes averaged with their
       negatives in reverse order; weights averaged in forward and reverse
