@@ -70,9 +70,25 @@ singularity build lme4_revdep.sif docker-archive:lme4_revdep.tar
 
 ### 2. Transfer the image to Compute Canada
 
+**Option A: direct file transfer via scp**
+
 ```bash
 scp lme4_revdep.sif username@cedar.computecanada.ca:~/revdep/
 ```
+
+**Option B: via Docker Hub**
+
+```bash
+# Locally: tag and push to Docker Hub (replace 'myuser' with your Docker Hub username)
+docker tag lme4-revdep:OLD_vs_NEW myuser/lme4-revdep:OLD_vs_NEW
+docker push myuser/lme4-revdep:OLD_vs_NEW
+
+# On the Compute Canada login node: pull and convert
+singularity pull lme4_revdep.sif docker://myuser/lme4-revdep:OLD_vs_NEW
+```
+
+Note: Docker Hub images are public by default. If the image should be kept
+private, either use a private Docker Hub repository or use Option A instead.
 
 ### 3. Submit checking job arrays
 
