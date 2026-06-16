@@ -50,6 +50,9 @@ variable.
 ```bash
 export NEW=2.0-2
 export OLD=2.0-1
+export CCUSER=bolker
+export CCACCOUNT=def-bolker
+export DOCKERUSER=bbolker
 ```
 
 ### 1. Build the Singularity image (locally, needs Docker + Singularity)
@@ -118,16 +121,18 @@ docker push myuser/lme4-revdep:${OLD}_vs_${NEW}
 
 # On the Compute Canada login node: pull and convert
 module load apptainer/1.4.5
-singularity pull lme4_revdep.sif docker://bbolker/lme4-revdep:${OLD}_vs_${NEW}-no_bioc
+singularity pull lme4_revdep.sif docker://${DOCKERUSER}/lme4-revdep:${OLD}_vs_${NEW}-no_bioc
 ```
 
 ### 3. Submit checking job arrays
 
 ```bash
 # On the Compute Canada login node:
-cd ~/project/bolker/revdep
-bash slurm_submit.sh lme4_revdep.sif results_old old --account=def-yourpi
-bash slurm_submit.sh lme4_revdep.sif results_new new --account=def-yourpi
+cd ~/project/${CCUSER}/lme4/reverse
+module load apptainer/1.4.5
+bash slurm_submit.sh lme4_revdep.sif results_old old --account=${CCACCOUNT}
+bash slurm_submit.sh lme4_revdep.sif results_new new --account=${CCACCOUNT}
+yourpi
 ```
 
 Each array runs one task per reverse dependency (up to 50 concurrently).
