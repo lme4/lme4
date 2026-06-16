@@ -39,7 +39,8 @@ mkdir -p "$RESULTS_DIR"
 RESULTS_DIR="$(realpath "$RESULTS_DIR")"
 
 ## Count packages directly from the container image
-N=$(singularity exec "$CONTAINER" wc -l < /opt/revdep/pkgs_to_check.txt)
+## (pipe through host wc -l; redirection inside singularity exec needs sh -c)
+N=$(singularity exec "$CONTAINER" cat /opt/revdep/pkgs_to_check.txt | wc -l)
 N="${N//[[:space:]]/}"
 echo "Container      : $CONTAINER"
 echo "Results dir    : $RESULTS_DIR"
