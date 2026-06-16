@@ -49,8 +49,12 @@ cat(sprintf("               tarball : %s\n", tarball))
 cat(sprintf("               output  : %s\n", file.path(out_parent, out_name)))
 
 ## ---- Run R CMD check ------------------------------------------------------
-## _R_CHECK_FORCE_SUGGESTS_=false is set by slurm_job.sh so that missing
-## Suggests do not cause check failures; it is inherited by R CMD check.
+## Set by slurm_job.sh and inherited by R CMD check:
+##   _R_CHECK_FORCE_SUGGESTS_=false        : missing Suggests don't fail the check
+##   _R_CHECK_CRAN_INCOMING_REMOTE_=FALSE  : skip the network-dependent part of
+##     the CRAN incoming feasibility check (compute nodes have no internet;
+##     without this, every check hangs/fails at "checking CRAN incoming
+##     feasibility")
 
 ## R CMD check places PKGNAME.Rcheck under the directory given by -o;
 ## rename to rdepends_PKGNAME.Rcheck afterwards for checkChanges.R compat.
