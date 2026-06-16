@@ -63,6 +63,8 @@ ret <- system2("R", c("CMD", "check", "--as-cran", "--no-manual",
 
 std_path  <- file.path(out_parent, paste0(pkg_name, ".Rcheck"))
 rdep_path <- file.path(out_parent, out_name)
+if (file.exists(rdep_path))
+    unlink(rdep_path, recursive = TRUE)  # remove stale results from a previous run
 if (file.exists(std_path))
     file.rename(std_path, rdep_path)
 
