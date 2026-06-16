@@ -25,6 +25,7 @@
 set -euo pipefail
 
 MYACCOUNT="${MYACCOUNT:-def-bolker}"
+MAILUSER="${MAILUSER:-bolker@mcmaster.ca}"
 
 CONTAINER="${1:?Usage: $0 CONTAINER RESULTS_DIR old|new [extra sbatch options]}"
 RESULTS_DIR="${2:?Usage: $0 CONTAINER RESULTS_DIR old|new [extra sbatch options]}"
@@ -55,6 +56,8 @@ sbatch \
     --mem=4G \
     --cpus-per-task=1 \
     --account="${MYACCOUNT}" \
+    --mail-type=BEGIN,FAIL \
+    --mail-user="${MAILUSER}" \
     --job-name="lme4_revdep_${LME4_VER}" \
     --output="${RESULTS_DIR}/slurm_%A_%a.out" \
     --error="${RESULTS_DIR}/slurm_%A_%a.err" \
