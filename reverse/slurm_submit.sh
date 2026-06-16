@@ -39,6 +39,12 @@ CONTAINER="$(realpath "$CONTAINER")"
 mkdir -p "$RESULTS_DIR"
 RESULTS_DIR="$(realpath "$RESULTS_DIR")"
 
+## Compute Canada uses Apptainer (apptainer/singularity module); adjust the
+## module name below to match your cluster ("apptainer" or "singularity").
+## Needed here (not just in slurm_job.sh) because we call singularity
+## directly below, on the login node, to count packages.
+command -v singularity >/dev/null 2>&1 || module load apptainer
+
 ## Count packages directly from the container image
 ## (pipe through host wc -l; redirection inside singularity exec needs sh -c)
 N=$(singularity exec "$CONTAINER" cat /opt/revdep/pkgs_to_check.txt | wc -l)
