@@ -66,5 +66,8 @@ rdep_path <- file.path(out_parent, out_name)
 if (file.exists(std_path))
     file.rename(std_path, rdep_path)
 
-cat(sprintf("exit code for %s: %d\n", pkg_name, ret))
-quit(status = ret)
+## Always exit 0 so SLURM marks the task COMPLETED regardless of check
+## outcome; R CMD check results (ERROR/WARNING/NOTE) live in the .Rcheck
+## directory and are evaluated by checkChanges.R, not by SLURM exit status.
+cat(sprintf("R CMD check exit code for %s: %d\n", pkg_name, ret))
+quit(status = 0L)
