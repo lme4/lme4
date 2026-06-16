@@ -19,5 +19,10 @@ singularity exec \
     --env "REVDEP_LME4=${REVDEP_LME4}" \
     --env "_R_CHECK_FORCE_SUGGESTS_=false" \
     --env "_R_CHECK_CRAN_INCOMING_REMOTE_=FALSE" \
+    --env "R_PROFILE=/dev/null" \
     "${CONTAINER}" \
     Rscript /opt/revdep/check_one.R "${SLURM_ARRAY_TASK_ID}"
+## R_PROFILE=/dev/null skips /usr/lib/R/etc/Rprofile.site, which calls
+## bspm::enable().  bspm requires D-Bus (unavailable in Singularity on HPC)
+## and emits a noisy warning; since all packages are pre-installed in the
+## image and compute nodes have no internet, bspm serves no purpose here.
