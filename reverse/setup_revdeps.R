@@ -23,7 +23,7 @@ TARBALL_DIR   <- file.path(REVDEP_DIR, "tarballs")
 PKG_LIST_FILE <- file.path(REVDEP_DIR, "pkgs_to_check.txt")
 LIB_OLD       <- file.path(REVDEP_DIR, "Library_old")
 LIB_NEW       <- file.path(REVDEP_DIR, "Library_new")
-NCPUS         <- max(1L, parallel::detectCores())
+NCPUS         <- max(1L, parallel::detectCores() - 1L)
 
 for (d in c(TARBALL_DIR, LIB_OLD, LIB_NEW))
     dir.create(d, recursive = TRUE, showWarnings = FALSE)
@@ -83,7 +83,7 @@ writeLines(dl[, 2L], PKG_LIST_FILE)
 ## ---- 4. Install all transitive dependencies (excluding lme4) -------------
 ## Resolve the full dependency closure of the downloaded rev-deps so that
 ## R CMD check can run offline on Compute Canada.
-## r2u installs binary apt packages where available (fast); falls back to source.
+## Two-pass: r2u/bspm installs binaries first, then source compilation in parallel.
 ##
 ## Recursive resolution uses only hard deps (Depends/Imports/LinkingTo) to
 ## avoid pulling in the enormous transitive closure of all Suggests.
@@ -119,18 +119,20 @@ configure.vars <- list(
               "ARROW_R_DEV=true",
               "ARROW_DEPENDENCY_SOURCE=BUNDLED"))
 
-## Try a fast batch install first.  If a single package (e.g. r-cran-micemd)
-## has a broken post-install script it will leave dpkg in an interrupted state
-## and fail the whole call.  In that case, clean up the dpkg state and fall
-## back to per-package installs so individual failures can be skipped.
+## Two-pass install strategy:
 ##
-## Note: bspm intercepts install.packages() and serializes installs through
-## apt, so Ncpus only affects within-package compilation, not across-package
-## parallelism.  r2u covers most of CRAN as binaries but only a subset of
-## Bioconductor, so source compilation can be a bottleneck when Bioc packages
-## are included.  If build times are unacceptable, consider doing a binary-only
-## pass first (bspm active), then calling bspm::disable() before a second pass
-## with install.packages(..., Ncpus = NCPUS) for remaining source-only packages.
+## Pass 1 (bspm active): install.packages() is intercepted by bspm, which
+##   installs pre-built binary .deb packages via apt where available (fast).
+##   bspm silently skips packages with no pre-built binary.  If a single
+##   package has a broken post-install script and leaves dpkg in a bad state,
+##   we detect and recover before proceeding.
+##
+## Pass 2 (bspm disabled): find packages still missing after pass 1 and
+##   compile them from source using R's own parallel installer (Ncpus
+##   subprocesses).  r2u covers most of CRAN as binaries but only a subset of
+##   Bioconductor, so this pass handles source-only packages in parallel
+##   rather than letting bspm serialize them one at a time through apt.
+cat("\n--- Pass 1: binary installs via bspm/apt ---\n")
 batch_ok <- tryCatch({
     install.packages(to_install,
                      configure.vars = configure.vars,
@@ -138,34 +140,62 @@ batch_ok <- tryCatch({
                      Ncpus          = NCPUS)
     TRUE
 }, error = function(e) {
-    message("Batch install failed: ", conditionMessage(e))
+    message("Pass 1 batch install failed: ", conditionMessage(e))
     FALSE
 })
 
 if (!batch_ok) {
-    message("Fixing broken dpkg state and retrying per-package ...")
+    message("Fixing broken dpkg state and retrying pass 1 ...")
     system2("dpkg", c("--configure", "-a"))
     system2("apt-get", c("install", "-f", "-y"))
+    tryCatch(
+        install.packages(to_install, configure.vars = configure.vars,
+                         dependencies = FALSE, Ncpus = NCPUS),
+        error = function(e) message("Pass 1 retry also failed: ", conditionMessage(e))
+    )
+}
 
-    install_failed <- character(0)
-    still_needed <- setdiff(to_install, rownames(installed.packages()))
-    cat(sprintf("Retrying %d packages individually ...\n", length(still_needed)))
-    for (pkg in still_needed) {
-        tryCatch(
-            install.packages(pkg, dependencies = FALSE, Ncpus = NCPUS),
-            error = function(e) {
-                message(sprintf("  SKIP %s: %s", pkg, conditionMessage(e)))
-                install_failed <<- c(install_failed, pkg)
-            }
-        )
+## Pass 2: parallel source compilation for packages bspm could not supply
+install_failed <- character(0)
+still_needed <- setdiff(to_install, rownames(installed.packages()))
+if (length(still_needed) > 0L) {
+    cat(sprintf("\n--- Pass 2: source compilation for %d package(s) (Ncpus=%d) ---\n",
+                length(still_needed), NCPUS))
+    bspm::disable()
+    src_ok <- tryCatch({
+        install.packages(still_needed,
+                         configure.vars = configure.vars,
+                         dependencies   = FALSE,
+                         Ncpus          = NCPUS)
+        TRUE
+    }, error = function(e) {
+        message("Pass 2 parallel install failed: ", conditionMessage(e))
+        FALSE
+    })
+    bspm::enable()
+    if (!src_ok) {
+        still_needed2 <- setdiff(still_needed, rownames(installed.packages()))
+        cat(sprintf("Retrying %d package(s) individually ...\n", length(still_needed2)))
+        for (pkg in still_needed2) {
+            tryCatch(
+                install.packages(pkg, dependencies = FALSE, Ncpus = NCPUS),
+                error = function(e) {
+                    message(sprintf("  SKIP %s: %s", pkg, conditionMessage(e)))
+                    install_failed <<- c(install_failed, pkg)
+                }
+            )
+        }
     }
-    if (length(install_failed)) {
-        warning(sprintf("%d package(s) could not be installed: %s",
-                        length(install_failed),
-                        paste(install_failed, collapse = ", ")))
-        writeLines(install_failed,
-                   file.path(REVDEP_DIR, "install_failures.txt"))
-    }
+} else {
+    cat("Pass 2: no source-only packages remaining.\n")
+}
+
+if (length(install_failed) > 0L) {
+    warning(sprintf("%d package(s) could not be installed: %s",
+                    length(install_failed),
+                    paste(install_failed, collapse = ", ")))
+    writeLines(install_failed,
+               file.path(REVDEP_DIR, "install_failures.txt"))
 }
 
 ## ---- 5 & 6. Install old and new lme4 into separate library dirs ----------
