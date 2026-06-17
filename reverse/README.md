@@ -67,6 +67,7 @@ directory; with no arguments it auto-detects the two most recent
 # Build the dev lme4 tarball if needed
 cd ../..
 R CMD build lme4 --compact-vignettes=both          # produces lme4_${NEW}.tar.gz
+mv lme4_${NEW}.tar.gz lme4/reverse
 cd lme4/reverse
 
 # Download the previous CRAN release for comparison

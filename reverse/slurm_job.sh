@@ -14,8 +14,14 @@
 
 module load apptainer
 
+## Resolve the directory containing this script so we can bind-mount
+## check_one.R from the host over the baked-in copy in the container.
+## This means script changes take effect without rebuilding the .sif image.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 singularity exec \
     --bind "${RESULTS_DIR}:/results" \
+    --bind "${SCRIPT_DIR}/check_one.R:/opt/revdep/check_one.R" \
     --env "REVDEP_LME4=${REVDEP_LME4}" \
     --env "_R_CHECK_FORCE_SUGGESTS_=false" \
     --env "_R_CHECK_CRAN_INCOMING_REMOTE_=FALSE" \

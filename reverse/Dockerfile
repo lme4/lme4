@@ -32,6 +32,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         texlive-latex-extra \
         texlive-fonts-recommended \
         texlive-fonts-extra \
+        texlive-lang-french \
     && rm -rf /var/lib/apt/lists/*
 
 ## Working directory for all revdep machinery
