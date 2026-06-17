@@ -122,7 +122,7 @@ docker push ${DOCKERUSER}/lme4-revdep:${OLD}_vs_${NEW}
 
 # On the Compute Canada login node: pull and convert
 module load apptainer/1.4.5
-singularity pull lme4_revdep.sif docker://${DOCKERUSER}/lme4-revdep:${OLD}_vs_${NEW}-no_bioc
+singularity pull lme4_revdep.sif docker://${DOCKERUSER}/lme4-revdep:${OLD}_vs_${NEW}
 ```
 
 ### 3. Submit checking job arrays
@@ -130,7 +130,7 @@ singularity pull lme4_revdep.sif docker://${DOCKERUSER}/lme4-revdep:${OLD}_vs_${
 ```bash
 # On the Compute Canada login node:
 cd ~/project/${CCUSER}/lme4/reverse
-module load apptainer/1.4.5
+## module load apptainer/1.4.5  ## is this needed?
 bash slurm_submit.sh lme4_revdep.sif results_old old --account=${CCACCOUNT}
 bash slurm_submit.sh lme4_revdep.sif results_new new --account=${CCACCOUNT}
 yourpi
