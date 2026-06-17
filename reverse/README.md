@@ -117,8 +117,8 @@ scp lme4_revdep.sif username@cedar.computecanada.ca:~/revdep/
 ```bash
 # Locally: log in, tag, and push (replace 'myuser' with your Docker Hub username)
 docker login
-docker tag lme4-revdep:${OLD}_vs_${NEW} myuser/lme4-revdep:${OLD}_vs_${NEW}
-docker push myuser/lme4-revdep:${OLD}_vs_${NEW}
+docker tag lme4-revdep:${OLD}_vs_${NEW} ${DOCKERUSER}/lme4-revdep:${OLD}_vs_${NEW}
+docker push ${DOCKERUSER}/lme4-revdep:${OLD}_vs_${NEW}
 
 # On the Compute Canada login node: pull and convert
 module load apptainer/1.4.5
