@@ -1,0 +1,16 @@
+
+Option A: one-liner with docker commit (quick, not reproducible)
+docker run --name lme4-patch lme4-revdep:VERSION \
+    bash -c "apt-get update && apt-get install -y --no-install-recommends lmodern && rm -rf /var/lib/apt/lists/*"
+docker commit lme4-patch lme4-revdep:VERSION-patched
+docker rm lme4-patch
+
+Option B: tiny patch Dockerfile (reproducible, one extra layer)
+FROM lme4-revdep:VERSION
+RUN apt-get update && apt-get install -y --no-install-recommends lmodern \
+    && rm -rf /var/lib/apt/lists/*
+docker build -t lme4-revdep:VERSION-patched -f Dockerfile.patch .
+
+Both avoid re-running the multi-GB dependency install. If you've already converted to a Singularity .sif, you'd then re-run the singularity build step from the patched Docker image.
+
+Option B is worth it if you want to document the patch; Option A is fine if you're just fixing a one-off and will do a clean rebuild next time anyway.
