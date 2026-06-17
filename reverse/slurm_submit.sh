@@ -58,8 +58,8 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 sbatch \
     --array="1-${N}%50" \
-    --time=2:00:00 \
-    --mem=4G \
+    --time=4:00:00 \
+    --mem=16G \
     --cpus-per-task=1 \
     --account="${MYACCOUNT}" \
     --mail-type=BEGIN,FAIL \
