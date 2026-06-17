@@ -7,6 +7,7 @@
 ##   CONTAINER    : absolute path to the Singularity/Apptainer .sif file
 ##   RESULTS_DIR  : absolute path to the directory for .Rcheck outputs
 ##   REVDEP_LME4  : "old" or "new" -- selects which lme4 library dir to use
+##   CHECK_ONE_R  : absolute path to check_one.R on the host filesystem
 ## SLURM_ARRAY_TASK_ID is set automatically by SLURM.
 ##
 ## Compute Canada uses Apptainer (apptainer/singularity module); adjust the
@@ -14,14 +15,16 @@
 
 module load apptainer
 
-## Resolve the directory containing this script so we can bind-mount
-## check_one.R from the host over the baked-in copy in the container.
-## This means script changes take effect without rebuilding the .sif image.
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+## CHECK_ONE_R is passed via --export in slurm_submit.sh (absolute path on the
+## host filesystem).  We bind-mount it over the baked-in copy so that script
+## changes take effect without rebuilding the .sif image.
+## Note: BASH_SOURCE[0] cannot be used here because SLURM copies the job
+## script to a temporary spool directory, so check_one.R would not be found
+## alongside it.
 
 singularity exec \
     --bind "${RESULTS_DIR}:/results" \
-    --bind "${SCRIPT_DIR}/check_one.R:/opt/revdep/check_one.R" \
+    --bind "${CHECK_ONE_R}:/opt/revdep/check_one.R" \
     --env "REVDEP_LME4=${REVDEP_LME4}" \
     --env "_R_CHECK_FORCE_SUGGESTS_=false" \
     --env "_R_CHECK_CRAN_INCOMING_=false" \

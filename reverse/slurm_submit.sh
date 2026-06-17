@@ -67,7 +67,7 @@ sbatch \
     --job-name="lme4_revdep_${LME4_VER}" \
     --output="${RESULTS_DIR}/slurm_%A_%a.out" \
     --error="${RESULTS_DIR}/slurm_%A_%a.err" \
-    --export="ALL,CONTAINER=${CONTAINER},RESULTS_DIR=${RESULTS_DIR},REVDEP_LME4=${LME4_VER}" \
+    --export="ALL,CONTAINER=${CONTAINER},RESULTS_DIR=${RESULTS_DIR},REVDEP_LME4=${LME4_VER},CHECK_ONE_R=${SCRIPT_DIR}/check_one.R" \
     "$@" \
     "${SCRIPT_DIR}/slurm_job.sh"
 
