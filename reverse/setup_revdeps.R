@@ -123,6 +123,14 @@ configure.vars <- list(
 ## has a broken post-install script it will leave dpkg in an interrupted state
 ## and fail the whole call.  In that case, clean up the dpkg state and fall
 ## back to per-package installs so individual failures can be skipped.
+##
+## Note: bspm intercepts install.packages() and serializes installs through
+## apt, so Ncpus only affects within-package compilation, not across-package
+## parallelism.  r2u covers most of CRAN as binaries but only a subset of
+## Bioconductor, so source compilation can be a bottleneck when Bioc packages
+## are included.  If build times are unacceptable, consider doing a binary-only
+## pass first (bspm active), then calling bspm::disable() before a second pass
+## with install.packages(..., Ncpus = NCPUS) for remaining source-only packages.
 batch_ok <- tryCatch({
     install.packages(to_install,
                      configure.vars = configure.vars,
