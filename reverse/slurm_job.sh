@@ -24,7 +24,7 @@ singularity exec \
     --bind "${SCRIPT_DIR}/check_one.R:/opt/revdep/check_one.R" \
     --env "REVDEP_LME4=${REVDEP_LME4}" \
     --env "_R_CHECK_FORCE_SUGGESTS_=false" \
-    --env "_R_CHECK_CRAN_INCOMING_REMOTE_=FALSE" \
+    --env "_R_CHECK_CRAN_INCOMING_=false" \
     --env "R_PROFILE=/dev/null" \
     "${CONTAINER}" \
     Rscript /opt/revdep/check_one.R "${SLURM_ARRAY_TASK_ID}"
@@ -32,3 +32,9 @@ singularity exec \
 ## bspm::enable().  bspm requires D-Bus (unavailable in Singularity on HPC)
 ## and emits a noisy warning; since all packages are pre-installed in the
 ## image and compute nodes have no internet, bspm serves no purpose here.
+##
+## _R_CHECK_CRAN_INCOMING_=false disables the entire CRAN incoming feasibility
+## section of R CMD check --as-cran.  This covers both the remote feasibility
+## sub-check (version already on CRAN, etc.) and the package-dependency check
+## that fetches CRAN/Bioconductor PACKAGES indices -- both of which produce
+## spurious network-access warnings on offline compute nodes.
