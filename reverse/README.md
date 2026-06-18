@@ -79,11 +79,11 @@ bash build.sh lme4_${OLD}.tar.gz lme4_${NEW}.tar.gz   # -> lme4_revdep.sif
 
 #### Build flags
 
-| Flag | Effect | Image tag suffix | Approx. compressed size |
-|---|---|---|---|
-| *(none)* | Deps/Imports/LinkingTo only; includes Bioconductor repos | *(none)* | ~6 GB |
-| `--full` | Also resolves Suggests recursively | `-full` | ~25 GB |
-| `--no-bioc` | Skip Bioconductor repositories (avoids flaky index fetches) | `-no_bioc` | ~4 GB |
+| Flag | Effect | Image tag suffix | Approx. compressed size | Approx. build time |
+|---|---|---|---|---|
+| *(none)* | Deps/Imports/LinkingTo only; includes Bioconductor repos | *(none)* | ~6 GB | ~48 min |
+| `--full` | Also resolves Suggests recursively | `-full` | ~25 GB | — |
+| `--no-bioc` | Skip Bioconductor repositories (avoids flaky index fetches) | `-no_bioc` | ~4 GB | — |
 
 Flags can be combined: `bash build.sh --full --no-bioc ...` produces a tag like
 `lme4-revdep:${OLD}_vs_${NEW}-full-no_bioc`.
