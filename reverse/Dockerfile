@@ -20,6 +20,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 ## Tools needed by R CMD check --as-cran:
 ##   qpdf / ghostscript : PDF size/validity checks
 ##   texlive-*          : LaTeX-based vignettes
+##   texinfo            : provides texi2dvi (required by some vignettes)
 ##   pandoc             : Rmarkdown vignettes
 ## r2u's bspm layer handles additional system-library deps for R packages
 ## automatically when install.packages() is called in setup_revdeps.R.
@@ -34,6 +35,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         texlive-fonts-extra \
         texlive-lang-french \
         lmodern \
+        texinfo \
     && rm -rf /var/lib/apt/lists/*
 
 ## Working directory for all revdep machinery
@@ -60,5 +62,9 @@ ARG WITH_BIOC=true
 RUN WITH_SUGGESTS=${WITH_SUGGESTS} WITH_BIOC=${WITH_BIOC} Rscript /opt/revdep/setup_revdeps.R && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
+
+## Extra R packages needed to build certain vignettes but not declared as
+## reverse-dependency dependencies (add to this list as needed).
+RUN Rscript -e 'install.packages(c("fpc", "lmPerm"))'
 
 CMD ["bash"]
