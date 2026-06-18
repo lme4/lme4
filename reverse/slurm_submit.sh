@@ -56,7 +56,8 @@ echo "Packages       : $N"
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-sbatch \
+JOBID=$(sbatch \
+    --parsable \
     --array="1-${N}%50" \
     --time=4:00:00 \
     --mem=16G \
@@ -69,7 +70,13 @@ sbatch \
     --error="${RESULTS_DIR}/slurm_%A_%a.err" \
     --export="ALL,CONTAINER=${CONTAINER},RESULTS_DIR=${RESULTS_DIR},REVDEP_LME4=${LME4_VER},CHECK_ONE_R=${SCRIPT_DIR}/check_one.R" \
     "$@" \
-    "${SCRIPT_DIR}/slurm_job.sh"
+    "${SCRIPT_DIR}/slurm_job.sh")
 
-echo "Job array submitted (1-${N}, lme4=${LME4_VER})."
+echo "Job array submitted: ${JOBID} (1-${N}, lme4=${LME4_VER})."
 echo "Results will appear in ${RESULTS_DIR}/"
+echo ""
+echo "To submit the other version sequentially after this one:"
+echo "  bash ${SCRIPT_DIR}/slurm_submit.sh ... --dependency=afterany:${JOBID}"
+echo ""
+echo "Or capture the job ID for scripting:"
+echo "  JOBID=\$(bash slurm_submit.sh ...); bash slurm_submit.sh ... --dependency=afterany:\${JOBID}"
