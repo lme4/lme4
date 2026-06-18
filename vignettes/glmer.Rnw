@@ -99,11 +99,13 @@
 \newcommand{\abs}{\operatorname{abs}}
 \newcommand{\bLt}{\ensuremath{\bm\Lambda_\theta}}
 \newcommand{\mc}[1]{\ensuremath{\mathcal{#1}}}
-\newcommand{\trans}{\ensuremath{^\prime}}
+\newcommand{\trans}{\ensuremath{^\top}}
 \newcommand{\yobs}{\ensuremath{\bm y_{\mathrm{obs}}}}
 \newcommand{\Lsat}{\ensuremath{L_{\mathrm{sat}}}}
 \newcommand*{\eq}[1]{eqn.~\ref{#1}}% or just {(\ref{#1})}
-%
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\ylogy}{ylogy}
 \usepackage{etoolbox}
 \usepackage{lineno}
 %% line numbering hack from Claude
@@ -162,9 +164,135 @@ we describe the facilities for fitting GLMMs.
 \section{Generalized Linear Mixed Models}
 \label{sec:GLMMdef}
 
-Generalized linear mixed models extend the class of
-generalized linear models by allowing for both fixed and random
-effects. In a GL(M)M, the length-$n$ vector-valued response variable,
+Generalized linear mixed models extend the class of linear models in two ways: allowing 
+for both fixed-effects parameters and random effects in the linear predictor, as in
+linear mixed models (LMMs), and allowing for non-Gaussian distributions of the
+response, whose mean is an inverse link applied to the linear predictor,
+as in generalized linear models (GLMs).
+
+We consider several characteristics of each of these model types.
+
+\subsection{The Linear Model}
+A linear model can be written as $\mc Y\sim\mc N\left(\bm X\bm\beta,\sigma^2\bm I\right)$, where
+$\mc Y$ is the $n$-dimensional random variable representing the response, $\bm X$ is an $n\times p$
+model matrix and $\bm\beta$ is a $p$-dimensional coefficient vector.
+The vector $\bm\eta=\bm X\bm\beta$ is called the \emph{linear predictor} which is mapped to
+the \emph{mean vector}, $\bm\mu=\bm g^{-1}(\bm\eta)$, in this case using an \emph{identity} link and
+inverse link function.
+(The \emph{link} function, $\bm g$, maps $\bm\mu$ to $\bm\eta$ and the \emph{inverse link},
+$\bm g^{-1}$, maps $\bm\eta$ to $\bm\mu$.)
+The maximum likelihood estimates of the coefficients, $\widehat{\bm\beta}$, are the values that
+minimize the sum of squared residuals
+\begin{equation}
+  \label{eq:LMMmles}
+  \widehat{\bm\beta} = \argmin_{\bm\beta}\sum_{i=1}^n (y_i - \mu_i)^2 .
+\end{equation}
+The squared residuals, $d(y_i,\mu_i)=(y_i - \mu_i)^2$, are the \emph{unit deviances} for
+the Gaussian family.
+
+\subsection{The Generalized Linear Model}
+In a \emph{generalized linear model} (GLM) the linear predictor is still $\bm\eta=\bm X\bm\beta$
+but the distribution of the response, $\mc Y$, with mean $\bm\mu=\bm g^{-1}(\bm\eta)$, can be from
+distribution families other than the Gaussian - the most common examples are Bernoulli, binomial, or Poisson.
+The distribution family determines the \emph{unit deviance} function, $d(y_i,\mu_i)$, and the mle's
+of the coefficients are those that minimize the sum of the unit deviances
+\begin{equation}
+  \label{eq:sumofunitdeviances}
+  \widehat{\bm\beta} = \argmin_{\bm\beta}\sum_{i=1}^n d(y_i,\mu_i) .
+\end{equation}
+
+The unit deviances are the difference between negative twice the log-likelihood at $(y_i, \mu_i)$ and
+negative twice the log-likelihood at $(y_i, y_i)$ (which is generally but not always zero).
+For the Poisson distribution the unit deviance function is
+\begin{equation}
+  \label{eq:Poissonunitdeviance}
+  d(y_i,\mu_i,w_i)=
+  \begin{cases}
+    2 w_i \mu_i & \text{if } y_i = 0 \\
+    2 w_i (y_i \log(y_i/\mu_i) - (y_i - \mu_i)) & \text{otherwise}
+  \end{cases}
+\end{equation}
+where $w_i$ is an optional prior case weight.
+
+Minimizing the sum of the unit deviances in a linear model (i.e. finding the \emph{least squares} estimates
+$\widehat{\bm\beta}$) can be performed as a direct (i.e. non-iterative) calculation.
+For a generalized linear model minimizing the sum of unit deviances usually must be done through iteration.
+Fortunately, there is a fast, robust algorithm, \emph{iteratively reweighted least squares} (IRLS),
+to do this. 
+
+The link and inverse link functions are \emph{diagonal mappings}, in the sense that there is a scalar
+function, $g$, such that the $i$th component of $\bm\eta$ is $g$
+applied to the $i$th component of $\bm\mu_{\mc Y}$.  (The name
+``diagonal'' reflects the fact that the Jacobian matrix,
+$\frac{d\eta}{d\mu\trans}$, of such a mapping will be diagonal.)
+If the distribution family is one of the exponential distribution families a
+\emph{canonical link} can be derived from the form of the distribution.
+These are the identity for the Gaussian family, the \emph{logit} or ``log-odds'' function,
+$g(\mu)=\log(\mu/(1 - \mu))$ for the Bernoulli or binomial families, and the
+natural logarithm, $g(\mu)=\log(\mu)$, for the Poisson.
+
+\subsection{The Linear Mixed Model}
+In a linear mixed model (LMM), described in \cite{bates2015fitting}, there are two vector-valued random
+variables: $\mc Y$, the $n$-dimensional response and $\mc B$ the $q$-dimensional random effects vector.
+The unconditional distribution $\mc B\sim\mc N(\bm 0,\bm\Sigma_{\bm\theta})$ depends on a
+\emph{covariance parameter} $\bm\theta$.
+The conditional distribution, $(\mc Y| \mc B=\bm b)\sim\mc N(\bm X\bm\beta+\bm Z\bm b, \sigma^2\bm I)$,
+has mean, $\bm\mu$, from the identity link applied to the linear predictor $\bm\eta=\bm X\bm\beta+\bm Z\bm b$.
+In practice the covariance parameter, $\bm\theta$, determines a lower triangular \emph{relative covariance factor},
+$\bm\Lambda_{\bm\theta}$, with $\bm\Sigma_{\bm\theta}=\sigma^2\bm\Lambda_{\bm\theta}\bm\Lambda_{\bm\theta}\trans$
+and we work with a ``whitened'' random effects variable, $\mc U\sim\mc N(\bm 0,\sigma^2\bm I)$, such that
+$\mc B=\bm\Lambda_{\bm\theta}\mc U$, and for which the linear predictor is
+\begin{equation}
+  \label{eq:LMMlinpred}
+  \bm\eta=\bm X\bm\beta+\bm Z\bm b=\bm X\bm\beta+\bm Z\bm\Lambda_{\bm\theta}\bm u .
+\end{equation}
+($\mc U$ is said to be ``whitened'' because its distribution with mean zero and
+constant-variance independent coordinates is ``white noise''.)
+
+As in a linear model the unit deviances are the squared residuals (because of the Gaussian family).
+For a fixed values of the parameters $\bm\beta$ and $\bm\theta$ the conditional mode of $\mc U$
+minimizes the \emph{penalized sum of unit deviances},
+\begin{equation}
+  \label{eq:penalizedsumofsquares}
+  (\tilde{\bm u} | \mc Y=\bm y,\bm\theta,\bm\beta) = \argmin_{\bm u}\left[\sum_{i=1}^n(y_i-\mu_i)^2+\|\bm u\|^2\right] .
+\end{equation}
+This penalized sum of squared residuals (PSSR) can be minimized directly (i.e. without iteration).
+The minimum PSSR and the determinant of a Cholesky factor created in the process of solving
+eq.~\ref{eq:penalizedsumofsquares} provide the log-likelihood
+of the parameters $(\bm\theta,\bm\beta)$.
+This log-likelihood is \emph{profiled} with respect to $\sigma^2$ in the sense that the conditional mle
+of $\sigma^2$ can be determined after determining $\tilde{\bm u}$.
+
+Because $\bm\beta$ and $\bm u$ both occur as coefficients in the linear predictor, the conditional estimate,
+$\widehat{\bm\beta}|\bm\theta$, can be determined along with $\tilde{\bm u}$
+by extending the penalized least squares problem,
+(eq.~\ref{eq:penalizedsumofsquares}) to minimize with respect to both $\bm u$ and $\bm\beta$.
+Thus, given a value of $\bm\theta$ and the solution to this extended penalized sum of squared residuals problem
+the profiled log-likelihood, which is a function of $\bm\theta$ only, can be evaluated.
+General nonlinear optimizers can then be used to determine the mle's for all the parameters.
+
+The point of using the profiled log-likelihood instead of the original log-likelihood is that the
+dimension of the general nonlinear optimization problem is much smaller in the profiled problem.
+
+\subsection{The Generalized Linear Mixed Model}
+
+As stated earlier, a GLMM combines the distribution family and link function from a GLM with random
+effects in the linear predictor, as in an LMM.
+The unconditional distribution of the random effects, $\mc B\sim\mc N(\bm 0, \bm\Sigma)$, and the definitions
+of the whitened random effects, $\mc U$, such that $\mc B=\bm\Lambda_{\bm\theta}\mc U$ where
+$\Lambda_{\bm\theta}\Lambda_{\bm\theta}\trans=\bm\Sigma$ are as in the LMM except that the scale parameter,
+$\sigma$, is not present in most GLMMs.
+The mean of the conditional distribution, $\mc Y|\mc U=\bm u$, is the inverse link applied to the
+linear predictor $\bm\eta=\bm X\bm\beta+\bm Z\bm\Lambda_{\bm\theta}\bm u$.
+
+The conditional mode,
+\begin{equation}
+  \label{eq:condmodeGLMM}
+  (\tilde{\bm u}|\mc Y=\bm y,\bm\theta,\bm\beta)=\argmin_{\bm u}\left[\sum_{i=1}^n d(y_i,\mu_i) + \|\bm u\|^2\right]
+\end{equation}
+can be determined by penalized iteratively reweighted least squares (PIRLS).
+
+In a GL(M)M, the length-$n$ vector-valued response variable,
 $\mc Y$, has a conditional distribution in the exponential dispersion family (e.g. Normal,
 binomial, Poisson).\footnote{The \code{lme4} package supports fitting negative binomial GLMMs,
 which are an extension of GLMMs; the negative binomial family is within the
@@ -177,7 +305,7 @@ The mean, $\bm\mu_{\mc Y }$, of $\mc Y$ depends on
 a linear predictor, which in the case of a GLM is 
 \begin{equation}
   \label{eq:GLMlinpred}
-  \bm\eta=\bm X\bm\beta .
+  \bm\eta=\bm X\bm\beta ,
 \end{equation}
 where $\bm\beta$ is a $p$-dimensional coefficient vector and $\bm X$
 is an $n \times p$ model matrix. The mapping from $\bm\mu_{\mc Y }$ to
