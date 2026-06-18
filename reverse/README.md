@@ -164,9 +164,17 @@ singularity pull lme4_revdep.sif docker://${DOCKERUSER}/lme4-revdep:${OLD}_vs_${
 ```bash
 # On the Compute Canada login node:
 cd ~/project/${CCUSER}/lme4/reverse
-## module load apptainer/1.4.5  ## is this needed?
 bash slurm_submit.sh lme4_revdep.sif results_old old --account=${CCACCOUNT}
 bash slurm_submit.sh lme4_revdep.sif results_new new --account=${CCACCOUNT}
+```
+
+If your cluster has a per-user job limit that prevents both arrays running
+simultaneously, submit them sequentially using SLURM's `--dependency` flag:
+
+```bash
+JOBID=$(bash slurm_submit.sh lme4_revdep.sif results_old old --account=${CCACCOUNT})
+bash slurm_submit.sh lme4_revdep.sif results_new new --account=${CCACCOUNT} \
+    --dependency=afterany:${JOBID}
 ```
 
 Each array runs one task per reverse dependency (up to 50 concurrently).
