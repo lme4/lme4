@@ -104,6 +104,40 @@ docker save -o lme4_revdep.tar lme4-revdep:${OLD}_vs_${NEW}
 singularity build lme4_revdep.sif docker-archive:lme4_revdep.tar
 ```
 
+#### Diagnosing build problems
+
+`setup_revdeps.R` writes two files into the image at build time:
+
+- `/opt/revdep/setup_summary.txt` — high-level summary (counts, lme4 versions, download failures)
+- `/opt/revdep/install_failures.txt` — packages that failed to install (absent if none)
+
+Inspect them without starting a full container:
+
+```bash
+docker run --rm lme4-revdep:${OLD}_vs_${NEW} cat /opt/revdep/setup_summary.txt
+docker run --rm lme4-revdep:${OLD}_vs_${NEW} cat /opt/revdep/install_failures.txt
+```
+
+Or on the cluster from the `.sif` file:
+
+```bash
+singularity exec lme4_revdep.sif cat /opt/revdep/setup_summary.txt
+singularity exec lme4_revdep.sif cat /opt/revdep/install_failures.txt
+```
+
+If packages failed to install, the compilation error usually names the missing
+system library.  To reproduce it interactively:
+
+```bash
+docker run --rm -it lme4-revdep:${OLD}_vs_${NEW} bash
+# inside the container:
+R -e 'install.packages("PackageName")'
+```
+
+The error output (e.g. `hdf5.h: No such file or directory`) maps directly to
+an apt package (e.g. `libhdf5-dev`).  Add it to the `apt-get install` block in
+the Dockerfile and rebuild.
+
 ### 2. Transfer the image to Compute Canada
 
 **Option A: direct file transfer via scp**
