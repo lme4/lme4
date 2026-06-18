@@ -126,6 +126,7 @@ configure.vars <- list(
 ##   bspm silently skips packages with no pre-built binary.  If a single
 ##   package has a broken post-install script and leaves dpkg in a bad state,
 ##   we detect and recover before proceeding.
+##   Observed timing: ~25 min (standard build, WITH_BIOC=true, WITH_SUGGESTS=false).
 ##
 ## Pass 2 (bspm disabled): find packages still missing after pass 1 and
 ##   compile them from source using R's own parallel installer (Ncpus
