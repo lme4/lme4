@@ -64,7 +64,7 @@ RUN WITH_SUGGESTS=${WITH_SUGGESTS} WITH_BIOC=${WITH_BIOC} Rscript /opt/revdep/se
     rm -rf /var/lib/apt/lists/*
 
 ## Extra R packages needed to build certain vignettes but not declared as
-## reverse-dependency dependencies (add to this list as needed).
+## reverse dependencies (add to this list as needed).
 RUN Rscript -e 'install.packages(c("fpc", "lmPerm"))'
 
 CMD ["bash"]
