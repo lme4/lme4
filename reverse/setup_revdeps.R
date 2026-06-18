@@ -133,6 +133,7 @@ configure.vars <- list(
 ##   subprocesses).  r2u covers most of CRAN as binaries but only a subset of
 ##   Bioconductor, so this pass handles source-only packages in parallel
 ##   rather than letting bspm serialize them one at a time through apt.
+##   Observed timing: ~35 min (standard build, WITH_BIOC=true, WITH_SUGGESTS=false).
 cat("\n--- Pass 1: binary installs via bspm/apt ---\n")
 batch_ok <- tryCatch({
     install.packages(to_install,
