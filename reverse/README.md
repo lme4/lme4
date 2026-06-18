@@ -115,7 +115,7 @@ scp lme4_revdep.sif username@cedar.computecanada.ca:~/revdep/
 **Option B: via Docker Hub**
 
 ```bash
-# Locally: log in, tag, and push (replace 'myuser' with your Docker Hub username)
+# Locally: log in, tag, and push
 docker login
 docker tag lme4-revdep:${OLD}_vs_${NEW} ${DOCKERUSER}/lme4-revdep:${OLD}_vs_${NEW}
 docker push ${DOCKERUSER}/lme4-revdep:${OLD}_vs_${NEW}
@@ -133,7 +133,6 @@ cd ~/project/${CCUSER}/lme4/reverse
 ## module load apptainer/1.4.5  ## is this needed?
 bash slurm_submit.sh lme4_revdep.sif results_old old --account=${CCACCOUNT}
 bash slurm_submit.sh lme4_revdep.sif results_new new --account=${CCACCOUNT}
-yourpi
 ```
 
 Each array runs one task per reverse dependency (up to 50 concurrently).
