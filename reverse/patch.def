@@ -2,5 +2,5 @@ Bootstrap: localimage
 From: lme4_revdep.sif
 
 %post
-    apt-get update && apt-get install -y --no-install-recommends lmodern \
+    apt-get update && apt --fix-broken install -y && apt-get install -y --no-install-recommends lmodern \
         && rm -rf /var/lib/apt/lists/*
