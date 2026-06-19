@@ -49,15 +49,18 @@ command -v singularity >/dev/null 2>&1 || module load apptainer
 ## (pipe through host wc -l; redirection inside singularity exec needs sh -c)
 N=$(singularity exec "$CONTAINER" cat /opt/revdep/pkgs_to_check.txt | wc -l)
 N="${N//[[:space:]]/}"
-echo "Container      : $CONTAINER"
-echo "Results dir    : $RESULTS_DIR"
-echo "lme4 version   : $LME4_VER"
-echo "Packages       : $N"
+
+## All informational output goes to stderr so that stdout carries only the
+## job ID, allowing clean capture: JOBID=$(bash slurm_submit.sh ...)
+echo "Container      : $CONTAINER"  >&2
+echo "Results dir    : $RESULTS_DIR" >&2
+echo "lme4 version   : $LME4_VER"   >&2
+echo "Packages       : $N"           >&2
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-JOBID=$(sbatch \
-    --parsable \
+## --parsable outputs only the numeric job ID to stdout
+JOBID=$(sbatch --parsable \
     --array="1-${N}%50" \
     --time=4:00:00 \
     --mem=16G \
@@ -72,11 +75,8 @@ JOBID=$(sbatch \
     "$@" \
     "${SCRIPT_DIR}/slurm_job.sh")
 
-echo "Job array submitted: ${JOBID} (1-${N}, lme4=${LME4_VER})."
-echo "Results will appear in ${RESULTS_DIR}/"
-echo ""
-echo "To submit the other version sequentially after this one:"
-echo "  bash ${SCRIPT_DIR}/slurm_submit.sh ... --dependency=afterany:${JOBID}"
-echo ""
-echo "Or capture the job ID for scripting:"
-echo "  JOBID=\$(bash slurm_submit.sh ...); bash slurm_submit.sh ... --dependency=afterany:\${JOBID}"
+echo "Job array submitted: ${JOBID} (1-${N}, lme4=${LME4_VER})." >&2
+echo "Results will appear in ${RESULTS_DIR}/"                      >&2
+echo "To submit the other version sequentially after this one:"    >&2
+echo "  bash ${SCRIPT_DIR}/slurm_submit.sh ... --dependency=afterany:${JOBID}" >&2
+echo "${JOBID}"
