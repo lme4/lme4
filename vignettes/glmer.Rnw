@@ -16,6 +16,7 @@
 \DeclareMathOperator{\VEC}{vec}
 \newcommand{\bbeta}{{\bm \beta}}
 \newcommand{\btheta}{{\bm \theta}}
+\newcommand{\bmb}[1]{{\color{blue} #1}}
 
 \DeclareUnicodeCharacter{0394}{$\Delta$}
 %
@@ -46,7 +47,7 @@
   observed data, the variance-covariance matrix of the random 
   effects, and the fixed effect parameters
   are determined using penalized iteratively reweighted
-  least squares (PIRLS). We compute an approximation of the integral
+  least squares. We compute an approximation of the integral
   over the distributions of the conditional modes to compute
   the maximum likelihood estimate for a given set of parameters (by default we use the
   Laplace approximation or, alternatively, the more computationally
@@ -149,8 +150,6 @@ opts_chunk$set(engine='R',dev='pdf',fig.width=10,
 \section{Introduction}
 \label{sec:intro}
 
-FIXME: check digits of output?
-
 The \pkg{lme4} package for \proglang{R} can be used to fit a broad
 range of mixed-effects models.  One major advantage of
 \pkg{lme4} over its predecessor, \pkg{nlme}, is that it can be used to
@@ -193,7 +192,7 @@ the Gaussian family.
 \subsection{The Generalized Linear Model}
 In a \emph{generalized linear model} (GLM) the linear predictor is still $\bm\eta=\bm X\bm\beta$
 but the distribution of the response, $\mc Y$, with mean $\bm\mu=\bm g^{-1}(\bm\eta)$, can be from
-distribution families other than the Gaussian; the most common examples are Bernoulli, binomial, or Poisson.
+distribution families other than the Gaussian, specifically from the class of exponential dispersion families; the most common examples are Bernoulli, binomial, or Poisson.
 The distribution family determines the \emph{unit deviance} function, $d(y_i,\mu_i)$, and the maximum likelihood estimates (MLEs)
 of the coefficients are those that minimize the sum of the unit deviances
 \begin{equation}
@@ -232,7 +231,7 @@ natural logarithm, $g(\mu)=\log(\mu)$, for the Poisson.
 
 \subsection{The Linear Mixed Model}
 In a linear mixed model (LMM), described in \cite{bates2015fitting}, there are two vector-valued random
-variables: $\mc Y$, the $n$-dimensional response and $\mc B$ the $q$-dimensional random effects vector.
+variables: $\mc Y$, the $n$-dimensional response, and $\mc B$, the $q$-dimensional random effects vector.
 The unconditional distribution $\mc B\sim\mc N(\bm 0,\bm\Sigma_{\bm\theta})$ depends on a
 \emph{covariance parameter} $\bm\theta$.
 The conditional distribution, $(\mc Y| \mc B=\bm b)\sim\mc N(\bm X\bm\beta+\bm Z\bm b, \sigma^2\bm I)$,
@@ -247,6 +246,7 @@ $\mc B=\bm\Lambda_{\bm\theta}\mc U$, and for which the linear predictor is
 \end{equation}
 ($\mc U$ is said to be ``whitened'' because its distribution with mean zero and
 constant-variance independent coordinates is ``white noise''.)
+\bmb{should we introduce the ``spherical'' terminology here?}
 
 As in a linear model the unit deviances are the squared residuals (because of the Gaussian family).
 For a fixed values of the parameters $\bm\beta$ and $\bm\theta$ the conditional mode of $\mc U$
@@ -291,6 +291,7 @@ The conditional mode,
 \end{equation}
 can be determined by penalized iteratively reweighted least squares (PIRLS).
 
+\bmb{much of the following is now a repeat of what was introduced above under GLMs}
 In a GL(M)M, the length-$n$ vector-valued response variable,
 $\mc Y$, has a conditional distribution in the exponential dispersion family (e.g. Normal,
 binomial, Poisson).\footnote{The \code{lme4} package supports fitting negative binomial GLMMs,
@@ -361,6 +362,7 @@ $\bm\Lambda_\theta$, which is a matrix square root of $\bm\Sigma_\theta$ (in pra
   \label{eq:GLMMSigma}
   \bm\Sigma_\theta=\bm\Lambda_\theta\bm\Lambda_\theta\trans .
 \end{equation}
+\bmb{comment that we are no longer whitening/estimated scaled covariances in this case?}
 This characterization of the random-effects covariance structure
 allows us to write the linear predictor as
 \begin{equation}
