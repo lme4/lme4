@@ -296,7 +296,7 @@ effects in the linear predictor, as in an LMM.
 The unconditional distribution of the random effects, $\mc B\sim\mc N(\bm 0, \bm\Sigma)$, and the definitions
 of the spherical random effects, $\mc U$, such that $\mc B=\bm\Lambda_{\bm\theta}\mc U$ where
 $\Lambda_{\bm\theta}\Lambda_{\bm\theta}\trans=\bm\Sigma$ are as in the LMM except that the scale parameter,
-$\sigma$, is not present in most GLMMs.
+$\sigma$, is not present in the most common GLMMs (binomial and Poisson families).
 The mean of the conditional distribution, $\mc Y|\mc U=\bm u$, is the inverse link applied to the
 linear predictor $\bm\eta=\bm X\bm\beta+\bm Z\bm\Lambda_{\bm\theta}\bm u$.
 
@@ -314,7 +314,7 @@ $f_{\mc Y,\mc U}(\bm y,\bm u)$.
 Approximating the integral with respect to $\bm u$ of the joint density (evaluated at the observed $\bm y$)
 by the integral of this local quadratic approximation is \emph{Laplace's method}.
 
-For simple models involving scalar random effects from a single random-effects term the multivariate integral
+For simple models involving scalar random effects from a single random-effects term \bmb{can we, in principle, deal with nested random effects as well?} the multivariate integral
 with respect to $\bm u$ can be factored into a product of scalar integrals, which can be evaluated by
 Gauss-Hermite rules.
 
@@ -342,7 +342,7 @@ To summarize:
 \item In certain simple models a more accurate method, adaptive Gauss-Hermite quadrature, can be used to
   approximate the log-likelihood.
 \item If the PSUD is minimized with respect to $\bm u$ and $\bm\beta$ simultaneously then the approximate
-  profiled log-likelihood becomes a function of $\bm\theta$ only.
+  profiled log-likelihood becomes a function of $\bm\theta$ only. \bmb{is it worth expanding on this slightly: ``as discussed further below, this approximation can save computation time for large problems'' (or some such)? (See [currently] line 195 or thereabouts; also, Alex Stringer requested more detail on this approach \ldots}
 \end{enumerate}
 
 The likelihood of the parameters, given the observed data, is now
