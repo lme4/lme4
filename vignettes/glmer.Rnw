@@ -48,7 +48,7 @@
   are determined using penalized iteratively reweighted
   least squares (PIRLS). We compute an approximation of the integral
   over the distributions of the conditional modes to compute
-  the MLE for a given set of parameters (by default we use the
+  the maximum likelihood estimate for a given set of parameters (by default we use the
   Laplace approximation or, alternatively, the more computationally
   expensive adaptive Gauss-Hermite quadrature). The package provides
   all the standard features available for GLMs in base \proglang{R},
@@ -176,7 +176,7 @@ We consider several characteristics of each of these model types.
 A linear model can be written as $\mc Y\sim\mc N\left(\bm X\bm\beta,\sigma^2\bm I\right)$, where
 $\mc Y$ is the $n$-dimensional random variable representing the response, $\bm X$ is an $n\times p$
 model matrix and $\bm\beta$ is a $p$-dimensional coefficient vector.
-The vector $\bm\eta=\bm X\bm\beta$ is called the \emph{linear predictor} which is mapped to
+The vector $\bm\eta=\bm X\bm\beta$ (the \emph{linear predictor}) is mapped to
 the \emph{mean vector}, $\bm\mu=\bm g^{-1}(\bm\eta)$, in this case using an \emph{identity} link and
 inverse link function.
 (The \emph{link} function, $\bm g$, maps $\bm\mu$ to $\bm\eta$ and the \emph{inverse link},
@@ -193,8 +193,8 @@ the Gaussian family.
 \subsection{The Generalized Linear Model}
 In a \emph{generalized linear model} (GLM) the linear predictor is still $\bm\eta=\bm X\bm\beta$
 but the distribution of the response, $\mc Y$, with mean $\bm\mu=\bm g^{-1}(\bm\eta)$, can be from
-distribution families other than the Gaussian - the most common examples are Bernoulli, binomial, or Poisson.
-The distribution family determines the \emph{unit deviance} function, $d(y_i,\mu_i)$, and the mle's
+distribution families other than the Gaussian; the most common examples are Bernoulli, binomial, or Poisson.
+The distribution family determines the \emph{unit deviance} function, $d(y_i,\mu_i)$, and the maximum likelihood estimates (MLEs)
 of the coefficients are those that minimize the sum of the unit deviances
 \begin{equation}
   \label{eq:sumofunitdeviances}
@@ -202,7 +202,7 @@ of the coefficients are those that minimize the sum of the unit deviances
 \end{equation}
 
 The unit deviances are the difference between negative twice the log-likelihood at $(y_i, \mu_i)$ and
-negative twice the log-likelihood at $(y_i, y_i)$ (which is generally but not always zero).
+negative twice the log-likelihood at $(y_i, y_i)$ (which is often zero).
 For the Poisson distribution the unit deviance function is
 \begin{equation}
   \label{eq:Poissonunitdeviance}
@@ -217,8 +217,7 @@ where $w_i$ is an optional prior case weight.
 Minimizing the sum of the unit deviances in a linear model (i.e. finding the \emph{least squares} estimates
 $\widehat{\bm\beta}$) can be performed as a direct (i.e. non-iterative) calculation.
 For a generalized linear model minimizing the sum of unit deviances usually must be done through iteration.
-Fortunately, there is a fast, robust algorithm, \emph{iteratively reweighted least squares} (IRLS),
-to do this. 
+Fortunately, this can be done using a fast, robust algorithm, \emph{iteratively reweighted least squares} \cite[IRLS:][]{McCullaghNelder1989}.
 
 The link and inverse link functions are \emph{diagonal mappings}, in the sense that there is a scalar
 function, $g$, such that the $i$th component of $\bm\eta$ is $g$
@@ -227,7 +226,7 @@ applied to the $i$th component of $\bm\mu_{\mc Y}$.  (The name
 $\frac{d\eta}{d\mu\trans}$, of such a mapping will be diagonal.)
 If the distribution family is one of the exponential distribution families a
 \emph{canonical link} can be derived from the form of the distribution.
-These are the identity for the Gaussian family, the \emph{logit} or ``log-odds'' function,
+The canonical link is the identity for the Gaussian family, the \emph{logit} or ``log-odds'' function,
 $g(\mu)=\log(\mu/(1 - \mu))$ for the Bernoulli or binomial families, and the
 natural logarithm, $g(\mu)=\log(\mu)$, for the Poisson.
 
@@ -260,7 +259,7 @@ This penalized sum of squared residuals (PSSR) can be minimized directly (i.e. w
 The minimum PSSR and the determinant of a Cholesky factor created in the process of solving
 eq.~\ref{eq:penalizedsumofsquares} provide the log-likelihood
 of the parameters $(\bm\theta,\bm\beta)$.
-This log-likelihood is \emph{profiled} with respect to $\sigma^2$ in the sense that the conditional mle
+This log-likelihood is \emph{profiled} with respect to $\sigma^2$ in the sense that the conditional MLE
 of $\sigma^2$ can be determined after determining $\tilde{\bm u}$.
 
 Because $\bm\beta$ and $\bm u$ both occur as coefficients in the linear predictor, the conditional estimate,
@@ -269,7 +268,7 @@ by extending the penalized least squares problem,
 (eq.~\ref{eq:penalizedsumofsquares}) to minimize with respect to both $\bm u$ and $\bm\beta$.
 Thus, given a value of $\bm\theta$ and the solution to this extended penalized sum of squared residuals problem
 the profiled log-likelihood, which is a function of $\bm\theta$ only, can be evaluated.
-General nonlinear optimizers can then be used to determine the mle's for all the parameters.
+General nonlinear optimizers can then be used to determine the MLEs for all the parameters.
 
 The point of using the profiled log-likelihood instead of the original log-likelihood is that the
 dimension of the general nonlinear optimization problem is much smaller in the profiled problem.
@@ -288,7 +287,7 @@ linear predictor $\bm\eta=\bm X\bm\beta+\bm Z\bm\Lambda_{\bm\theta}\bm u$.
 The conditional mode,
 \begin{equation}
   \label{eq:condmodeGLMM}
-  (\tilde{\bm u}|\mc Y=\bm y,\bm\theta,\bm\beta)=\argmin_{\bm u}\left[\sum_{i=1}^n d(y_i,\mu_i) + \|\bm u\|^2\right]
+  (\tilde{\bm u}|\mc Y=\bm y,\bm\theta,\bm\beta)=\argmin_{\bm u}\left[\sum_{i=1}^n d(y_i,\mu_i) + \|\bm u\|^2\right],
 \end{equation}
 can be determined by penalized iteratively reweighted least squares (PIRLS).
 
