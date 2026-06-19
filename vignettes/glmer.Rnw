@@ -187,7 +187,10 @@ minimize the sum of squared residuals
   \widehat{\bm\beta} = \argmin_{\bm\beta}\sum_{i=1}^n (y_i - \mu_i)^2 .
 \end{equation}
 The squared residuals, $d(y_i,\mu_i)=(y_i - \mu_i)^2$, are the \emph{unit deviances} for
-the Gaussian family.
+the Gaussian family.\footnote{In the \proglang{R} \emph{family} lists of functions that encapsulate the
+distribution families in arguments to \code{glm} and \code{glmer}, the function that returns the unit deviances
+is named \code{dev.resids}, a source of confusion in some cases because they are not the values returned
+by \code{residuals(m, type="deviance")}.}
 
 \subsection{The Generalized Linear Model}
 In a \emph{generalized linear model} (GLM) the linear predictor is still $\bm\eta=\bm X\bm\beta$
@@ -226,7 +229,7 @@ $\frac{d\eta}{d\mu\trans}$, of such a mapping will be diagonal.)
 If the distribution family is one of the exponential distribution families a
 \emph{canonical link} can be derived from the form of the distribution.
 The canonical link is the identity for the Gaussian family, the \emph{logit} or ``log-odds'' function,
-$g(\mu)=\log(\mu/(1 - \mu))$ for the Bernoulli or binomial families, and the
+$g(\mu)=\log(\mu/(1 - \mu))$, for the Bernoulli or binomial families, and the
 natural logarithm, $g(\mu)=\log(\mu)$, for the Poisson.
 
 \subsection{The Linear Mixed Model}
@@ -238,35 +241,48 @@ The conditional distribution, $(\mc Y| \mc B=\bm b)\sim\mc N(\bm X\bm\beta+\bm Z
 has mean, $\bm\mu$, from the identity link applied to the linear predictor $\bm\eta=\bm X\bm\beta+\bm Z\bm b$.
 In practice the covariance parameter, $\bm\theta$, determines a lower triangular \emph{relative covariance factor},
 $\bm\Lambda_{\bm\theta}$, with $\bm\Sigma_{\bm\theta}=\sigma^2\bm\Lambda_{\bm\theta}\bm\Lambda_{\bm\theta}\trans$
-and we work with a ``whitened'' random effects variable, $\mc U\sim\mc N(\bm 0,\sigma^2\bm I)$, such that
+and we work with a ``spherical'' random effects variable, $\mc U\sim\mc N(\bm 0,\sigma^2\bm I)$, such that
 $\mc B=\bm\Lambda_{\bm\theta}\mc U$, and for which the linear predictor is
 \begin{equation}
   \label{eq:LMMlinpred}
   \bm\eta=\bm X\bm\beta+\bm Z\bm b=\bm X\bm\beta+\bm Z\bm\Lambda_{\bm\theta}\bm u .
 \end{equation}
-($\mc U$ is said to be ``whitened'' because its distribution with mean zero and
-constant-variance independent coordinates is ``white noise''.)
-\bmb{should we introduce the ``spherical'' terminology here?}
+($\mc U$ is said to be ``spherical'' because contours of constant probability density
+are spheres centered at the origin.)
 
-As in a linear model the unit deviances are the squared residuals (because of the Gaussian family).
-For a fixed values of the parameters $\bm\beta$ and $\bm\theta$ the conditional mode of $\mc U$
-minimizes the \emph{penalized sum of unit deviances},
+The likelihood of the parameters, $\bm\beta$, $\bm\theta$ and $\sigma^2$, given $\mc Y=\bm y$,
+is the marginal density of $\mc Y$ evaluated at the observed $\bm y$.
+Conceptually, we determine an expression for the integral of the joint density,
+$f_{\mc Y,\mc U}(\bm y,\bm u)$, with respect to $\bm u$, then evaluate that expression at the observed $\bm y$.
+In practice, it is easier to reverse the order of the evaluation at the observed $\bm y$ and the integration with
+respect to $\bm u$.
+
+The joint density is
+\begin{equation}
+  \label{eq:jointLMMdensity}
+  f_{\mc Y,\mc U}(\bm y,\bm u)=\frac{1}{(2\pi\sigma^2)^{(n+q)/2}}
+  \exp\left(\frac{\|\bm y-\bm\mu\|^2 + \|\bm u\|^2}{-2\sigma^2}\right) ,
+\end{equation}
+where the expression in the numerator of the integrand is the \emph{penalized sum of the unit deviances} (PSUD)
+for the Gaussian family, which is the penalized sum of squared residuals (PSSR).
+(The sum of the unit deviances is $\|\bm y-\bm\mu\|^2$ and the penalty is $\|\bm u\|^2$.)
+
+To evaluate the integral we determine the \emph{conditional mode} of $\mc U$, given $\mc Y=\bm y$, which minimizes
+the PSSR with respect to $\bm u$
 \begin{equation}
   \label{eq:penalizedsumofsquares}
   (\tilde{\bm u} | \mc Y=\bm y,\bm\theta,\bm\beta) = \argmin_{\bm u}\left[\sum_{i=1}^n(y_i-\mu_i)^2+\|\bm u\|^2\right] .
 \end{equation}
-This penalized sum of squared residuals (PSSR) can be minimized directly (i.e. without iteration).
-The minimum PSSR and the determinant of a Cholesky factor created in the process of solving
-eq.~\ref{eq:penalizedsumofsquares} provide the log-likelihood
-of the parameters $(\bm\theta,\bm\beta)$.
-This log-likelihood is \emph{profiled} with respect to $\sigma^2$ in the sense that the conditional MLE
-of $\sigma^2$ can be determined after determining $\tilde{\bm u}$.
+The PSSR can be minimized directly (i.e. without iteration) and the minimum doesn't depend on $\sigma^2$.
+When the minimum PSSR and the determinant of the Hessian of the PSSR, which can be evaluated from a Cholesky
+factor created in the process of solving eq.~\ref{eq:penalizedsumofsquares}, are available the MLE of
+$\sigma^2$ can be evaluated separately, as is commonly done in linear models.
 
 Because $\bm\beta$ and $\bm u$ both occur as coefficients in the linear predictor, the conditional estimate,
 $\widehat{\bm\beta}|\bm\theta$, can be determined along with $\tilde{\bm u}$
 by extending the penalized least squares problem,
 (eq.~\ref{eq:penalizedsumofsquares}) to minimize with respect to both $\bm u$ and $\bm\beta$.
-Thus, given a value of $\bm\theta$ and the solution to this extended penalized sum of squared residuals problem
+Thus, given a value of $\bm\theta$ and the solution to this extended PSSR problem,
 the profiled log-likelihood, which is a function of $\bm\theta$ only, can be evaluated.
 General nonlinear optimizers can then be used to determine the MLEs for all the parameters.
 
@@ -278,166 +294,56 @@ dimension of the general nonlinear optimization problem is much smaller in the p
 As stated earlier, a GLMM combines the distribution family and link function from a GLM with random
 effects in the linear predictor, as in an LMM.
 The unconditional distribution of the random effects, $\mc B\sim\mc N(\bm 0, \bm\Sigma)$, and the definitions
-of the whitened random effects, $\mc U$, such that $\mc B=\bm\Lambda_{\bm\theta}\mc U$ where
+of the spherical random effects, $\mc U$, such that $\mc B=\bm\Lambda_{\bm\theta}\mc U$ where
 $\Lambda_{\bm\theta}\Lambda_{\bm\theta}\trans=\bm\Sigma$ are as in the LMM except that the scale parameter,
 $\sigma$, is not present in most GLMMs.
 The mean of the conditional distribution, $\mc Y|\mc U=\bm u$, is the inverse link applied to the
 linear predictor $\bm\eta=\bm X\bm\beta+\bm Z\bm\Lambda_{\bm\theta}\bm u$.
 
-The conditional mode,
+The conditional mode, which minimizes the \emph{penalized sum of unit deviances} (PSUD),
 \begin{equation}
   \label{eq:condmodeGLMM}
   (\tilde{\bm u}|\mc Y=\bm y,\bm\theta,\bm\beta)=\argmin_{\bm u}\left[\sum_{i=1}^n d(y_i,\mu_i) + \|\bm u\|^2\right],
 \end{equation}
-can be determined by penalized iteratively reweighted least squares (PIRLS).
+is determined by penalized iteratively reweighted least squares (PIRLS).
 
-\bmb{much of the following is now a repeat of what was introduced above under GLMs}
-In a GL(M)M, the length-$n$ vector-valued response variable,
-$\mc Y$, has a conditional distribution in the exponential dispersion family (e.g. Normal,
-binomial, Poisson).\footnote{The \code{lme4} package supports fitting negative binomial GLMMs,
-which are an extension of GLMMs; the negative binomial family is within the
-exponential dispersion family if the dispersion parameter is fixed.
-The \code{glmer.nb} function uses a one-dimensional optimizer
-to estimate the dispersion parameter, fitting a negative binomial GLMM with
-a fixed dispersion parameter at each trial value. In practice this
-implementation is slower than those in other R packages (e.g., the \code{glmmTMB} package).}
-The mean, $\bm\mu_{\mc Y }$, of $\mc Y$ depends on
-a linear predictor, which in the case of a GLM is 
-\begin{equation}
-  \label{eq:GLMlinpred}
-  \bm\eta=\bm X\bm\beta ,
-\end{equation}
-where $\bm\beta$ is a $p$-dimensional coefficient vector and $\bm X$
-is an $n \times p$ model matrix. The mapping from $\bm\mu_{\mc Y }$ to
-$\bm\eta$, which is called the \emph{link function} and written,
-\begin{equation}
-  \label{eq:linkfun}
-  \bm X\bm\beta=\bm\eta=\bm g\left(\bm\mu_{\mc Y }\right) ,
-\end{equation}
-is a \emph{diagonal mapping} in the sense that there is a scalar
-function, $g$, such that the $i$th component of $\bm\eta$ is $g$
-applied to the $i$th component of $\bm\mu_{\mc Y }$.  (The name
-``diagonal'' reflects the fact that the Jacobian matrix,
-$\frac{d\eta}{d\mu\trans}$, of such a mapping will be diagonal.) The
-scalar link function must be invertible and differentiable over its range.  The
-vector-valued \emph{inverse link} function, $\bm g^{-1}$, will be the
-scalar inverse link, $g^{-1}$, applied component-wise to
-$\bm\eta$.
-% The scalar link function must be invertible over its range.
-% The vector-valued \emph{inverse link} function, $\bm g^{-1}$, will be
-% the scalar inverse link, $g^{-1}$, applied component-wise to
-% $\bm\eta$.  % commented out the repetition - DMB
+In the case of an LMM, minimizing the PSSR provided the value of the integral defining the likelihood of
+the parameters, given the observed response, $\mc Y=\bm y$. 
+For a GLMM, minimizing the PSUD provides a local quadratic approximation to the logarithm of the joint density,
+$f_{\mc Y,\mc U}(\bm y,\bm u)$.
+Approximating the integral with respect to $\bm u$ of the joint density (evaluated at the observed $\bm y$)
+by the integral of this local quadratic approximation is \emph{Laplace's method}.
 
-In the GLMM case, the vector of means of the exponential dispersion family distribution of
-$\mc Y$ depends on an unobserved random vector, $\mc B$, of length
-$q$, called the random-effects coefficient vector. In particular, the
-conditional mean of $\mc Y$ given that $\mc B = \bm b$, written
-$\bm\mu_{\mc Y|\mc B = \bm b}$, depends on the linear predictor,
-\begin{equation}
-  \label{eq:GLMMlinpred}
-  \bm\eta=\bm Z\bm b+\bm X\bm\beta ,
-\end{equation}
-where $\bm Z$ is an $n \times q$ random-effects model matrix. Similar
-to the GLM case, the mapping from the conditional mean, $\bm\mu_{\mc
-  Y|\mc B = \bm b}$, to the linear predictor, $\bm\eta$, is
-\begin{equation}
-  \label{eq:linkfunii}
-  \bm Z\bm b + \bm X\bm\beta=
-  \bm\eta=
-  \bm g\left(\bm\mu_{\mc Y|\mc B =\bm b}\right) ,
-\end{equation}
-The random vector $\mc B$ is assumed to be distributed multivariate
-normally,
-\begin{equation}
-  \label{eq:2}
-  \mc B \sim \mc N(\bm 0, \bm\Sigma_\theta)
-\end{equation}
-where $\bm\Sigma_\theta$ is the covariance matrix of $\mc B$, which
-depends on a vector of covariance parameters, $\bm\theta$.
+For simple models involving scalar random effects from a single random-effects term the multivariate integral
+with respect to $\bm u$ can be factored into a product of scalar integrals, which can be evaluated by
+Gauss-Hermite rules.
 
-The optimization routines of \pkg{lme4} never actually compute
-$\bm\Sigma_\theta$ directly, and instead use the elements of the covariance factor,
-$\bm\Lambda_\theta$, which is a matrix square root of $\bm\Sigma_\theta$ (in practice a Cholesky factor),
-\begin{equation}
-  \label{eq:GLMMSigma}
-  \bm\Sigma_\theta=\bm\Lambda_\theta\bm\Lambda_\theta\trans .
-\end{equation}
-\bmb{comment that we are no longer whitening/estimated scaled covariances in this case?}
-This characterization of the random-effects covariance structure
-allows us to write the linear predictor as
-\begin{equation}
-  \label{eq:GLMMlinpredii}
-  \bm\eta=\bm Z\bm\Lambda_\theta\bm u+\bm X\bm\beta ,
-\end{equation}
-where the spherical random effects vector, $\bm u$
-(see \cite{bates2015fitting}) is a realization
-of the random vector, $\mc U$,
-\begin{equation}
-  \label{eq:UdistGLMM}
-  \mc U\sim\mc N(\bm0,\bm I_q)
-\end{equation}
-where $\bm I_q$ is the identity matrix.
+%\footnote{The \code{lme4} package supports fitting negative binomial GLMMs,
+%which are an extension of GLMMs; the negative binomial family is within the
+%exponential dispersion family if the dispersion parameter is fixed.
+%The \code{glmer.nb} function uses a one-dimensional optimizer
+%to estimate the dispersion parameter, fitting a negative binomial GLMM with
+%a fixed dispersion parameter at each trial value. In practice this
+%implementation is slower than those in other R packages (e.g., the \code{glmmTMB} package).}
 
-Common forms of the conditional distribution are Bernoulli, for binary
-responses, binomial for binary responses that are recorded as the
-number of trials and the number of successes, and Poisson, for count
-data.  The combination of a distributional form and a link function is
-called a \emph{family}.  For distributional forms in the exponential
-dispersion family there is a \emph{canonical link}.  For Bernoulli or binomial
-forms the canonical link is the \emph{logit} link function
-\begin{equation}
-  \label{eq:logitLink}
-  \eta_i=\log\left(\frac{\mu_i}{1-\mu_i}\right);
-\end{equation}
-for the Poisson distribution the canonical link is the natural
-logarithm.
-
-The form of the distribution determines the conditional variance,
-$\Var(\mc Y|\mc U=\bm u)$, as a function of the conditional mean and,
-possibly, a separate scale factor. (In the most common cases the conditional
-variance is completely determined by the conditional mean.) 
-
-Assuming that the conditional distribution belongs to the exponential 
-dispersion family, we can weight observations differently by scaling the dispersion parameter, 
-$\phi$. These \textbf{prior weights},  $\bm w$, a vector of size $n$, are known 
-positive constants (equal to the number of observations per trial in the particular case of a binomial GLMM).
-
-By scaling the dispersion parameters, we also modify the conditional variance. 
-Consider the form, where $i = 1, 2, \dots, n$:
-\begin{equation}
-  \text{Var}(\mc Y_i|\mc U=\bm u) = \frac{\phi}{w_i} \Var(\mu_i)
-\end{equation}
-where $\Var(\mu_i)$ is the family-specific variance function. 
-Higher weights indicate a smaller variance.
-
-If prior weights are not specified, by default $\bm w$ is just a vector of 1's.
-
-Another common modification when dealing with generalized linear mixed models
-is to allow for an \textbf{offset}, which is an efficient way to include known scaling 
-factors (like population or area) without introducing additional parameters to 
-the model.
-
-In particular, the inclusion of an offset would modify the linear predictor 
-as follows:
-\begin{equation}
-  \label{eq:GLMMoffset}
-  \bm\eta=\bm Z\bm b+\bm X\bm\beta + \text{offset}.
-\end{equation}
-
-
-For GLMMs, the scale parameter is not typically estimated as part of the nonlinear minimization of the negative likelihood over the $\beta$ and $\theta$ parameters.
-As is common in generalized linear model contexts, it is 
-set equal to the (residual) deviance
-divided by the residual degrees of freedom. 
-(Except for the Binomial and Poisson families,
-where the scale parameter is fixed at 1.)
-
-The deviance itself is estimated using the method of moments estimator, which 
-is the Pearson residual sum of squares. This approach is preferred by \citet{McCullaghNelder1989} as it is less sensitive to small errors or model 
-misspecification than the maximum likelihood estimator. 
-
-We therefore estimate the deviance using the penalized weighted Pearson 
-residual sum of squares, as described in Section 3.2 of \cite{bates2015fitting}.
+To summarize:
+\begin{enumerate}
+\item Like a GLM, the definition of a GLMM incorporates a distribution family and a link function.
+\item For distributions in the exponential distribution family we usually use the canonical link.
+\item As in an LMM the linear predictor, $\bm\eta=\bm X\bm\beta+\bm Z\bm b$, incorporates fixed-effects      
+  parameters, $\bm\beta$, and random effects, $\mc B\sim\mc N(\bm 0,\bm\Sigma_{\bm\theta})$.
+\item The parameters $\bm\theta$ determine a triangular relative covariance factor, $\bm\Lambda_{\bm\theta}$,
+  such that $\bm\Sigma_{\bm\theta}=\bm\Lambda_{\bm\theta}\bm\Lambda_{\bm\theta}\trans$.
+  (A scale parameter, $\sigma$, is incorporated for families like the Gaussian that use one.)
+\item For given values of $\bm\beta$ and $\bm\theta$, the penalized sum of unit deviances (PSUD),
+  $\sum_{i=1}^n d(y_i,\mu_i)+\|\bm u\|^2$ is minimized with respect to $\bm u$.
+\item A local quadratic approximation to the PSUD at the conditional mode provides Laplace's approximation
+  to the log-likelihood, which is minimized with respect to $\bm\beta$ and $\bm\theta$.
+\item In certain simple models a more accurate method, adaptive Gauss-Hermite quadrature, can be used to
+  approximate the log-likelihood.
+\item If the PSUD is minimized with respect to $\bm u$ and $\bm\beta$ simultaneously then the approximate
+  profiled log-likelihood becomes a function of $\bm\theta$ only.
+\end{enumerate}
 
 The likelihood of the parameters, given the observed data, is now
 \begin{equation}
@@ -457,24 +363,6 @@ as a density, up to a scale factor.
 To evaluate the integrand in (\ref{eq:GLMMlike}) we need the unscaled conditional density $f_{\mc Y,\mc U}$, which depends on the likelihood of $\yobs$ conditional on $\bm u$: $f(\yobs, \bm u) = f(\yobs|\bm u) f(\bm u)$.
 As usual in likelihood estimation we will eventually be working, for convenience, with negative log likelihoods rather than likelihoods.
 However, base R's machinery for defining GLM models, or ``families'', does not provide a convenient expression for the negative log-likelihood: instead, objects of class \code{family} include a \code{dev.resids} function that returns a vector of observation-specific deviances, i.e. $-2(\log L(\yobs|\bm u) - \log \Lsat)$ where $\Lsat$ is the likelihood corresponding to a saturated model with as many parameters as observations.
-%
-\footnote{There is
-some confusion in \proglang{R} (and in its predecessor,
-\proglang{S}) about the exact definition of the deviance residuals
-of a family.  As indicated above, we will use this name for the
-value of the \code{dev.resids} function for the family.  The signed
-square root of this vector, using the signs of $\yobs-\mu$, is returned
-when the \code{residuals} method is applied to a fitted model
-of class \code{"glm"} when \code{type="deviance"}, the
-default, is specified.  Both are called ``deviance residuals''
-at different points in the documentation.}
-%
-For example, the log-likelihood for a Poisson observation $y$ with mean $\lambda$ is (omitting the normalization constant) $\log L(y, \lambda) = y \log \lambda - \lambda$; the deviance is
-$$
--2(\log L(y, \lambda) - \log L(y, y)) = -2(y(\log \lambda - \log y) - (\lambda-y))
-$$
-(with appropriate adjustments if $y=0$).
-Because deviances differ from (negative) log likelihoods only by a parameter-independent constant (the log-likelihood of the saturated model) and a change of scale (multiplication by 2), this change does not affect our optimization procedure.
 
 One advantage of using the pre-existing GLM family structure is
 that the software can thus fit
