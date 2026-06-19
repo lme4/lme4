@@ -7,6 +7,9 @@
 \section{CHANGES IN VERSION 2.0-2}{
   \subsection{BUG FIXES}{
     \itemize{
+      \item \code{profile()} no longer emits spurious \dQuote{unused control
+      arguments ignored} warnings when profiling with an \code{optimizer}
+      different from the one used for the original fit (GH #913)
       \item \code{lmList} would fail when some groups have rank-deficient model matrices;
       in particular, it used to report the incorrect degrees of freedom (GH #377)
       \item likelihood profiling no longer gets stuck when a deviance value less

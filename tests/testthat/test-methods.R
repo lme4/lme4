@@ -751,6 +751,14 @@ test_that("summary", {
   expect_is(family(gnb),"family")
 })
 
+test_that("profile with switched optimizer does not warn (GH #913)", {
+    ## fm1 was fit with the default optimizer (nloptwrap); profiling with a
+    ## different optimizer must not pass nloptwrap's stored control args (e.g.
+    ## 'print_level') to the new optimizer, which would warn "unused control
+    ## arguments ignored".
+    expect_no_warning(profile(fm1, which = 1, optimizer = "bobyqa"))
+})
+
 
 if (testLevel>1) {
   #context("profile")
