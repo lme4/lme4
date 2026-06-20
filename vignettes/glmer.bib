@@ -471,13 +471,14 @@ Approximation},
   number={413},
   pages={79--86},
   year={1991},
-  publisher={Taylor \& Francis}
+  doi = {10.1080/01621459.1991.10475006}
 }
 
 @article{bates2015fitting,
   title={Fitting linear mixed-effects models using lme4},
   author={Bates, Douglas and M{\"a}chler, Martin and Bolker, Ben and Walker, Steve},
   journal={Journal of Statistical Software},
+  doi = {10.18637/jss.v067.i01},
   volume={67},
   pages={1--48},
   year={2015}
@@ -492,7 +493,7 @@ Approximation},
   number={15},
   pages={2865--2873},
   year={2008},
-  publisher={Wiley Online Library}
+  doi = {10.1002/sim.3107}
 }
 
 @book{madsen2011,
@@ -577,14 +578,12 @@ Approximation},
   langid = {english}
 }
 
-@misc{stringerAsymptoticsNumericalIntegration2022,
+@article{stringerAsymptoticsNumericalIntegration2022,
   title = {Asymptotics of Numerical Integration for Two-Level Mixed Models},
   author = {Stringer, Alex and Bilodeau, Blair and Tang, Yanbo},
-  year = 2022,
-  month = feb,
-  publisher = {arXiv},
-  doi = {10.48550/arXiv.2202.07864},
-  urldate = {2026-05-26},
+  year = 2026,
+  journal = {Bernoulli},
+  note = {(forthcoming)},
   abstract = {We study mixed models with a single grouping factor, where inference about unknown parameters requires optimizing a marginal likelihood defined by an intractable integral. Low-dimensional numerical integration techniques are regularly used to approximate these integrals, with inferences about parameters based on the resulting approximate marginal likelihood. For a generic class of mixed models that satisfy explicit regularity conditions, we derive the stochastic relative error rate incurred for both the likelihood and maximum likelihood estimator when adaptive numerical integration is used to approximate the marginal likelihood. We then specialize the analysis to well-specified generalized linear mixed models having exponential family response and multivariate Gaussian random effects, verifying that the regularity conditions hold, and hence that the convergence rates apply. We also prove that for models with likelihoods satisfying very weak concentration conditions that the maximum likelihood estimators from non-adaptive numerical integration approximations of the marginal likelihood are not consistent, further motivating adaptive numerical integration as the preferred tool for inference in mixed models. Code to reproduce the simulations in this paper is provided at https://github.com/awstringer1/aq-theory-paper-code.},
   keywords = {Statistics - Applications,Statistics - Methodology},
   annotation = {ADS Bibcode: 2022arXiv220207864S},
@@ -618,4 +617,54 @@ Approximation},
   place = London,
   publisher = {Imperial College Press},
   pages = {155--170},
+}
+
+@misc{stringerFittingGeneralizedLinear2022b,
+  title = {Fitting {{Generalized Linear Mixed Models}} Using {{Adaptive Quadrature}}},
+  author = {Stringer, Alex and Bilodeau, Blair},
+  year = 2022,
+  month = feb,
+  number = {arXiv:2202.07864},
+  eprint = {2202.07864},
+  publisher = {arXiv},
+  doi = {10.48550/arXiv.2202.07864},
+  urldate = {2024-11-14},
+  abstract = {We describe how to approximate the intractable marginal likelihood that arises when fitting generalized linear mixed models. We prove that non-adaptive quadrature approximations yield high error asymptotically in every statistical model satisfying weak regularity conditions. We derive the rate of error incurred when using adaptive quadrature to approximate the marginal likelihood in a broad class of generalized linear mixed models, which includes non-exponential family response and non-Gaussian random effects distributions. We provide an explicit recommendation for how many quadrature points to use, and show that this recommendation recovers and explains many empirical results from published simulation studies and data analyses. Particular attention is paid to models for dependent binary and survival/time-to-event observations. Code to reproduce results in the manuscript is found at https://github.com/awstringer1/glmm-aq-paper-code.},
+  archiveprefix = {arXiv},
+  keywords = {Statistics - Applications,Statistics - Methodology},
+  file = {/home/bolker/Documents/zotero_new/storage/CCAGE8L6/Stringer and Bilodeau - 2022 - Fitting Generalized Linear Mixed Models using Adaptive Quadrature.pdf;/home/bolker/Documents/zotero_new/storage/99P5FKXQ/2202.html}
+}
+
+@article{harrisonComparisonObservationlevelRandom2015,
+  title = {A Comparison of Observation-Level Random Effect and Beta-Binomial Models for Modelling Overdispersion in Binomial Data in Ecology and Evolution},
+  author = {Harrison, Xavier A.},
+  year = 2015,
+  month = jul,
+  journal = {PeerJ},
+  volume = {3},
+  pages = {e1114},
+  publisher = {PeerJ Inc.},
+  issn = {2167-8359},
+  doi = {10.7717/peerj.1114},
+  urldate = {2023-06-20},
+  abstract = {Overdispersion is a common feature of models of biological data, but researchers often fail to model the excess variation driving the overdispersion, resulting in biased parameter estimates and standard errors. Quantifying and modeling overdispersion when it is present is therefore critical for robust biological inference. One means to account for overdispersion is to add an observation-level random effect (OLRE) to a model, where each data point receives a unique level of a random effect that can absorb the extra-parametric variation in the data. Although some studies have investigated the utility of OLRE to model overdispersion in Poisson count data, studies doing so for Binomial proportion data are scarce. Here I use a simulation approach to investigate the ability of both OLRE models and Beta-Binomial models to recover unbiased parameter estimates in mixed effects models of Binomial data under various degrees of overdispersion. In addition, as ecologists often fit random intercept terms to models when the random effect sample size is low ({$<$}5 levels), I investigate the performance of both model types under a range of random effect sample sizes when overdispersion is present. Simulation results revealed that the efficacy of OLRE depends on the process that generated the overdispersion; OLRE failed to cope with overdispersion generated from a Beta-Binomial mixture model, leading to biased slope and intercept estimates, but performed well for overdispersion generated by adding random noise to the linear predictor. Comparison of parameter estimates from an OLRE model with those from its corresponding Beta-Binomial model readily identified when OLRE were performing poorly due to disagreement between effect sizes, and this strategy should be employed whenever OLRE are used for Binomial data to assess their reliability. Beta-Binomial models performed well across all contexts, but showed a tendency to underestimate effect sizes when modelling non-Beta-Binomial data. Finally, both OLRE and Beta-Binomial models performed poorly when models contained {$<$}5 levels of the random intercept term, especially for estimating variance components, and this effect appeared independent of total sample size. These results suggest that OLRE are a useful tool for modelling overdispersion in Binomial data, but that they do not perform well in all circumstances and researchers should take care to verify the robustness of parameter estimates of OLRE models.},
+  langid = {english},
+  file = {/home/bolker/Documents/zotero_new/storage/5W9YL625/Harrison - 2015 - A comparison of observation-level random effect an.pdf}
+}
+
+@article{rabe-heskethMaximumLikelihoodEstimation2005b,
+  title = {Maximum Likelihood Estimation of Limited and Discrete Dependent Variable Models with Nested Random Effects},
+  author = {{Rabe-Hesketh}, Sophia and Skrondal, Anders and Pickles, Andrew},
+  year = 2005,
+  month = oct,
+  journal = {Journal of Econometrics},
+  volume = {128},
+  number = {2},
+  pages = {301--323},
+  issn = {0304-4076},
+  doi = {10.1016/j.jeconom.2004.08.017},
+  urldate = {2026-06-20},
+  abstract = {Gauss--Hermite quadrature is often used to evaluate and maximize the likelihood for random component probit models. Unfortunately, the estimates are biased for large cluster sizes and/or intraclass correlations. We show that adaptive quadrature largely overcomes these problems. We then extend the adaptive quadrature approach to general random coefficient models with limited and discrete dependent variables. The models can include several nested random effects (intercepts and coefficients) representing unobserved heterogeneity at different levels of a hierarchical dataset. The required multivariate integrals are evaluated efficiently using spherical quadrature rules. Simulations show that adaptive quadrature performs well in a wide range of situations.},
+  keywords = {Adaptive quadrature,GLLAMM,Hierarchical models,Multilevel models,Numerical integration,Random coefficients,Random effects,Spherical quadrature rules},
+  file = {/home/bolker/Documents/zotero_new/storage/V84YE3JC/Rabe-Hesketh et al. - 2005 - Maximum likelihood estimation of limited and discrete dependent variable models with nested random e.pdf;/home/bolker/Documents/zotero_new/storage/3TFPFBID/S0304407604001599.html}
 }

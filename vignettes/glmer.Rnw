@@ -316,7 +316,7 @@ $f_{\mc Y,\mc U}(\bm y,\bm u)$.
 Approximating the integral with respect to $\bm u$ of the joint density (evaluated at the observed $\bm y$)
 by the integral of this local quadratic approximation is \emph{Laplace's method}.
 
-For simple models involving scalar random effects from a single random-effects term \bmb{can we, in principle, deal with nested random effects as well?} the multivariate integral
+For simple models involving scalar random effects from a single random-effects term the multivariate integral
 with respect to $\bm u$ can be factored into a product of scalar integrals, which can be evaluated by
 Gauss-Hermite rules.
 
@@ -691,7 +691,7 @@ approximation to the deviance is a good approximation in this case.
 
 \section{Adaptive Gauss-Hermite quadrature for GLMMs}
 \label{sec:aGQ}
-When the integral (\ref{eq:GLMMlike}) can be expressed as a product of
+When the first integral in (\ref{eq:GLMMLaplace}) can be expressed as a product of
 low-dimensional integrals, we can use Gauss-Hermite quadrature to
 provide a closer approximation to the integral.  Univariate
 Gauss-Hermite quadrature evaluates the integral of a function that is
@@ -710,7 +710,7 @@ standard normal kernel for orders $k$ from 1 to 100.  For example,
 GHrule(5)
 @
 where \code{z} is the vector of knots, \code{w} is the vector
-of weights, and \code{dlnorm} is the log-density of the standard
+of weights, and \code{ldnorm} is the log-density of the standard
 normal distribution at $z$.
 
 The choice of the value of $k$ depends on the behavior of the function
@@ -736,11 +736,13 @@ Figure~\ref{fig:tfunc}
 shows $t(z)$ for each of the unidimensional integrals in the
 likelihood for the model \code{m1} at the parameter estimates.
 While this view shows the deficiency of the Laplace approximation
-(deviation from a horizontal reference line at $z=1$ clearly,
+(deviation from a horizontal reference line at $z=1$) clearly,
 The AGQ(3) approximation fits extremely well over the range shown.
 The tails of the polynomials implied by the AGQ approximation
 can fluctuate widely, but these fluctuations are suppressed by
-multiplying by the thin tails of the Gaussian distribution.
+multiplying by the thin tails of the Gaussian distribution (so that
+in Figure~\ref{fig:densities} the deviations of the conditional density
+from the standard Normal are barely visible).
 
 \begin{figure}[tbp]
   \centering
@@ -774,6 +776,7 @@ an example where Gauss-Hermite quadrature is necessary for reliable results. In 
 conditional densities depart much more clearly from the standard normal (Figure~\ref{fig:toenailplot}; note the scale of the
 density ratios goes from 0 to 10, in contrast the maximum of 4 in Figure~\ref{fig:tfunc}).
 \cite{stringerAsymptoticsNumericalIntegration2022} and \cite{stringerExactGradientEvaluation2024} further explore the limitations of Laplace approximation.
+%% from Alex S.: The "Stringer A, Bilodeau B, Tang Y (2022)” paper was accepted in March 2025: Bilodeau, B., Stringer, A., and Tang, Y. (2026). Asymptotics of adaptive quadrature for two-level mixed models. Bernoulli (forthcoming). It is scheduled to be published quite soon I believe.
 
 \begin{figure}[tbp]
   \centering
@@ -800,14 +803,16 @@ gridExtra::grid.arrange(
 \end{figure}
 
 To use adaptive Gauss-Hermite quadrature for model fitting 
-in \code{glmer} models, set the argument \code{nAGQ}, the 
+in \code{glmer} models, users would set the argument \code{nAGQ}, the 
 number of quadrature points, to a value greater than 1.
+%% \bmb{provide any strategies/rules of thumb for choosing? Stringer/Bilodeau suggestion?}
 Increasing the number of nodes generally improves the accuracy of the likelihood 
 approximation at the expense of computation time --- although rounding errors
 may accumulate when using large numbers of quadrature points. At present, AGQ is only available 
 for models with a single scalar random effect. (The \code{GLMMadaptive} package implements
 AGQ for vector-valued random effect models, although it is still restricted to models with
-a single random effect.)
+a single random effect; \cite{rabe-heskethMaximumLikelihoodEstimation2005b} describe methods
+for AGQ for models with nested random effects.)
 
 \section{Model fitting}
 
@@ -847,7 +852,7 @@ used specifically to describe analyses of Bernoulli responses, but
 in this case there are multiple trials per observation [cows that
 could become seropositive], and so a dispersion or scale parameter
 can be estimated); (2) a GLMM implemented in \code{lme4}; and a
-(3) Markov chain Monte Carlo algorithm \citet{zeger1991generalized}, 
+(3) Markov chain Monte Carlo algorithm \citep{zeger1991generalized}, 
 which as they state allows for a non-parametric rather than a Normal model 
 for the random effects.
 The authors did not find any significant effects of treatment,
@@ -929,7 +934,7 @@ grad(dd1B,tmpf(gm1B)[-1])
 @
 
 It is also worth considering
-adding an observation-level random effect to the model,
+adding an observation-level random effect to the model \citep{harrisonComparisonObservationlevelRandom2015},
 which we can do by creating a new factor based on observation
 number and using \code{update()} on the previous model:
 <<cbppModelII, warning=FALSE>>=
@@ -1031,7 +1036,7 @@ grid.arrange(p1,p2,p3,p4,nrow=2)
 The \code{ranef()} accessor extracts the conditional modes; the argument
 \code{condVar=TRUE} additionally extracts the variances of
 the conditional modes, which are stored as an attribute
-labelled \code{"postVar"} --- a three-dimensional array that
+labelled \code{"postVar"}\footnote{In earlier versions of the software, these elements were called ``posterior variances'' rather than ``conditional variances'', based on the close correspondence between mixed models and hierarchical Bayesian models.} --- a three-dimensional array that
 gives the variance-covariance matrix of the conditional modes
 for each level of the grouping variable. The plotting methods
 \code{dotplot()} and \code{qqmath()} return lists of graphical
@@ -1041,10 +1046,10 @@ the Q-Q plot (\code{qqmath}) the $y$-axis shows corresponding
 values of the standard normal quantiles (Figure~\ref{fig:glmerRanefplot}).
 
 <<glmerRanefplot,fig.cap="Graphical display of random effects. \\emph{Left}: conditional modes $\\pm 1.96 \\times \\text{conditional standard deviation}$, ordered by magnitude. \\emph{Right}: quantile-quantile plot, with linear regression line overlaid.",echo=FALSE>>=
-rr <- ranef(gm1,condVar=TRUE)
+rr <- ranef(gm1, condVar=TRUE)
 dd <- dotplot(rr)
-qq <- qqmath(rr,type=c("p","r"))
-grid.arrange(dd$herd,qq$herd,ncol=2)
+qq <- qqmath(rr, type=c("p","r"))
+grid.arrange(dd$herd, qq$herd, ncol=2)
 @
 
 \code{performance::check\_model()} checks a variety of classical assumptions 
@@ -1091,7 +1096,7 @@ according to either an information-theoretic or a
 hypothesis-testing model selection framework).
 
 Here we will start by
-computing likelihood profiles and confidence intervals
+computing likelihood profiles and confidence intervals (CIs)
 for the model incorporating both random effects;
 although it has the same point estimates and maximum likelihood
 as the reduced model, confidence intervals that incorporate
@@ -1172,10 +1177,10 @@ ggplot(combCI, aes(var, est, colour=type, shape=model)) +
 @    
 
 If the default optimizers (Nelder-Mead followed by BOBYQA) do not
-perform well, one could attempt to re-fit a [g]lmer model with a variety of 
-different optimizers using \code{allFit()}. To see which optimizers \code{lme4}
-currently supports, one can use the command \code{allFit(show.meth.tab=TRUE)} 
-to show all of the different methods. 
+perform well, one could attempt to re-fit the model with a variety of 
+different optimizers using \code{allFit()}.
+The command \code{allFit(show.meth.tab=TRUE)} lists the optimizers \code{lme4}
+currently supports.
 
 To use \code{allFit()}, supply the initial fitted model as input. Useful 
 results are obtained from \code{summary(allFit())}: 
@@ -1302,10 +1307,10 @@ variables and random effects structure, comparing them via \code{anova}. The
 models considered different variables.
 
 For instance, there are two different ways to encode the number of living 
-children: \code{livch}, a four-level factor distinguishing \code{0}, \code{1}, 
-\code{2}, or \code{3+} children, while other models use \code{ch} instead (later 
-we label as \code{binary\_child}), which is a binary indicator for whether the 
-woman has any living children. 
+children: \code{livch} is a four-level factor distinguishing \code{0}, \code{1}, 
+\code{2}, or \code{3+} children, while other models use \code{ch} instead, which is a binary indicator for whether the 
+woman has any living children (in Table~\ref{tab:contraictab} and Figure~\ref{fig:contracomp}
+we label this variable as \code{binary\_child}).
 
 Second, we vary whether child status interacts with the woman's age: two models
 include \code{ch} (or \code{livch}) and \code{age} as additive terms, while the 
@@ -1432,7 +1437,7 @@ combCI <- transform(contr_combCI,
     )
 @
 
-<<contracompplot,fig.cap="Contraception example: comparison of point and confidence interval estimation for different methods. (Note that the Wald CIs for variation in the intercept across districts, in the \\code{(1|district/urban)} model, include negative values.)",fig.scap="Contraception comparison",echo=FALSE,fig.width=10,fig.height=10,warning=FALSE,fig.lab="fig:contracomp">>=
+<<contracompplot,fig.cap="Contraception example: comparison of point and confidence interval estimation for different methods. (Note that the Wald CI for variation in the intercept across districts, in the \\code{(1|district/urban)} model, includes negative values.)",fig.scap="Contraception comparison",echo=FALSE,fig.width=10,fig.height=10,warning=FALSE,fig.lab="fig:contracomp">>=
 ggplot(combCI, aes(var, est, colour=type, shape=model)) +
   geom_pointrange(aes(ymin=lwr, ymax=upr),
                   position=position_dodge(width=0.6)) +
