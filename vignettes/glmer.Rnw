@@ -293,10 +293,10 @@ dimension of the general nonlinear optimization problem is much smaller in the p
 
 \subsection{The Generalized Linear Mixed Model}
 
-As stated earlier, a GLMM combines the distribution family and link function from a GLM with random
+As stated earlier, a GLMM combines the distribution family and link function, from a GLM, with random
 effects in the linear predictor, as in an LMM.
-The unconditional distribution of the random effects, $\mc B\sim\mc N(\bm 0, \bm\Sigma)$, and the definitions
-of the spherical random effects, $\mc U$, such that $\mc B=\bm\Lambda_{\bm\theta}\mc U$ where
+The unconditional distribution of the random effects, $\mc B\sim\mc N(\bm 0, \bm\Sigma_{\bm\theta})$,
+and the definitions of the spherical random effects, $\mc U$, such that $\mc B=\bm\Lambda_{\bm\theta}\mc U$ where
 $\Lambda_{\bm\theta}\Lambda_{\bm\theta}\trans=\bm\Sigma$ are as in the LMM except that the scale parameter,
 $\sigma$, is not present in the most common GLMMs (binomial and Poisson families).
 The mean of the conditional distribution, $\mc Y|\mc U=\bm u$, is the inverse link applied to the
@@ -331,18 +331,20 @@ Gauss-Hermite rules.
 To summarize:
 \begin{enumerate}
 \item Like a GLM, the definition of a GLMM incorporates a distribution family and a link function.
-  The distribution family determines the unit deviances, $d(y_i,\mu_i),i=1,\dots,n$. Distributions in the exponential distribution family have a canonical link which is the default link for those families.
+  The distribution family determines the unit deviances, $d(y_i,\mu_i),i=1,\dots,n$. Distributions in the exponential distribution family have a canonical link which is the default link in \code{glm} and in
+  \code{glmer} for those families
 \item As in an LMM the linear predictor, $\bm\eta=\bm X\bm\beta+\bm Z\bm b$, incorporates fixed-effects      
   parameters, $\bm\beta$, and random effects, $\mc B\sim\mc N(\bm 0,\bm\Sigma_{\bm\theta})$.
 \item The parameters $\bm\theta$ determine a triangular relative covariance factor, $\bm\Lambda_{\bm\theta}$,
   such that $\bm\Sigma_{\bm\theta}=\bm\Lambda_{\bm\theta}\bm\Lambda_{\bm\theta}\trans$.
   (A scale parameter, $\sigma$, is incorporated for families like the Gaussian that use one.)
 \item For given values of $\bm\beta$ and $\bm\theta$, the penalized sum of unit deviances (PSUD),
-  $\sum_{i=1}^n d(y_i,\mu_i)+\|\bm u\|^2$, is minimized with respect to $\bm u$.
+  $\sum_{i=1}^n d(y_i,\mu_i)+\|\bm u\|^2$, is minimized with respect to $\bm u$ using PIRLS.
 \item A local quadratic approximation to the PSUD at the conditional mode provides Laplace's approximation
   to the log-likelihood, which is minimized with respect to $\bm\beta$ and $\bm\theta$.
 \item In certain simple models adaptive Gauss-Hermite quadrature (aGHQ) can be used to
-  approximate the log-likelihood more accurately, at the expense of more evaluations of the PSUD.
+  approximate the log-likelihood more accurately, at the expense of more evaluations of the PSUD for each
+  candidate combination of $\bm\beta$ and $\bm\theta$.
 \item If the PSUD is minimized with respect to $\bm u$ and $\bm\beta$ simultaneously then the approximate
   profiled log-likelihood becomes a function of $\bm\theta$ only, as discussed below.
   This approximation can save computation time for large problems.
@@ -360,14 +362,14 @@ We extend it to a \emph{penalized iteratively reweighted least squares}
 This algorithm has the form
 \begin{enumerate}
 \item Given parameter values, $\bm\beta$ and $\bm\theta$, and starting
-  estimates, $\bm u_0$, of the spherical random effects evaluate the linear predictor, $\bm\eta$, the
+  estimates, $\bm u_0$, of the spherical random effects, evaluate the linear predictor, $\bm\eta$, the
   corresponding conditional mean, $\bm\mu_{\mc Y|\mc U=\bm u}$, and
   the conditional variance.
   Establish the weights as the inverse of the variance.
   We write these weights in the form of a diagonal weight matrix, $\bm W$, although they are stored and manipulated as a vector.
 \item Let 
   \begin{equation}
-  Q(\bm u) = \left\|\bm W^{1/2}\left(\yobs-\bm\mu_{\mc
+  Q(\bm u) = \left\|\bm W^{1/2}\left(\bm y-\bm\mu_{\mc
     Y|\mc U=\bm u}\right)\right\|^2+\|\bm u\|^2.
   \end{equation}
 
@@ -389,7 +391,7 @@ solution to the penalized, weighted, linear least squares problem
   \label{eq:incr}
   \bm\delta_i=\arg\min_{\bm\delta}\left\|
     \begin{bmatrix}
-      \bm W^{1/2}\left(\yobs-\bm\mu_i\right)\\
+      \bm W^{1/2}\left(\bm y-\bm\mu_i\right)\\
       \bm u_i
     \end{bmatrix}-
     \begin{bmatrix}
@@ -433,7 +435,7 @@ The minimizer, $\bm\delta_i$, of (\ref{eq:incr}) satisfies
 \begin{equation}
   \label{eq:incrEq}
   \bm P\left(\bLt\trans\bm Z\trans\bm M_i\bm W\bm M_i\bm Z\bLt+\bm I_q\right)\bm P\trans
-      \bm\delta_i=\bLt\trans\bm Z\trans\bm M_i\bm W(\yobs-\bm\mu_i) - \bm u_i
+      \bm\delta_i=\bLt\trans\bm Z\trans\bm M_i\bm W(\bm y-\bm\mu_i) - \bm u_i
 \end{equation}
 which we solve using the sparse Cholesky factor.  At convergence, the
 factor, $\bm L_{\beta,\theta}$, satisfies
@@ -461,7 +463,7 @@ The default value of \code{nAGQ=1} specifies the
 \emph{Laplace approximation} \citep{madsen2011}.
 
 A second-order Taylor series approximation to $-2\log[f_{\mc Y,\mc
-  U}(\yobs,\bm u)]$ based at $\tilde{\bm u}$ provides an approximation
+  U}(\bm y,\bm u)]$ based at $\tilde{\bm u}$ provides an approximation
 of the unscaled conditional density as a multiple of the density for
 the multivariate Gaussian $\mathcal{N}(\tilde{\bm u},\bm L\bm
 L\trans)$.  The change of variable
@@ -473,7 +475,7 @@ provides
 \begin{equation}
   \label{eq:GLMMLaplace}
   \begin{aligned}
-    L(\bm\beta,\bm\theta|\yobs)&=\int_{\mathbb{R}^q}f_{\mc Y,\mc U}(\yobs,\bm u)\,d\bm u\\
+    L(\bm\beta,\bm\theta|\bm y)&=\int_{\mathbb{R}^q}f_{\mc Y,\mc U}(\bm y,\bm u)\,d\bm u\\
     &\approx \tilde{f}\,|\bm L|\, \int_{\mathbb{R}^q}e^{-\|\bm z\|^2/2}\,(2\pi)^{-q/2}\,d\bm z\\
     &=\tilde{f}\, |\bm L|
   \end{aligned}
@@ -481,7 +483,7 @@ provides
 or, on the deviance scale,
 \begin{equation}
   \label{eq:LaplaceDev}
-  -2\ell(\bm\beta,\bm\theta|\yobs)\approx\sum_{i=1}^nd_i(\yobs,\tilde{\bm u}) +
+  -2\ell(\bm\beta,\bm\theta|\bm y)\approx\sum_{i=1}^n d(y_i, \mu_i) +
     \|\tilde{\bm u}\|^2 + \log(|\bm L|^2)+\frac{q}{2}\log(2\pi)
 \end{equation}
 
@@ -508,7 +510,7 @@ necessarily homogeneous (i.e., a scalar multiple of the identity matrix).
 Because each element of $\bm\mu$ depends on only one element of $\bm
 u$ and the elements of $\mc Y$ are conditionally independent, given
 $\mc U=\bm u$, the conditional densities of the $u_j,j=1,\dots,q$
-given $\mc Y=\yobs$ are independent.  We partition the indices
+given $\mc Y=\bm y$ are independent.  We partition the indices
 $1,\dots,n$ as $\mathbb{I}_j,j=1,\dots,q$ according to the levels of
 $\bm h$.  That is, the index $i$ is in $\mathbb{I}_j$ if $h_i=j$.
 This partitioning also applies to the deviance residuals in that
@@ -517,18 +519,18 @@ the $i$th deviance residual depends only on $u_j$ when $i\in\mathbb{I}_j$.
 Writing the univariate conditional densities as
 \begin{equation}
   \label{eq:univariateCondDens}
-  f_j(\yobs,u_j)=\exp\left(-\frac{\sum_{i\in\mathbb{I}_j}d_i(\yobs, u_j)+u_j^2}{2}\right)(2\pi)^{-1/2}
+  f_j(\bm y,u_j)=\exp\left(-\frac{\sum_{i\in\mathbb{I}_j}d(y_i, u_j)+u_j^2}{2}\right)(2\pi)^{-1/2}
 \end{equation}
 we have
 \begin{equation}
   \label{eq:vectorCondDens}
-  f_{\mc Y,\mc U}(\yobs,\bm u)=\prod_{j=1}^q f_j(\yobs,u_j)
+  f_{\mc Y,\mc U}(\bm y,\bm u)=\prod_{j=1}^q f_j(\bm y,u_j)
 \end{equation}
 and
 \begin{equation}
   \label{eq:ssLike}
   \begin{aligned}
-    L(\bm\beta,\bm\theta|\yobs)=\prod_{j=1}^q\int_{\mathbb{R}}f_j(\yobs,u)\,du
+    L(\bm\beta,\bm\theta|\bm y)=\prod_{j=1}^q\int_{\mathbb{R}}f_j(\bm y,u)\,du
   \end{aligned}
 \end{equation}
 
@@ -550,7 +552,7 @@ This model has been fit by minimizing the Laplace approximation to the
 deviance.  We can assess the quality of this approximation by
 evaluating the unscaled conditional density at $u_j(z)=\tilde{u_j} +
 z/{\bm L_{j,j}}$ and comparing the ratio,
-$f_j(\yobs,u)/(\tilde{f_j}\sqrt{2\pi})$, to the standard normal
+$f_j(\bm y,u)/(\tilde{f_j}\sqrt{2\pi})$, to the standard normal
 density, $\phi(z)=e^{-z^2/2}/\sqrt{2\pi}$, as shown in Figure~\ref{fig:densities}.
 <<density-utils, echo = FALSE>>=
 zeta <- function(m, zmin=-3, zmax=3, npts=301L, rank = FALSE) {
