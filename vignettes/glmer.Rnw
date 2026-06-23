@@ -385,27 +385,27 @@ This algorithm has the form
 We use a Gauss-Newton algorithm with an orthogonality convergence
 criterion~\citep[\S 2.2.3]{bateswatts88:_nonlin} to solve the
 penalized, weighted, nonlinear least squares problem in step 2.  At
-the $i$th iteration we determine an increment, $\bm\delta_i$, as the
+the $i$th iteration we determine an increment, $\bm\delta^{(i)} = \bm u^{(i+1)} - \bm u^{(i)}$, as the
 solution to the penalized, weighted, linear least squares problem
 \begin{equation}
   \label{eq:incr}
-  \bm\delta_i=\arg\min_{\bm\delta}\left\|
+  \bm\delta^{(i)}=\arg\min_{\bm\delta}\left\|
     \begin{bmatrix}
-      \bm W^{1/2}\left(\bm y-\bm\mu_i\right)\\
-      \bm u_i
+      \bm W^{1/2}\left(\bm y-\bm\mu^{(i)}\right)\\
+      \bm u^{(i)}
     \end{bmatrix}-
     \begin{bmatrix}
-      \bm W^{1/2}\bm M_i\bm Z\bm\Lambda_\theta\\
+      \bm W^{1/2}\bm M^{(i)}\bm Z\bm\Lambda_\theta\\
       \bm I_q
     \end{bmatrix}\bm u\right\|^2
 \end{equation}
-where $\bm u_i$ is current value of $\bm u$, $\bm\mu_i$ is the
-corresponding conditional mean of $\mc Y|\mc U=\bm u_i$ and $\bm M_i$ is
+where $\bm u^{(i)}$ is the current value of $\bm u$, $\bm\mu^{(i)}$ is the
+corresponding conditional mean of $\mc Y|\mc U=\bm u^{(i)}$ and $\bm M^{(i)}$ is
 the Jacobian matrix of the vector-valued inverse link, evaluated at
-$\bm\mu_i$.  That is
+$\bm\mu^{(i)}$.  That is
 \begin{equation}
   \label{eq:Jacobian}
-  \bm M_i=\left.\frac{d\bm\mu}{d\bm\eta\trans}\right|_{\bm\eta_i},
+  \bm M^{(i)}=\left.\frac{d\bm\mu}{d\bm\eta\trans}\right|_{\bm\eta^{(i)}},
 \end{equation}
 which will be a diagonal matrix so, as for the weights, we store and
 manipulate the Jacobian as a vector.
@@ -413,37 +413,40 @@ manipulate the Jacobian as a vector.
 When solving for the minimum of $Q(\bm u)$, the proposed update
   for $\bm u$ may increase rather than decrease the value of the objective 
   function $Q(\bm u)$, if the step size estimated by the Gauss-Newton step
-  is too large. Let $Q(\bm u_i)$ represent the value of the objective 
+  is too large. Let $Q(\bm u^{(i)})$ represent the value of the objective 
   function $Q(\bm u)$ at the current iterate $\bm u_{i}$; similarly, let 
-  $Q(\bm u_{i-1})$ represent the the value of the objective function of the 
+  $Q(\bm u^{(i-1)}$ represent the the value of the objective function of the 
   previous iteration. 
 
-  If $Q(\bm u_i) > Q(\bm u_{i-1})$, we proceed with a \emph{step-halving}
+  If $Q(\bm u^{(i)}) > Q(\bm u^{(i-1)})$, we proceed with a \emph{step-halving}
   procedure. That is, we successively consider scaled updates of the form
   \begin{equation}
-  \bm u_i^{(j)} = \bm u_{i-1} + \frac{\bm \delta_i}{2^j}, \quad j = 1, 2, \ldots,
+  \bm u^{(i,j)} = \bm u^{(i-1)} + \frac{\bm \delta^{(i)}}{2^j}, \quad j = 1, 2, \ldots,
 \end{equation}
-computing $Q(\bm u_i^{(j)})$ at each step. The step-halving procedure 
+computing $Q(\bm u^{(i,j)})$ at each step. The step-halving procedure 
 continues until a value of $j$ is found such that 
-$Q(\bm u_i^{(j)}) < Q(\bm u_{i-1})$,
-which the iterate is then updated by setting $\bm u_{i} = \bm u_{i}^{(j)}$.
+$Q(\bm u^{(i,j)}) < Q(\bm u^{(i-1)})$,
+after which the iterate is then updated by setting $\bm u^{(i)} = \bm u^{(i,j)}$.
 
 If no such $j$ is found after a predetermined number of halvings, then the 
 step-halving procedure has failed and the algorithm terminates. 
 
-The minimizer, $\bm\delta_i$, of (\ref{eq:incr}) satisfies
+The minimizer, $\bm\delta^{(i)}$, of (\ref{eq:incr}) satisfies
 \begin{equation}
   \label{eq:incrEq}
-  \bm P\left(\bLt\trans\bm Z\trans\bm M_i\bm W\bm M_i\bm Z\bLt+\bm I_q\right)\bm P\trans
-      \bm\delta_i=\bLt\trans\bm Z\trans\bm M_i\bm W(\bm y-\bm\mu_i) - \bm u_i
+  \bm P\left(\bLt\trans\bm Z\trans\bm M^{(i)}\bm W\bm M^{(i)}\bm Z\bLt+\bm I_q\right)\bm P\trans
+      \bm\delta^{(i)}=\bLt\trans\bm Z\trans\bm M^{(i)}\bm W(\bm y-\bm\mu^{(i)}) - \bm u^{(i)}
 \end{equation}
 which we solve using the sparse Cholesky factor.  At convergence, the
 factor, $\bm L_{\beta,\theta}$, satisfies
 \begin{equation}
   \label{eq:CholFactorGLMM}
   \bm L_{\beta,\theta}\bm L_{\beta,\theta}\trans =
-  \bm P\left(\bLt\trans\bm Z\trans\bm M\bm W\bm M\bm Z\bLt+\bm I_q\right)\bm P\trans
+  \bm P\left(\bLt\trans\bm Z\trans\bm M\bm W\bm M\bm Z\bLt+\bm I_q\right)\bm P\trans,
 \end{equation}
+where $\bm P$ denotes a fill-reducing permutation that is computed based on the sparsity pattern
+of $\bm Z \bm \Lambda_{\theta}$ prior to the optimization process (see \cite{bates2015fitting}).
+
 As we show in the next section, the matrix $(\bm L_{\beta,\theta}\bm
 L_{\beta,\theta}\trans)^{-1}$ is a Laplace approximation of the
 covariance matrix for the spherical random effects, conditional on the
