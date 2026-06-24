@@ -355,105 +355,37 @@ To summarize:
 
 The iteratively reweighted least squares (IRLS) algorithm is an
 efficient method of determining the maximum likelihood
-estimates of the coefficients in a generalized linear model.
-We extend it to a \emph{penalized iteratively reweighted least squares}
-(PIRLS) algorithm for determining the conditional mode, $\tilde{\bm u}_{\beta,\theta}$
-(eq.~\ref{eq:condmodeGLMM}).
-This algorithm has the form
-\begin{enumerate}
-\item Given parameter values, $\bm\beta$ and $\bm\theta$, and starting
-  estimates, $\bm u_0$, of the spherical random effects, evaluate the linear predictor, $\bm\eta$, the
-  corresponding conditional mean, $\bm\mu_{\mc Y|\mc U=\bm u}$, and
-  the conditional variance.
-  Establish the weights as the inverse of the variance.
-  We write these weights in the form of a diagonal weight matrix, $\bm W$, although they are stored and manipulated as a vector.
-\item Let 
-  \begin{equation}
-  Q(\bm u) = \left\|\bm W^{1/2}\left(\bm y-\bm\mu_{\mc
-    Y|\mc U=\bm u}\right)\right\|^2+\|\bm u\|^2.
-  \end{equation}
-
-  Solve the penalized, weighted, nonlinear least squares problem
-  \begin{equation}
-    \label{eq:weightedNLS}
-    \arg\min_{\bm u}\left( Q(\bm u) \right).
-  \end{equation}
-\item Update the weights, $\bm W$, and check for convergence.  If not
-  converged, go to step 2.
-\end{enumerate}
-
-We use a Gauss-Newton algorithm with an orthogonality convergence
-criterion~\citep[\S 2.2.3]{bateswatts88:_nonlin} to solve the
-penalized, weighted, nonlinear least squares problem in step 2.  At
-the $i$th iteration we determine an increment, $\bm\delta^{(i)} = \bm u^{(i+1)} - \bm u^{(i)}$, as the
-solution to the penalized, weighted, linear least squares problem
+estimates of the coefficients in a GLM.
+As the name IRLS implies this is an iterative algorithm where the $k+1$st
+coefficient vector, $\bm\beta^{(k+1)}$, is determined from $\bm\beta^{(k)}$, and the process
+continues until convergence.
+At the $k$th iteration, the linear predictor is $\bm\eta^{(k)}=\bm X\bm\beta^{(k)}$ and
+the mean response vector is $\bm\mu^{(k)}=\bm g^{-1}(\bm\eta^{(k)})$.
+The residual on the response scale, $\bm r^{(k)}=\bm y-\bm\mu^{(k)}$, is mapped to a \emph{working residual}
+on the linear predictor scale via a linear approximation to the link function.
+Because the link and inverse link at diagonal maps we can write the working residual component-wise as
 \begin{equation}
-  \label{eq:incr}
-  \bm\delta^{(i)}=\arg\min_{\bm\delta}\left\|
-    \begin{bmatrix}
-      \bm W^{1/2}\left(\bm y-\bm\mu^{(i)}\right)\\
-      \bm u^{(i)}
-    \end{bmatrix}-
-    \begin{bmatrix}
-      \bm W^{1/2}\bm M^{(i)}\bm Z\bm\Lambda_\theta\\
-      \bm I_q
-    \end{bmatrix}\bm u\right\|^2
+  \label{eq:wrkresid}
+  \tilde{r}_i^{(k)}=(y_i - \mu_i^{(k)})g^\prime(\mu_i^{(k)})\quad i=1,\dots,n ,
 \end{equation}
-where $\bm u^{(i)}$ is the current value of $\bm u$, $\bm\mu^{(i)}$ is the
-corresponding conditional mean of $\mc Y|\mc U=\bm u^{(i)}$ and $\bm M^{(i)}$ is
-the Jacobian matrix of the vector-valued inverse link, evaluated at
-$\bm\mu^{(i)}$.  That is
+where $g^\prime(\mu_i^{(k)})$ denotes the derivative of the link function at $\mu_i^{(k)}$.
+
+Because the variances of the working residuals are not constant we must evaluate these variances
+and use weighted least squares, with the weights inversely proportional to the variances, to determine an
+increment $\bm\delta^{(k)}$ such that $\bm\beta^{(k+1)}=\bm\beta^{(k)}+\bm\delta^{(k)}$.
+An alternative approach is to define a \emph{working response}
 \begin{equation}
-  \label{eq:Jacobian}
-  \bm M^{(i)}=\left.\frac{d\bm\mu}{d\bm\eta\trans}\right|_{\bm\eta^{(i)}},
+  \label{eq:wrkresp}
+  \tilde{y}_i^{(k)}=(\eta_i^{(k)}- o_i)+\tilde{r}_i^({k}),\quad i=1,\dots,k
 \end{equation}
-which will be a diagonal matrix so, as for the weights, we store and
-manipulate the Jacobian as a vector.
+where $o_i$ is an optional \emph{offset} to be applied on the linear predictor scale.
 
-When solving for the minimum of $Q(\bm u)$, the proposed update
-  for $\bm u$ may increase rather than decrease the value of the objective 
-  function $Q(\bm u)$, if the step size estimated by the Gauss-Newton step
-  is too large. Let $Q(\bm u^{(i)})$ represent the value of the objective 
-  function $Q(\bm u)$ at the current iterate $\bm u_{i}$; similarly, let 
-  $Q(\bm u^{(i-1)}$ represent the the value of the objective function of the 
-  previous iteration. 
-
-  If $Q(\bm u^{(i)}) > Q(\bm u^{(i-1)})$, we proceed with a \emph{step-halving}
-  procedure. That is, we successively consider scaled updates of the form
-  \begin{equation}
-  \bm u^{(i,j)} = \bm u^{(i-1)} + \frac{\bm \delta^{(i)}}{2^j}, \quad j = 1, 2, \ldots,
-\end{equation}
-computing $Q(\bm u^{(i,j)})$ at each step. The step-halving procedure 
-continues until a value of $j$ is found such that 
-$Q(\bm u^{(i,j)}) < Q(\bm u^{(i-1)})$,
-after which the iterate is then updated by setting $\bm u^{(i)} = \bm u^{(i,j)}$.
-
-If no such $j$ is found after a predetermined number of halvings, then the 
-step-halving procedure has failed and the algorithm terminates. 
-
-The minimizer, $\bm\delta^{(i)}$, of (\ref{eq:incr}) satisfies
-\begin{equation}
-  \label{eq:incrEq}
-  \bm P\left(\bLt\trans\bm Z\trans\bm M^{(i)}\bm W\bm M^{(i)}\bm Z\bLt+\bm I_q\right)\bm P\trans
-      \bm\delta^{(i)}=\bLt\trans\bm Z\trans\bm M^{(i)}\bm W(\bm y-\bm\mu^{(i)}) - \bm u^{(i)}
-\end{equation}
-which we solve using the sparse Cholesky factor.  At convergence, the
-factor, $\bm L_{\beta,\theta}$, satisfies
-\begin{equation}
-  \label{eq:CholFactorGLMM}
-  \bm L_{\beta,\theta}\bm L_{\beta,\theta}\trans =
-  \bm P\left(\bLt\trans\bm Z\trans\bm M\bm W\bm M\bm Z\bLt+\bm I_q\right)\bm P\trans,
-\end{equation}
-where $\bm P$ denotes a fill-reducing permutation that is computed based on the sparsity pattern
-of $\bm Z \bm \Lambda_{\theta}$ prior to the optimization process (see \cite{bates2015fitting}).
-
-As we show in the next section, the matrix $(\bm L_{\beta,\theta}\bm
-L_{\beta,\theta}\trans)^{-1}$ is a Laplace approximation of the
-covariance matrix for the spherical random effects, conditional on the
-observed data. This fact is useful for constructing a nonlinear
-objective function for finding the approximate maximum likelihood
-estimates of $\theta$ and $\beta$.
-
+IRLS is usually implemented by solving a weighted least squares problem on the working residual
+for the increment, $\bm\delta^{(k)}$, at each iteration.
+For the \emph{penalized iteratively reweighted least squares} (PIRLS) algorithm to determine
+$\bm u^{(k+1)}$ from $\bm u^{(k)}$ it is easiest to use the working response because the penalty
+is defined as $\|\bm u^{(k+1)}\|^2$ so the penalized weighted least squares calculation should be
+in terms of $\bm u$.
 
 \subsection{Evaluating the likelihood for GLMMs using the Laplace approximation}
 \label{sec:Laplace}
