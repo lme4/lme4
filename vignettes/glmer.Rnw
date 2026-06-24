@@ -1317,7 +1317,7 @@ models considered different variables.
 For instance, there are two different ways to encode the number of living 
 children: \code{livch} is a four-level factor distinguishing \code{0}, \code{1}, 
 \code{2}, or \code{3+} children, while other models use \code{ch} instead, which is a binary indicator for whether the 
-woman has any living children (in Table~\ref{tab:contraictab} and Figure~\ref{fig:contracomp}
+woman has any living children (in Table~\ref{tab:contraictab} and Figure~\ref{fig:contracompplot}
 we label this variable as \code{binary\_child}).
 
 Second, we vary whether child status interacts with the woman's age: two models
@@ -1445,7 +1445,7 @@ combCI <- transform(contr_combCI,
     )
 @
 
-<<contracompplot,fig.cap="Contraception example: comparison of point and confidence interval estimation for different methods. (Note that the Wald CI for variation in the intercept across districts, in the \\code{(1|district/urban)} model, includes negative values.)",fig.scap="Contraception comparison",echo=FALSE,fig.width=10,fig.height=10,warning=FALSE,fig.lab="fig:contracomp">>=
+<<contracompplot,fig.cap="Contraception example: comparison of point and confidence interval estimation for different methods. (Note that the Wald CI for variation in the intercept across districts, in the \\code{(1|district/urban)} model, includes negative values.)",fig.scap="Contraception comparison",echo=FALSE,fig.width=10,fig.height=10,warning=FALSE>>=
 ggplot(combCI, aes(var, est, colour=type, shape=model)) +
   geom_pointrange(aes(ymin=lwr, ymax=upr),
                   position=position_dodge(width=0.6)) +
