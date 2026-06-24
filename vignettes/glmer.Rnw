@@ -69,6 +69,7 @@
   McMaster University \\
   1280 Main Street W \\
   Hamilton, ON L8S 4K1, Canada \\
+  Email: \email{annahuynh.ly@utoronto.ca}
   \par\bigskip
   Rune Haubo Bojesen Christensen \\
   Copenhagen Research Centre for Biological and Precision Psychiatry \\
@@ -239,7 +240,8 @@ variables: $\mc Y$, the $n$-dimensional response, and $\mc B$, the $q$-dimension
 The unconditional distribution $\mc B\sim\mc N(\bm 0,\bm\Sigma_{\bm\theta})$ depends on a
 \emph{covariance parameter} $\bm\theta$.
 The conditional distribution, $(\mc Y| \mc B=\bm b)\sim\mc N(\bm X\bm\beta+\bm Z\bm b, \sigma^2\bm I)$,
-has mean, $\bm\mu$, from the identity link applied to the linear predictor $\bm\eta=\bm X\bm\beta+\bm Z\bm b$.
+has mean, $\bm\mu$, from the identity link applied to the linear predictor $\bm\eta=\bm X\bm\beta+\bm Z\bm b$,
+where $\bm Z$ is an $n\times q$ model matrix for the random effects and $\bm b$ is a value of $\mc B$.
 In practice the covariance parameter, $\bm\theta$, determines a lower triangular \emph{relative covariance factor},
 $\bm\Lambda_{\bm\theta}$, with $\bm\Sigma_{\bm\theta}=\sigma^2\bm\Lambda_{\bm\theta}\bm\Lambda_{\bm\theta}\trans$
 and we work with a ``spherical'' random effects variable, $\mc U\sim\mc N(\bm 0,\sigma^2\bm I)$, such that
@@ -637,9 +639,10 @@ $e^{-z^2}$ or $e^{-z^2/2}$.  For statisticians the natural candidate
 is the standard normal density, $\phi(z)=e^{-z^2/2}/\sqrt(2\pi)$.
 A $k$th-order Gauss-Hermite formula provides knots, $z_i,i=1,...,k$,
 and weights, $w_i,i=1,\dots,k$, such that
-\begin{displaymath}
+\begin{equation}
+  \label{eq:GHquad}
   \int_{\mathbb{R}}t(z)\phi(z)\,dz\approx\sum_{i=1}^kw_it(z_i)
-\end{displaymath}
+\end{equation}
 The function \code{GHrule} in \pkg{lme4} (based on code in the
 \pkg{SparseGrid} package) provides knots and weights relative to the
 standard normal kernel for orders $k$ from 1 to 100.  For example,
@@ -739,9 +742,10 @@ gridExtra::grid.arrange(
 \label{fig:toenailplot}
 \end{figure}
 
-To use adaptive Gauss-Hermite quadrature for model fitting 
-in \code{glmer} models, users would set the argument \code{nAGQ}, the 
-number of quadrature points, to a value greater than 1.
+To use adaptive Gauss-Hermite quadrature for model fitting in \code{glmer} models, 
+users would set the argument \code{nAGQ}, the number of quadrature points 
+(i.e. $k$ in eq.~\ref{eq:GHquad}), to a value greater than 1.
+
 Increasing the number of nodes generally improves the accuracy of the likelihood 
 approximation at the expense of computation time --- although rounding errors
 may accumulate when using large numbers of quadrature points.
@@ -758,7 +762,7 @@ for AGQ for models with nested random effects.)
 
   Once we can calculate the deviance by PIRLS for specified values of $\btheta$ and $\bbeta$ (or only $\btheta$ if profiling out the fixed effects via \code{nAGQ=0}), we then estimate the parameters by nonlinear optimization. This procedure largely follows the description in \cite{bates2015fitting}, using derivative-free optimizers with box constraints to prevent non-positive-(semi)definite covariance matrices. Specifically, the elements of $\btheta$ corresponding to the diagonal of $\bm\Lambda_\theta$ are currently constrained to be non-negative.
   
-The only difference is that by default \code{glmer} uses a two-step fitting procedure, using \code{nAGQ=0} at the first stage to get preliminary estimates which are then used as starting points for a second optimization with Laplace approximation or Gauss-Hermite quadrature as specified by the user. Different nonlinear optimizers can be used at each stage: the current default, as specified in \code{glmerControl}, is to use Powell's BOBYQA followed by a box-constrained variant of the Nelder-Mead simplex algorithm. For faster, approximate fitting, the second stage can be omitted; in the rare cases where the initial \code{nAGQ=0} fit gives poor results, the first stage can be skipped via \code{glmerControl(nAGQ0initStep = FALSE)}.
+The only difference is that by default \code{glmer} uses a two-step fitting procedure, using \code{nAGQ=0} at the first stage to get preliminary estimates which are then used as starting points for a second optimization with Laplace approximation or Gauss-Hermite quadrature as specified by the user. Different nonlinear optimizers can be used at each stage: the current default, as specified in \code{glmerControl}, is to use Powell's BOBYQA \citep{Powell_bobyqa} followed by a box-constrained variant of the Nelder-Mead simplex algorithm. For faster, approximate fitting, the second stage can be omitted; in the rare cases where the initial \code{nAGQ=0} fit gives poor results, the first stage can be skipped via \code{glmerControl(nAGQ0initStep = FALSE)}.
   
 However, because the profiled log-likelihood is an even function of the diagonal elements of $\btheta$
 and $\bm\Sigma_\theta=\bm\Lambda_\theta\bm\Lambda_\theta\trans$ depends on them only through their squares, positive and negative values yield identical likelihoods. This symmetry means that constrained optimization is not strictly necessary --- an unconstrained optimizer will converge to a correct solution, approaching zero from either side in the boundary case of a singular random-effects covariance matrix. (Once a solution is found, we can map it to a unique solution where the diagonal elements are all non-negative.)
@@ -1413,7 +1417,7 @@ Thus instead of (e.g.) \code{(1+urban|district)}, we can specify the random effe
 diagonal, heterogeneous variances (\code{diag(1+urban|district)});
  diagonal, homogeneous variances (\code{diag(1+urban|district, hom = TRUE)});
 compound symmetric, heterogeneous variances (\code{cs(1+urban|district)}); or
-compound symmetric, homogeneous variances (\code{cs(1+urban|district, hom = TRUE)}).
+compound symmetric, homogeneous variances (\code{cs(1+urban|\allowbreak district, hom = TRUE)}).
 
 <<cm_varcorr, echo = FALSE>>=
 cc <- glmerControl(check.conv.grad = .makeCC("warning", tol = 1e-2), check.conv.hess = "ignore")
