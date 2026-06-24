@@ -132,7 +132,7 @@ The definition of the parameter vectors differs for the other covariance structu
 case, $\mathbf{\theta}$ (or `par`) only contains the standard deviations. 
 The relative co-factor ${\mathbf \Lambda}_{\mathbf{\theta}}$ is:
 \[
-{\mathbf Lambda}_{\mathbf{\theta}} = \begin{bmatrix}
+{\mathbf \Lambda}_{\mathbf{\theta}} = \begin{bmatrix}
 \theta_1 & 0 & 0 & \dots & 0 \\
 0 & \theta_2 & 0 & \dots & 0 \\
 0 & 0 & \theta_3 & \dots & 0 \\
