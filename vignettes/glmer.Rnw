@@ -810,10 +810,13 @@ gridExtra::grid.arrange(
 To use adaptive Gauss-Hermite quadrature for model fitting 
 in \code{glmer} models, users would set the argument \code{nAGQ}, the 
 number of quadrature points, to a value greater than 1.
-%% \bmb{provide any strategies/rules of thumb for choosing? Stringer/Bilodeau suggestion?}
 Increasing the number of nodes generally improves the accuracy of the likelihood 
 approximation at the expense of computation time --- although rounding errors
-may accumulate when using large numbers of quadrature points. At present, AGQ is only available 
+may accumulate when using large numbers of quadrature points.
+A reasonable strategy for choosing the number of nodes is to re-fit the model with increasing values of \code{nAGQ} until the parameter estimates stabilize
+\citep{tuerlinckxStatisticalInferenceGeneralized2006a}; a ``warm-start'' procedure using the parameter estimates from the previous fit as starting values (and using \code{control = glmerControl(nAGQ0initStep = FALSE)} to disable the \code{nAGQ=0} preliminary fit) will speed up this procedure.
+
+At present, AGQ is only available 
 for models with a single scalar random effect. (The \code{GLMMadaptive} package implements
 AGQ for vector-valued random effect models, although it is still restricted to models with
 a single random effect; \cite{rabe-heskethMaximumLikelihoodEstimation2005b} describe methods
