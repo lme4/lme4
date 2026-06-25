@@ -62,7 +62,10 @@ satisfies
       \bm\delta^{(i)}=\bLt\trans\bm Z\trans\bm M^{(i)}\bm W(\bm y-\bm\mu^{(i)}) - \bm u^{(i)}
 \end{equation}
 where $\bm u^{(i)}$ is the current value of $\bm u$, $\bm\mu^{(i)}$ is the
-corresponding conditional mean of $\mc Y|\mc U=\bm u^{(i)}$ and $\bm M^{(i)}$ is
+corresponding conditional mean of $\mc Y|\mc U=\bm u^{(i)}$,
+and $\bm P$ denotes a fill-reducing permutation that is computed based on the sparsity pattern
+of $\bm Z \bm \Lambda_{\theta}$ prior to the optimization process (see \cite{bates2015fitting}).
+Here $\bm M^{(i)}$ is
 the Jacobian matrix of the vector-valued inverse link, evaluated at
 $\bm\mu^{(i)}$.  That is
 \begin{equation}
@@ -70,16 +73,14 @@ $\bm\mu^{(i)}$.  That is
   \bm M^{(i)}=\left.\frac{d\bm\mu}{d\bm\eta\trans}\right|_{\bm\eta^{(i)}},
 \end{equation}
 which will be a diagonal matrix so, as for the weights, we store and
-manipulate the Jacobian as a vector.
+manipulate it as a vector.
 
 We solve (\ref{eq:incrEq}) using the sparse Cholesky factor.  At convergence, the factor, $\bm L_{\beta,\theta}$, satisfies
 \begin{equation}
   \label{eq:CholFactorGLMM}
   \bm L_{\beta,\theta}\bm L_{\beta,\theta}\trans =
-  \bm P\left(\bLt\trans\bm Z\trans\bm M\bm W\bm M\bm Z\bLt+\bm I_q\right)\bm P\trans,
+  \bm P\left(\bLt\trans\bm Z\trans\bm M\bm W\bm M\bm Z\bLt+\bm I_q\right)\bm P\trans.
 \end{equation}
-where $\bm P$ denotes a fill-reducing permutation that is computed based on the sparsity pattern
-of $\bm Z \bm \Lambda_{\theta}$ prior to the optimization process (see \cite{bates2015fitting}).
 
 When solving for the minimum of $Q(\bm u)$, the proposed update
 for $\bm u$ may increase rather than decrease the value of the objective 
