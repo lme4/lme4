@@ -95,9 +95,9 @@ If $Q(\bm u^{(i+1)}) > Q(\bm u^{(i)})$, we proceed with a \emph{step-halving}
   \bm u^{(i,j)} = \bm u^{(i)} + \frac{\bm \delta^{(i)}}{2^j}, \quad j = 1, 2, \ldots,
 \end{equation}
 computing $Q(\bm u^{(i,j)})$ at each step. The step-halving procedure 
-continues until a value of $j$ is found such that 
-$Q(\bm u^{(i,j)}) < Q(\bm u^{(i)})$,
-after which the iterate is then updated by setting $\bm u^{(i+1)} = \bm u^{(i,j)}$.
+continues until a value $j^*$ of $j$ is found such that 
+$Q(\bm u^{(i,j^*)}) < Q(\bm u^{(i)})$,
+after which the iterate is then updated by setting $\bm u^{(i+1)} = \bm u^{(i,j^*)}$.
 
 If no such $j$ is found after a predetermined number of halvings, then the 
 step-halving procedure has failed and the algorithm terminates. 
