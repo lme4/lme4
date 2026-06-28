@@ -26,6 +26,17 @@ pars <- c(1.16204380240176, -0.183842216759865)
 stopifnot(identical(dfun1(pars), dfun2(pars)))
 
 stopifnot(!get("compDev", environment(dfun2)))
+
+## compare with lme4pureR (not identical)
+remotes::install_github("lme4/lme4pureR")
+library(lme4pureR)
+
+ll <- plsform(formula(g2), data = dd, family = poisson)
+devf <- do.call(pirls, c(ll, list(family=poisson)))
+devf(pars)
+all.equal(devf(pars), dfun1(pars), tolerance = 0)
+## differs by 6e-6 (could compare in more detail)
+
 ## debug(dfun2)
 ## dfun2(pars)
 ## ... debug(pwrssUpdate) ## in environment(dfun2)
