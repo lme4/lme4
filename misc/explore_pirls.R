@@ -1,10 +1,18 @@
 library(lme4)
 dd  <- data.frame(g = factor(rep(1:3, each = 3)))
-y <- simulate(~ 1 + (1|g),
+dd$y <- simulate(~ 1 + (1|g),
               family = poisson,
               seed = 101,
               newdata = dd,
               newparams = list(beta = 0, theta = 2))[[1]]
+
+## constructive::construct(dd)
+## equivalent, maybe helpful in porting to Julia etc.
+dd <- data.frame(
+  g = factor(rep(1:3, each = 3L)),
+  y = as.integer(c(0, 0, 1, 3, 5, 4, 0, 1, 0))
+)
+
 g1 <- glmer(y ~ 1 + (1|g), data = dd, family = poisson, control = glmerControl(nAGQ0initStep = FALSE))
 g2 <- update(g1, control = glmerControl(compDev = FALSE, nAGQ0initStep = FALSE))
 
