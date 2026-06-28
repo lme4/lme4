@@ -365,7 +365,7 @@ At the $k$th iteration, the linear predictor is $\bm\eta^{(k)}=\bm X\bm\beta^{(k
 the mean response vector is $\bm\mu^{(k)}=\bm g^{-1}(\bm\eta^{(k)})$.
 The residual on the response scale, $\bm r^{(k)}=\bm y-\bm\mu^{(k)}$, is mapped to a \emph{working residual}
 on the linear predictor scale via a linear approximation to the link function.
-Because the link and inverse link at diagonal maps we can write the working residual component-wise as
+Because the link and inverse link are diagonal maps we can write the working residual component-wise as
 \begin{equation}
   \label{eq:wrkresid}
   \tilde{r}_i^{(k)}=(y_i - \mu_i^{(k)})g^\prime(\mu_i^{(k)})\quad i=1,\dots,n ,
@@ -378,7 +378,7 @@ increment $\bm\delta^{(k)}$ such that $\bm\beta^{(k+1)}=\bm\beta^{(k)}+\bm\delta
 An alternative approach is to define a \emph{working response}
 \begin{equation}
   \label{eq:wrkresp}
-  \tilde{y}_i^{(k)}=(\eta_i^{(k)}- o_i)+\tilde{r}_i^({k}),\quad i=1,\dots,k
+  \tilde{y}_i^{(k)}=(\eta_i^{(k)}- o_i)+\tilde{r}_i^{(k)},\quad i=1,\dots,k
 \end{equation}
 where $o_i$ is an optional \emph{offset} to be applied on the linear predictor scale.
 
@@ -388,6 +388,74 @@ For the \emph{penalized iteratively reweighted least squares} (PIRLS) algorithm 
 $\bm u^{(k+1)}$ from $\bm u^{(k)}$ it is easiest to use the working response because the penalty
 is defined as $\|\bm u^{(k+1)}\|^2$ so the penalized weighted least squares calculation should be
 in terms of $\bm u$.
+
+In more detail, the PIRLS algorithm has the form
+\begin{enumerate}
+\item Given parameter values, $\bm\beta$ and $\bm\theta$, incorporate the fixed-effects contribution
+  to the linear predictor, $\bm X\bm\beta$, as an \emph{offset}, $\bm o$, to be used in evaluating the working
+  response (eq. \ref{eq:wrkresp}).
+  Set the initial values of $\bm u^{(0)}=\bm 0$ so that the PIRLS iterations always start from the same value
+  of $\bm u$, providing for a stable result that depends only on $\bm\beta$ and $\bm\theta$.
+  Evaluate the lower triangular $\bm\Lambda_{\bm\theta}$, the linear predictor
+  \begin{equation}
+    \label{eq:linpredPIRLS0}
+    \bm\eta^{(0)}=\bm Z\bm\Lambda_{\bm\theta}\bm u^{(0)} + \bm o,
+  \end{equation}
+  the conditional mean of $\mc Y|\mc U=\bm u^{(0)}$,
+  \begin{equation}
+    \label{eq:condmeanPIRLS0}
+    \bm\mu^{(0)}=\bm g^{-1}(\bm\eta^{(0)}),
+  \end{equation}
+  the (diagonal) Jacobian matrix,
+  \begin{equation}
+    \label{eq:Jacobian}
+    \bm J^{(0)}=\frac{d \bm\mu}{d \bm\eta^\top}={\bm g^{-1}}^\prime
+  \end{equation}
+  and the conditional variance
+  \begin{equation}
+    \label{eq:confvarPIRLS}
+    \bm V^{(0)}=\mathrm{Var}(\mc Y|\bm\mu=\bm\mu^{(0)})
+  \end{equation}
+  which is also a diagonal matrix.
+  
+\item Establish the weights as the inverse of the combined variance contributions from $\bm\eta$.
+  \begin{equation}
+    \label{eq:PIRLSweights}
+    \bm W^{(0)}=\left(\bm J^{(0)\top}\bm V^{(0)}\bm J^{(0)}\right)^{-1}
+  \end{equation}
+  Eq. \ref{eq:PIRLSweights} is written as a product and an inverse of matrices but all the matrices involved
+  are diagonal and the evaluation of eq.~\ref{eq:PIRLSweights} is performed as vector operations.
+
+\item Evaluate $\bm u^{(1)}$ as the solution to the penalized, weighted least squares problem
+  \begin{equation}
+    \label{eq:PIRLSeqn}
+    \left(\bm \Lambda^\top\bm Z^\top\bm W^{(0)}\bm Z\bm\Lambda + \bm I\right)\bm u^{(1)}=
+    \bm\Lambda^\top\bm Z^\top\tilde{\bm y}^{(0)}
+  \end{equation} 
+  using the sparse Cholesky factor, $\bm L_{\bm\beta,\bm\theta}^{(0)}$, defined by
+  \begin{equation}
+    \label{eq:sparseChol}
+    \bm L_{\bm\beta,\bm\theta}^{(0)}\bm L_{\bm\beta,\bm\theta}^{(0)\top}=
+    \bm P\left(\bm \Lambda^\top\bm Z^\top\bm W^{(0)}\bm Z\bm\Lambda + \bm I\right)\bm P^\top ,
+  \end{equation}
+  where $\bm P$ is the matrix representation of a \emph{fill-reducing permutation} determined from the
+  structure of $\bm Z^\top\bm Z$.
+  (In simple GLMM problems $\bm P$ can be an identity matrix but for general sparse Cholesky evaluations
+  determining and employing a fill-reducing permutation can be important in reducing memory usage
+  and compute time.)
+  
+\item Evaluate PSUD, the penalized sum of unit deviances, at $\bm u^{(1)}$.
+  If the PSUD at $\bm u^{(1)}$ exceeds that at $\bm u^{(0)}$ use \emph{step-halving} which, in this case,
+  means replacing $\bm u^{(1)}$ by the average of $\bm u^{(0)}$ and $\bm u^{(1)}$, and trying again.
+  We set a maximum, usually 10 or fewer, on the number of step-halvings that are allowed before
+  declaring the algorithm to have failed.
+
+\item If the iteration succeeds in reducing the PSUD, check for convergence by comparing the weights,
+  $\bm W^{(i+1)}$, to $\bm W^{(i)}$.
+  If the relative differences in the weights are small the algorithm is declared to have converged.
+  Otherwise repeat the previous steps using evaluations at $\bm u^{(i)}$ to produce $\bm u^{(i+1)}$.
+
+\end{enumerate}
 
 \subsection{Evaluating the likelihood for GLMMs using the Laplace approximation}
 \label{sec:Laplace}
