@@ -54,12 +54,17 @@ profile.merMod <- function(fitted,
     ## hack: doesn't work to set bobyqa parameters to *ending* values stored
     ## in @optinfo$control
     ignore.pars <- c("xst", "xt")
-    control.internal <- fitted@optinfo$control
+    ## The control stored in @optinfo$control is specific to the optimizer used
+    ## for the original fit.  Reusing it with a *different* optimizer can pass
+    ## arguments the new optimizer rejects (e.g. nloptwrap's 'print_level' handed
+    ## to bobyqa), producing spurious "unused control arguments ignored" warnings
+    ## (GH #913).  Only carry it over when the optimizer is unchanged.
+    control.internal <- if (identical(optimizer, fitted@optinfo$optimizer))
+                            fitted@optinfo$control else list()
     if (length(ign <- which(names(control.internal) %in% ignore.pars)) > 0)
         control.internal <- control.internal[-ign]
     if (!is.null(control)) {
-        i <- names(control)
-        control.internal[[i]] <- control[[i]]
+        for (i in names(control)) control.internal[[i]] <- control[[i]]
     }
     control <- control.internal
     useSc <- isLMM(fitted) || isNLMM(fitted)

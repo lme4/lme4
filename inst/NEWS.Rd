@@ -12,6 +12,9 @@
       \code{getME(*, "devfun")} for GLMMs now correctly propagates
       \code{compDev} (and \code{tolPwrss}) from the fitted model to the
       reconstructed deviance function environment.
+      \item \code{profile()} no longer emits spurious \dQuote{unused control
+      arguments ignored} warnings when profiling with an \code{optimizer}
+      different from the one used for the original fit (GH #913)
       \item \code{lmList} would fail when some groups have rank-deficient model matrices;
       in particular, it used to report the incorrect degrees of freedom (GH #377)
       \item likelihood profiling no longer gets stuck when a deviance value less
@@ -71,6 +74,24 @@
       \item exported covariance methods documented in
       \code{help("Covariance-class")} (\code{getPar}, \code{getTheta},
       etc.)
+      \item how \code{lme4} searches for model components
+      such as weights and offsets has changed; \code{[g]lmer} no longer copies
+      \code{weights} and \code{offset} objects from the parent frame
+      (environment of the calling function) into the environment of
+      the formula; the \code{simulate.merMod} method modifies the
+      formula's environment, but restores it when exiting.
+      This change makes the scoping
+      logic more consistent with other R functions and solves problems
+      of leakage/overwriting of these objects (e.g. see GH #481).
+      This change may cause failures in some cases where the
+      formula and the weights are defined in separate environments
+      before passing them to \code{[g]lmer}.
+      Such failures
+      can generally be solved by adding a statement such as
+      \code{assign("weights", weights, environment(formula))} (see
+      \url{https://github.com/lme4/lme4/pull/961} and
+      \url{https://github.com/lme4/lme4/pull/811} for more detail,
+      and \url{https://github.com/lme4/lme4/issues/742} for an example).
     } % itemize
   } % user-visible changes
 } % 2.0-2
