@@ -444,7 +444,7 @@ glmerPwrssUpdate <- function(pp, resp, tol, GQmat, compDev=TRUE, grpFac=NULL, ma
  ### does this show anywhere ??? [i.e. is it ever used in our checks/examples/scripts/vignettes ?
  ### message("glmerPwrssUpdate(*, compDev=FALSE)  --> using more R, no direct .Call() to C.") # [DBG] only
     oldpdev <- .Machine$double.xmax
-    uOnly   <- nAGQ == 0L
+    uOnly   <- nAGQ != 0L
     i <- 0
     repeat {
         ## oldu <- pp$delu
