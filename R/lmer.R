@@ -2155,7 +2155,10 @@ getME.merMod <- function(object,
                    mkGlmerDevfun(object@frame, X=getME(object, "X"),
                                  reTrms=reTrms, family=family(object),
                                  nAGQ=object@devcomp$dims[["nAGQ"]],
-                                 verbose=verbose)
+                                 verbose=verbose,
+                                 control=glmerControl(
+                                     compDev=as.logical(object@devcomp$dims[["compDev"]]),
+                                     tolPwrss=object@devcomp$cmp[["tolPwrss"]]))
                } else {
                    ## copied from refit ... DRY ...
                    devlist <- list(pp=PR, resp=rsp,

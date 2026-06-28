@@ -7,6 +7,11 @@
 \section{CHANGES IN VERSION 2.0-2}{
   \subsection{BUG FIXES}{
     \itemize{
+      \item fixed \code{compDev=FALSE} (R-level PIRLS, used for debugging):
+      the \code{uOnly} flag was inverted relative to the C++ implementation.
+      \code{getME(*, "devfun")} for GLMMs now correctly propagates
+      \code{compDev} (and \code{tolPwrss}) from the fitted model to the
+      reconstructed deviance function environment.
       \item \code{lmList} would fail when some groups have rank-deficient model matrices;
       in particular, it used to report the incorrect degrees of freedom (GH #377)
       \item likelihood profiling no longer gets stuck when a deviance value less
