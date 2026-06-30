@@ -430,7 +430,7 @@ In more detail, the PIRLS algorithm has the form
   \begin{equation}
     \label{eq:PIRLSeqn}
     \left(\bm \Lambda^\top\bm Z^\top\bm W^{(0)}\bm Z\bm\Lambda + \bm I\right)\bm u^{(1)}=
-    \bm\Lambda^\top\bm Z^\top\tilde{\bm y}^{(0)}
+    \bm\Lambda^\top\bm Z^\top \bm W^{(0)}\tilde{\bm y}^{(0)}
   \end{equation} 
   using the sparse Cholesky factor, $\bm L_{\bm\beta,\bm\theta}^{(0)}$, defined by
   \begin{equation}
