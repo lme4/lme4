@@ -51,8 +51,10 @@
   } % bug fixes
   \subsection{NEW FEATURES}{
     \itemize{
-      \item add support for parallelization via the \code{future} framework by setting
-      argument \code{parallel} to \code{"future"}.
+      \item a new vignette (\code{vignette("glmer", package = "lme4")})
+      describes the details of \code{glmer} implementation
+      \item parallelization via the \code{future} framework is available
+      by setting argument \code{parallel} to \code{"future"}.
     } % itemize
   } % new features
   \subsection{USER-VISIBLE CHANGES}{
