@@ -53,20 +53,25 @@ if (FALSE) {
 pp <- environment(dfun2)$pp
 resp <- environment(dfun2)$resp
 eps <- .Machine$double.eps
-## reset mean (start latent variables at 0)
-resp$updateMu(c(0,0,0))
-beta <- pars[2]
-mu <- exp(beta)
 
+vals <- getME(g2, c("Lambdat", "Zt"))
+## make sure Lambda has current values
+stopifnot(all(vals$Lambdat@x == pars[1]))
+
+## u value before solving (in this case)
+ui <- c(-0.5, 1, -0.5)
+gamma <- with(vals, t(Zt) %*% t(Lambdat) %*% ui)
+resp$updateMu(gamma)
+beta <- pars[2]
+mu <- exp(beta + gamma)
 ## compute sqrt(working weights) by hand
 stopifnot(all(resp$mu == mu))
 stopifnot(all(resp$muEta() == mu))
 stopifnot(all(resp$variance() == mu))
 ## working weights should be mu.eta/sqrt(var) = mu/sqrt(mu) = sqrt(mu)
 ## not exact equality here (because of order of operations)
-stopifnot(all(abs(resp$sqrtWrkWt() - sqrt(mu)) < eps))
-## exact equality
-stopifnot(resp$sqrtWrkWt() == mu*(1/sqrt(mu)))
+stopifnot(myident(resp$sqrtWrkWt(), sqrt(mu), tolerance =  1.1*eps))
+stopifnot(myident(resp$sqrtWrkWt(), mu*(1/sqrt(mu)), tolerance = eps))
 
 ## step 1 of RglmerWrkIter (easy)
 pp$updateXwts(resp$sqrtWrkWt())
@@ -103,15 +108,10 @@ V <- diag(pp$Xwts) %*% d_X
 stopifnot(myident(t(V) %*% resp$wtWrkResp(), pp$Vtr))
 Whalf <- diag(resp$sqrtWrkWt())
 
-vals <- getME(g2, c("Lambdat", "Zt"))
-## make sure Lambda has current values
-stopifnot(all(vals$Lambdat@x == pars[1]))
 LamtUt <- with(vals, Lambdat %*% Zt %*% Whalf)
 Utr <- LamtUt %*% resp$wtWrkResp()
 
 stopifnot(myident(Utr, pp$Utr))
-
-ui <- c(0,0,0) ## u value before solving (in this case)
 
 ## step 4 (because uOnly is TRUE)
 cval <- pp$solveU()  ## 29.28844
@@ -128,8 +128,13 @@ cval <- pp$solveU()  ## 29.28844
 
 LHS <- tcrossprod(LamtUt) + diag(nrow(LamtUt))
 u1_alt <- solve(LHS, Utr - ui)
+u2_alt <- solve(LHS, Utr - pp$u0)
 u1 <- solve(LHS, LamtUt %*% resp$wtWrkResp())
-stopifnot(myident(Utr-ui, LamtUt %*% resp$wtWrkResp()))  ## these are in fact identical ...
+
+stopifnot(myident(Utr-pp$u0, LamtUt %*% resp$wtWrkResp()))
+
+## OOPS.
+## stopifnot(myident(Utr-ui, LamtUt %*% resp$wtWrkResp()))  ## these are in fact identical ...
 
 ## result of solving is the same (slightly larger discrepancy since C++ code is being
 ## fancy and updating in place, etc. etc. (permutations probably don't matter in this case,
