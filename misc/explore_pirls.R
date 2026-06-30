@@ -126,9 +126,6 @@ cval <- pp$solveU()  ## 29.28844
 ## d_L.solveInPlace(d_delu, CHOLMOD_Lt);
 ## d_L.solveInPlace(d_delu, CHOLMOD_Pt);
 
-## BMB: as written in pirls.pdf, this has the wrong dimensions anyway!
-## first term on RHS is length(# obs); second term is length(# latent vars)
-## so we would need something like Zt %*% ui anyway ...
 LHS <- tcrossprod(LamtUt) + diag(nrow(LamtUt))
 u1_alt <- solve(LHS, Utr - ui)
 u1 <- solve(LHS, LamtUt %*% resp$wtWrkResp())
