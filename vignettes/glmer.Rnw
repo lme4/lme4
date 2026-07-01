@@ -420,11 +420,12 @@ In more detail, the PIRLS algorithm has the form
   \end{equation}
   which is also a diagonal matrix.
   
-\item Establish the weights as the inverse of the combined variance contributions from $\bm\eta$.
+\item Establish the weights as the inverse of the combined variance contributions from $\bm\eta$:
   \begin{equation}
     \label{eq:PIRLSweights}
     \bm W^{(0)}=\left(\bm J^{(0)\top}\bm V^{(0)}\bm J^{(0)}\right)^{-1}
   \end{equation}
+(we would also multiply this quantity by a diagonal matrix of prior weights, if any were specifiied).
   Eq. \ref{eq:PIRLSweights} is written as a product and an inverse of matrices but all the matrices involved
   are diagonal and the evaluation of eq.~\ref{eq:PIRLSweights} is performed as vector operations.
 
