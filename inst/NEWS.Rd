@@ -7,6 +7,11 @@
 \section{CHANGES IN VERSION 2.0-2}{
   \subsection{BUG FIXES}{
     \itemize{
+      \item fixed \code{compDev=FALSE} (R-level PIRLS, used for debugging):
+      the \code{uOnly} flag was inverted relative to the C++ implementation.
+      \code{getME(*, "devfun")} for GLMMs now correctly propagates
+      \code{compDev} (and \code{tolPwrss}) from the fitted model to the
+      reconstructed deviance function environment.
       \item \code{profile()} no longer emits spurious \dQuote{unused control
       arguments ignored} warnings when profiling with an \code{optimizer}
       different from the one used for the original fit (GH #913)
@@ -46,8 +51,10 @@
   } % bug fixes
   \subsection{NEW FEATURES}{
     \itemize{
-      \item add support for parallelization via the \code{future} framework by setting
-      argument \code{parallel} to \code{"future"}.
+      \item a new vignette (\code{vignette("glmer", package = "lme4")})
+      describes the details of \code{glmer} implementation
+      \item parallelization via the \code{future} framework is available
+      by setting argument \code{parallel} to \code{"future"}.
     } % itemize
   } % new features
   \subsection{USER-VISIBLE CHANGES}{
