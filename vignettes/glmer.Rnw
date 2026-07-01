@@ -1506,9 +1506,13 @@ We can use \code{VarCorr} and other accessor methods as we would for models with
 VarCorr(cm.cs)
 @
 
+\section*{Acknowledgments}
+
+We would like to thank Steve Walker, for early work on \code{glmer}, and Alex Stringer, for helpful comments on the manuscript.
+
 \bibliography{glmer}
 
-\section{Package versions used}
+\section*{Package versions used}
 
 <<pkgs, echo=FALSE>>=
 pkglist <- c("lme4", "performance", "DHARMa", "see")
