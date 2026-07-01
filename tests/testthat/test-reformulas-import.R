@@ -1,4 +1,4 @@
-## these tests may fail if run a second time in the same session, because of rlang only-report-once-per-session setting
+## these tests may fail if run a second time in the same session, because of the once-per-session warning throttling
 f <- ~ 1 + (1|f)
 test_that("deprecation warnings from lme4 formula processing", {
   expect_warning(subbars(f), "has moved")

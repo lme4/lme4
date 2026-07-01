@@ -94,6 +94,10 @@
       \url{https://github.com/lme4/lme4/pull/961} and
       \url{https://github.com/lme4/lme4/pull/811} for more detail,
       and \url{https://github.com/lme4/lme4/issues/742} for an example).
+      \item the dependency on \pkg{rlang} has been removed; the
+      once-per-session deprecation warnings for formula-processing
+      functions that moved to \pkg{reformulas} are now implemented
+      internally.
     } % itemize
   } % user-visible changes
 } % 2.0-2
@@ -340,9 +344,9 @@
   } % bug fixes
   \subsection{USER-VISIBLE CHANGES}{
     \itemize{
-      \item{updated tests of upstream \code{Matrix} version; should
+      \item updated tests of upstream \code{Matrix} version; should
 	      now warn only on ABI incompatibility, not on package version
-	      mismatch alone}
+	      mismatch alone
     } % itemize
   } % user-visible changes
 } % 1.1-35.2

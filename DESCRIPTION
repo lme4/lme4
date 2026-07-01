@@ -59,7 +59,6 @@ Imports:
     nloptr (>= 1.0.4),
     parallel,
     reformulas (>= 0.4.3.1),
-    rlang,
     splines,
     utils
 Suggests:
