@@ -45,7 +45,7 @@ Description:
 Depends: R (>= 3.6), Matrix, methods, stats
 LinkingTo:
     Matrix (>= 1.5-0),
-    Rcpp (>= 0.10.5),
+    Rcpp (>= 1.1.1-1.1),
     RcppEigen (>= 0.3.3.9.4)
 Imports:
     MASS,
