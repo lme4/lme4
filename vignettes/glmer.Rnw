@@ -182,12 +182,13 @@ inverse link function.
 (The \emph{link} function, $\bm g$, maps $\bm\mu$ to $\bm\eta$ and the \emph{inverse link},
 $\bm g^{-1}$, maps $\bm\eta$ to $\bm\mu$.)
 The maximum likelihood estimates (MLEs) of the coefficients, $\widehat{\bm\beta}$, are the values that
-minimize the sum of squared residuals
+minimize the (weighted) sum of squared residuals
 \begin{equation}
   \label{eq:LMMmles}
-  \widehat{\bm\beta} = \argmin_{\bm\beta}\sum_{i=1}^n (y_i - \mu_i)^2 .
+  \widehat{\bm\beta} = \argmin_{\bm\beta}\sum_{i=1}^n w_i (y_i - \mu_i)^2 .
 \end{equation}
-The squared residuals, $d(y_i,\mu_i)=(y_i - \mu_i)^2$, are the \emph{unit deviances} for
+with weights $w_i$.
+The weighted squared residuals, $d(y_i,\mu_i, w_i)= w_i (y_i - \mu_i)^2$, are the \emph{unit deviances} for
 the Gaussian family.\footnote{In the \proglang{R} \emph{family} lists of functions that encapsulate the
 distribution families in arguments to \code{glm} and \code{glmer}, the function that returns the unit deviances
 is named \code{dev.resids}, a source of confusion in some cases because they are not the values returned
@@ -202,10 +203,10 @@ The distribution family determines the \emph{unit deviance} function, $d(y_i,\mu
 of the coefficients are those that minimize the sum of the unit deviances
 \begin{equation}
   \label{eq:sumofunitdeviances}
-  \widehat{\bm\beta} = \argmin_{\bm\beta}\sum_{i=1}^n d(y_i,\mu_i) .
+  \widehat{\bm\beta} = \argmin_{\bm\beta}\sum_{i=1}^n d(y_i,\mu_i, w_i) .
 \end{equation}
 
-The unit deviances are the difference between negative twice the log-likelihood at $(y_i, \mu_i)$ and
+The unit deviances are the (weighted) difference between negative twice the log-likelihood at $(y_i, \mu_i)$ and
 negative twice the log-likelihood at $(y_i, y_i)$ (which is often zero).
 For the Poisson distribution the unit deviance function is
 \begin{equation}
@@ -217,6 +218,7 @@ For the Poisson distribution the unit deviance function is
   \end{cases}
 \end{equation}
 where $w_i$ is an optional prior case weight.
+For simplicity we generally neglect the prior weights and write $d(y_i, u_i)$ below.
 
 Minimizing the sum of the squared residuals in a linear model (i.e. finding the \emph{least squares} estimates
 $\widehat{\bm\beta}$ for an LM) can be performed as a direct (i.e. non-iterative) calculation.
@@ -374,7 +376,7 @@ where $g^\prime(\mu_i^{(k)})$ denotes the derivative of the link function at $\m
 
 Because the variances of the working residuals are not constant we must evaluate these variances
 and use weighted least squares, with the weights inversely proportional to the variances, to determine an
-increment $\bm\delta^{(k)}$ such that $\bm\beta^{(k+1)}=\bm\beta^{(k)}+\bm\delta^{(k)}$.
+increment $\bm\delta^{(k)}$ such that $\bm\beta^{(k+1)}=\bm\beta^{(k)}+\bm\delta^{(k)}$. (The \emph{working weights} based on the variances are combined with the prior weights $w_i$, if any have been specified.)
 An alternative approach is to define a \emph{working response}
 \begin{equation}
   \label{eq:wrkresp}
@@ -485,6 +487,7 @@ provides
     &=\tilde{f}\, |\bm L|
   \end{aligned}
 \end{equation}
+(where $\tilde f$ is the penalized deviance evaluated at the conditional modes)
 or, on the deviance scale,
 \begin{equation}
   \label{eq:LaplaceDev}
@@ -1573,13 +1576,13 @@ unscaled conditional log-likelihood. Following standard GLM theory
   \frac{d L(\bm\beta, \bm\theta | \bm y, \bm u)}{d \bm\psi}
   \frac{d \bm\psi}{d \bm\mu}
   \frac{d \bm\mu}{d \bm\eta}
-  \frac{d \bm\eta}{d \bm u}
+  \frac{d \bm\eta}{d \bm u} .
 \end{displaymath}
-The first derivative in this chain follow from basic results in GLM
+The first derivative in this chain follows from basic results in GLM
 theory,
 \begin{displaymath}
   \frac{d L(\bm\beta, \bm\theta | \bm y, \bm u)}{d \bm\psi} = 
-  (\bm y - \bm\mu)^\top \bm A
+  (\bm y - \bm\mu)^\top \bm A .
 \end{displaymath}
 Again from standard GLM theory, the next two derivatives define the
 inverse diagonal variance matrix,
@@ -1590,7 +1593,7 @@ and the diagonal Jacobian matrix,
 \begin{displaymath}
 \frac{d \bm\mu}{d \bm\eta} = \bm M \quad .
 \end{displaymath}
-Finally, because $\bm\beta$ affects $\bm\eta$ only linearly,
+Finally, because $\bm u$ affects $\bm\eta$ only linearly,
 \begin{displaymath}
   \frac{d \bm\eta}{d \bm u} = \bm Z \bm\Lambda_\theta
 \end{displaymath}
