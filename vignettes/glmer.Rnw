@@ -255,6 +255,18 @@ $\mc B=\bm\Lambda_{\bm\theta}\mc U$, and for which the linear predictor is
 ($\mc U$ is said to be ``spherical'' because contours of constant probability density
 are spheres centered at the origin.)
 
+Most generally, $\bm\Lambda_{\bm\theta}$ can be any lower triangular matrix, since
+$\bm\Lambda_{\bm\theta}\bm\Lambda_{\bm\theta}\trans$ is then guaranteed to be
+positive semidefinite. In \pkg{lme4} version 2.0 and later, we have also
+implemented \emph{structured covariance matrices}, which introduce a more
+elaborate mapping from $\bm\theta$ to $\bm\Lambda_{\bm\theta}$ that lets users
+specify a range of structured forms such as diagonal, compound symmetric, or
+first-order autoregressive (AR1) covariance matrices. We introduce the syntax
+for these structures in the CBPP example (Section~\ref{sec:cbpp}); see the
+\href{https://CRAN.R-project.org/package=lme4/vignettes/covariance_structures.html}{lme4 covariance structures vignette}
+for the theoretical details of how $\bm\Lambda_{\bm\theta}$ is constructed for
+each structure.
+
 The likelihood of the parameters, $\bm\beta$, $\bm\theta$ and $\sigma^2$, given $\mc Y=\bm y$,
 is the marginal density of $\mc Y$ evaluated at the observed $\bm y$.
 Conceptually, we determine an expression for the integral of the joint density,
@@ -1227,9 +1239,9 @@ matrices for (generalized) linear mixed models.
 compound symmetry, and first-order autoregressive (AR1) structures.
 By default, AR1 models assume a homogeneous-variance model (the variance is the same for all time steps), while the other models assume heterogeneous-variance models (variances differ for every level of the varying term); users can adjust this with the \code{hom} argument (e.g. \code{ar1(..., hom = FALSE)}).
 
-The unstructured covariance structure is the default for mixed models. 
-Here we illustrate fitting an AR1 model; the next example will show diagonal and compound symmetric
-models.
+The unstructured covariance structure is the default for mixed models.
+Here we illustrate fitting an AR1 model; the next example will show a compound
+symmetric model.
 
 <<covar_cbpp>>=
 gm.ar1 <- glmer(incidence/size ~ ar1(1 + herd | period),
@@ -1239,9 +1251,6 @@ print(VarCorr(gm.ar1))
 @
 
 For this particular model, a heterogeneous AR1 model (\code{ar1(..., hom = FALSE)}) results in a singular fit.
-
-See the \href{https://CRAN.R-project.org/package=lme4/vignettes/covariance_structures.html}{lme4 covariance structures vignette}
-for more detail.
 
 \subsection{Contraception}
 
@@ -1475,35 +1484,31 @@ The point estimates and confidence intervals of the explanatory variables are si
 
 Urban residence, presence of living children, and age were all strong predictors of contraceptive use among women in Bangladesh (because we are fitting a quadratic model for the effect of age, the non-significant effect of \code{age\_s} simply means that the marginal effect of age \emph{at the mean age} is not clearly negative or positive).
 
-With \code{lme4} versions greater than 2.0, we can
-also set up models with structured random effects
-covariance matrices.
-In the models below \code{diag} specifies a diagonal 
-variance-covariance structure, while \code{cs} specifies a compound symmetric model. The \code{hom} argument specifies
-whether the model should allow different variances for
-each varying effect (e.g. for intercepts and slopes in
-the models below, which allow the effects of the
-continuous covariate of age to vary across districts).
-
-Thus instead of (e.g.) \code{(1+urban|district)}, we can specify the random effect with
-diagonal, heterogeneous variances (\code{diag(1+urban|district)});
- diagonal, homogeneous variances (\code{diag(1+urban|district, hom = TRUE)});
-compound symmetric, heterogeneous variances (\code{cs(1+urban|district)}); or
-compound symmetric, homogeneous variances (\code{cs(1+urban|\allowbreak district, hom = TRUE)}).
+Returning to the structured covariance matrices introduced in
+Section~\ref{sec:cbpp}, we can replace the unstructured random effect
+\code{(1+urban|district)} with diagonal (\code{diag}) or compound symmetric
+(\code{cs}) structures, in either heterogeneous- or homogeneous-variance form
+(via the \code{hom} argument):
 
 <<cm_varcorr, echo = FALSE>>=
 cc <- glmerControl(check.conv.grad = .makeCC("warning", tol = 1e-2), check.conv.hess = "ignore")
 base_form <- use ~ age*ch + I(age^2) + urban
 cm.diag <- glmer(update(base_form, . ~ . + diag(1 + urban|district)), Contraception, binomial, control = cc )
 cm.homdiag <- glmer(update(base_form, . ~ . + diag(1 + urban|district, hom = TRUE)), Contraception, binomial, control = cc)
-cm.cs <- glmer(update(base_form, . ~ . + cs(1 + urban|district)), Contraception, binomial, control = cc)
 cm.homcs <- glmer(update(base_form, . ~ . + cs(1 + urban|district, hom = TRUE)), Contraception, binomial, control = cc)
+@
+
+For example, the compound symmetric fit is
+
+<<cm_cs, message = FALSE, warning = FALSE>>=
+cm.cs <- glmer(use ~ age*ch + I(age^2) + urban + cs(1 + urban | district),
+               Contraception, binomial, control = cc)
 @
 
 We can use \code{VarCorr} and other accessor methods as we would for models with default, unstructured covariance matrices, e.g.:
 
 <<cm_varcorr_view>>=
-VarCorr(cm.cs)
+print(VarCorr(cm.cs))
 @
 
 \section*{Acknowledgments}
