@@ -264,7 +264,7 @@ specify a range of structured forms such as diagonal, compound symmetric, or
 first-order autoregressive (AR1) covariance matrices. We introduce the syntax
 for these structures in the CBPP example (Section~\ref{sec:cbpp}); see the
 \href{https://CRAN.R-project.org/package=lme4/vignettes/covariance_structures.html}{lme4 covariance structures vignette}
-for the theoretical details of how $\bm\Lambda_{\bm\theta}$ is constructed for
+for the details of how $\bm\Lambda_{\bm\theta}$ is constructed for
 each structure.
 
 The likelihood of the parameters, $\bm\beta$, $\bm\theta$ and $\sigma^2$, given $\mc Y=\bm y$,
@@ -1487,7 +1487,7 @@ Urban residence, presence of living children, and age were all strong predictors
 Returning to the structured covariance matrices introduced in
 Section~\ref{sec:cbpp}, we can replace the unstructured random effect
 \code{(1+urban|district)} with diagonal (\code{diag}) or compound symmetric
-(\code{cs}) structures, in either heterogeneous- or homogeneous-variance form
+(\code{cs}) structures, with either heterogeneous or homogeneous variances
 (via the \code{hom} argument):
 
 <<cm_varcorr, echo = FALSE>>=
