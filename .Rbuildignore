@@ -47,3 +47,4 @@ Sweave.sty
 tests/testthat/test-summary_testlevel.*
 ^vignettes/glmer_old\.Rnw$
 ^vignettes/glmer_diff.pdf
+^vignettes/latexdiff_commit\.sh$
