@@ -1615,32 +1615,32 @@ Therefore we have,
   (\bm y - \bm\mu)^\top \bm A
   \bm V^{-1}
   \bm M
-  \bm Z \bm\Lambda_\theta +
+  \bm Z \bm\Lambda_\theta -
   \bm u^\top \quad .
 \label{eq:dPDEVdu}
 \end{equation}
 This is very similar to the gradient for GLMs with respect to fixed
 effects coefficients, $\bm\beta$. The only difference induced by
 including the penalty term for the random effects ($\bm u$), is the
-addition of the $\bm u^\top$ term.
+subtraction of the $\bm u^\top$ term.
 
 Again we apply the chain rule to take the Hessian,
 \begin{equation}
   \frac{d^2 L(\bm\beta, \bm\theta | \bm y, \bm u)}{d \bm u \, d \bm u} = 
-  \frac{d^2 L(\bm\beta, \bm\theta | \bm y, \bm u)}{d \bm u \, d \bm\mu}
+  \frac{d^2 L'(\bm\beta, \bm\theta | \bm y, \bm u)}{d \bm u \, d \bm\mu}
   \frac{d \bm\mu}{d \bm\eta}
-  \frac{d \bm\eta}{d \bm u} + \bm I_q
+  \frac{d \bm\eta}{d \bm u} - \bm I_q
 \end{equation}
 which leads to,
 \begin{equation}
   \frac{d^2 L(\bm\beta, \bm\theta | \bm y, \bm u)}{d \bm u \, d \bm u} = 
-  \frac{d^2 L(\bm\beta, \bm\theta | \bm y, \bm u)}{d \bm u \, d \bm\mu}\bm
+  \frac{d^2 L'(\bm\beta, \bm\theta | \bm y, \bm u)}{d \bm u \, d \bm\mu}\bm
   M \bm Z \bm\Lambda_\theta 
-  + \bm I_q
+  - \bm I_q
 \end{equation}
 The first derivative in this chain can be expressed as,
 \begin{equation}
-  \frac{d^2 L(\bm\beta, \bm\theta | \bm y, \bm u)}{d \bm u \, d \bm\mu} =
+  \frac{d^2 L'(\bm\beta, \bm\theta | \bm y, \bm u)}{d \bm u \, d \bm\mu} =
   -\bm\Lambda_\theta^\top \bm Z^\top \bm M \bm V^{-1} \bm A  + 
   \bm\Lambda_\theta^\top \bm Z^\top \left[ \frac{d \bm M \bm V^{-1}}{d \bm\mu} \right] \bm A \bm R
 \end{equation}
@@ -1655,7 +1655,7 @@ The Hessian can therefore be expressed as,
   -\bm \Lambda_\theta^\top \bm Z^\top \bm M \bm A^{1/2}\bm V^{-1/2}\left( 
     \bm I_n - 
     \bm V \bm M^{-1}\left[ \frac{d \bm M \bm V^{-1}}{d \bm\mu} \right] \bm R
-  \right) \bm V^{-1/2}\bm A^{1/2} \bm M \bm Z \bm\Lambda_\theta + \bm I_q
+  \right) \bm V^{-1/2}\bm A^{1/2} \bm M \bm Z \bm\Lambda_\theta - \bm I_q
 \label{eq:betaHessian}
 \end{equation}
 This result can be simplified by expressing it in terms of a weighted
@@ -1666,7 +1666,7 @@ random-effects design matrix, $\bm U = \bm A^{1/2}\bm V^{-1/2}\bm M
   -\bm U^\top\left( 
     \bm I_n - 
     \bm V \bm M^{-1}\left[ \frac{d \bm V^{-1}\bm M}{d \bm\mu} \right] \bm R
-  \right) \bm U + \bm I_q \quad .
+  \right) \bm U - \bm I_q \quad .
 \label{eq:betaHessiansimp}
 \end{equation}
 
@@ -1681,7 +1681,7 @@ which means that for canonical links,
   -\bm U^\top\left( 
     \bm I_n - 
     \bm I_n \left[ \frac{d \bm I_n}{d \bm\mu} \right] \bm R
-  \right) \bm U + \bm I_q = \bm U^\top \bm U + \bm I_q
+  \right) \bm U - \bm I_q = - \bm U^\top \bm U - \bm I_q
 \end{equation}
 The second way to simplify the Hessian is to take its expectation with
 respect to the distribution of the response, conditional on the
@@ -1695,10 +1695,10 @@ the Hessian via $\bm R$, we have that,
   -\bm U^\top\left( 
     \bm I_n - 
     \bm U \bm M^{-1}\left[ \frac{d \bm V^{-1}\bm M}{d\mu} \right] E(\bm R)
-  \right) \bm U + \bm I_q = \bm U^\top \bm U + \bm I_q
+  \right) \bm U - \bm I_q = - \bm U^\top \bm U - \bm I_q
 \label{eq:simphesstwo}
 \end{equation}
 
-Like base R's \code{glm}, \code{glmer} uses Fisher scoring throughout (which is identical to Newton's method for canonical links) to enable the use of the (P)IRLS algorithm.
+Like base R's \code{glm}, \code{glmer} uses Fisher scoring throughout (which is identical to Newton's method for canonical links) to enable the use of the (P)IRLS algorithm. As usual, we minimize the conditional negative log-density rather than maximizing the conditional log-density.
 
 \end{document}
