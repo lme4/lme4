@@ -437,7 +437,7 @@ In more detail, the PIRLS algorithm has the form
     \label{eq:PIRLSweights}
     \bm W^{(0)}=\left(\bm J^{(0)\top}\bm V^{(0)}\bm J^{(0)}\right)^{-1}
   \end{equation}
-(we would also multiply this quantity by a diagonal matrix of prior weights, if any were specifiied).
+(we would also multiply this quantity by a diagonal matrix of prior weights, if any were specified).
   Eq. \ref{eq:PIRLSweights} is written as a product and an inverse of matrices but all the matrices involved
   are diagonal and the evaluation of eq.~\ref{eq:PIRLSweights} is performed as vector operations.
 
@@ -1511,7 +1511,7 @@ We can use \code{VarCorr} and other accessor methods as we would for models with
 print(VarCorr(cm.cs))
 @
 
-\section*{Acknowledgments}
+\section*{Acknowledgements}
 
 We would like to thank Steve Walker, for early work on \code{glmer}, and Alex Stringer, for helpful comments on the manuscript.
 
