@@ -1096,7 +1096,7 @@ and statistical tests of model assumptions (Figure~\ref{fig:dharma_mod_cbpp}).
 
 <<dharma_mod_cbpp,fig.cap="Model assumption checks using the DHARMa package. \\code{n.s.} denotes ``not significant''.",echo=FALSE,warning=FALSE>>=
 ## FIXME: versions of DHARMa before 0.5.0 gave a significant nonlinearity test, so the caption
-## included: 'Other exploration (such as \\code{plot(simulationOutput, form = cbpp2\\$period)}) does not reveal any obvious problems such as nonlinear reponses, so we proceed with the analysis despite the significant adjusted quantile test.'
+## included: 'Other exploration (such as \\code{plot(simulationOutput, form = cbpp2\\$period)}) does not reveal any obvious problems such as nonlinear responses, so we proceed with the analysis despite the significant adjusted quantile test.'
 ## Post 0.5.0, there are no test rejections; instead we get the warning 'In getSimulations.merMod(fittedModel, nsim = n, simulateREs = simulateREs,  :
 ##  Model was fit with prior weights. These will be ignored in the simulation. See ?getSimulations for details.'
 ## (is this a false positive?)
@@ -1549,6 +1549,7 @@ The unscaled conditional log-density takes the form,
   \bm c -
   \frac{1}{2}\bm u^\top \bm u -
   \frac{q}{2}\log{2\pi}
+  \label{eq:unsccondlogdens}
 \end{equation}
 where $\bm\psi$ is the $n$-by-$1$ canonical parameter of an
 exponential family, $\bm\phi$ is the $n$-by-$1$ vector of cumulant
@@ -1583,15 +1584,16 @@ unscaled conditional log-likelihood. Following standard GLM theory
 \citep{McCullaghNelder1989}, we use the chain rule,
 \begin{displaymath}
   \frac{d L(\bm\beta, \bm\theta | \bm y, \bm u)}{d \bm u} = 
-  \frac{d L(\bm\beta, \bm\theta | \bm y, \bm u)}{d \bm\psi}
+  \frac{d L'(\bm\beta, \bm\theta | \bm y, \bm u)}{d \bm\psi}
   \frac{d \bm\psi}{d \bm\mu}
   \frac{d \bm\mu}{d \bm\eta}
-  \frac{d \bm\eta}{d \bm u} .
+  \frac{d \bm\eta}{d \bm u} - \frac{1}{2} \frac{d \, (\bm u^\top \bm u)}{d \, \bm u}
 \end{displaymath}
-The first derivative in this chain follows from basic results in GLM
+where $L'$ represents the log-density in (\ref{eq:unsccondlogdens}) exclusive of the penalty term.
+The first derivative in the first term's chain follows from basic results in GLM
 theory,
 \begin{displaymath}
-  \frac{d L(\bm\beta, \bm\theta | \bm y, \bm u)}{d \bm\psi} = 
+  \frac{d L'(\bm\beta, \bm\theta | \bm y, \bm u)}{d \bm\psi} = 
   (\bm y - \bm\mu)^\top \bm A .
 \end{displaymath}
 Again from standard GLM theory, the next two derivatives define the
@@ -1619,7 +1621,7 @@ Therefore we have,
 \end{equation}
 This is very similar to the gradient for GLMs with respect to fixed
 effects coefficients, $\bm\beta$. The only difference induced by
-differentiating with respect to the random effects, $\bm u$, is the
+including the penalty term for the random effects ($\bm u$), is the
 addition of the $\bm u^\top$ term.
 
 Again we apply the chain rule to take the Hessian,
@@ -1696,5 +1698,7 @@ the Hessian via $\bm R$, we have that,
   \right) \bm U + \bm I_q = \bm U^\top \bm U + \bm I_q
 \label{eq:simphesstwo}
 \end{equation}
+
+Like base R's \code{glm}, \code{glmer} uses Fisher scoring throughout (which is identical to Newton's method for canonical links) to enable the use of the (P)IRLS algorithm.
 
 \end{document}
