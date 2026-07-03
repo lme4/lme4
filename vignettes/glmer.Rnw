@@ -964,13 +964,20 @@ grad(dd1B,tmpf(gm1B)[-1])
 It is also worth considering
 adding an observation-level random effect to the model \citep{harrisonComparisonObservationlevelRandom2015},
 which we can do by creating a new factor based on observation
-number and using \code{update()} on the previous model:
+number and using \code{update()} on the previous model (we switch the optimizer to BOBYQA for both phases
+for one of the updates):
 <<cbppModelII, warning=FALSE>>=
-cbpp2 <- transform(cbpp2,obs=factor(seq(nrow(cbpp2))))    
-gm2 <- update(gm1,.~.+(1|obs))  ## herd and observation-level REs
+cbpp2 <- transform(cbpp2,obs=factor(seq(nrow(cbpp2))))
+bob_opt <- glmerControl(optimizer = "bobyqa")
+gm2 <- update(gm1,.~.+(1|obs), control = bob_opt)  ## herd and observation-level REs
 gm3 <- update(gm1,.~.-(1|herd)+(1|obs))  ## observation-level REs only
 @
 
+<<diagnose, echo=FALSE, warning=FALSE>>=
+aa <- allFit(gm2)
+ok <- summary(aa)[["which.OK"]]
+lapply(aa[ok], \(x) x@optinfo$conv$lme4$messages)
+@ 
 \subsubsection{Model summary}
 
 The first part of the summary reiterates
@@ -1204,7 +1211,7 @@ ggplot(combCI, aes(var, est, colour=type, shape=model)) +
   facet_wrap(~ vartype, ncol = 1, scale = "free")
 @    
 
-If the default optimizers (Nelder-Mead followed by BOBYQA) do not
+If the default optimizers (BOBYQA followed by Nelder-Mead) do not
 perform well, one could attempt to re-fit the model with a variety of 
 different optimizers using \code{allFit()}.
 The command \code{allFit(show.meth.tab=TRUE)} lists the optimizers \code{lme4}
