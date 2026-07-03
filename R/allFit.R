@@ -26,7 +26,7 @@ opt.ctrls <- list(bobyqa=c("npt","rhobeg","rhoend","iprint","maxfun"),
                               "xtol_rel", "xtol_abs", "maxeval", "maxtime",
                               "algorithm"),
                   nmkbw=c("tol","maxfeval","regsimp","maximize",
-                          "restarts.max","trace","maxfun"))
+                          "restarts.max","trace"))
 
 ## name of 'max function evaluations' for each optimizer
 maxfun_arg <- c(bobyqa = "maxfun",
@@ -130,11 +130,20 @@ allFit <- function(object, meth.tab = NULL,
             if (verbose) cat(fit.names[..i],": ")
             ctrl <- getCall(object)$control
             ## NB:  'ctrl' must become a correct *argument* list for g?lmerControl()
+            ## 'ctrl' as extracted above is an unevaluated language object:
+            ## NULL, a call (typically to g?lmerControl()), or a symbol
+            ## referring to a previously constructed control object (e.g.
+            ## control=cc where cc <- lmerControl(...) was assigned earlier).
+            ## eval() resolves either case to the actual, fully resolved
+            ## (and nested) control object, which we then unpack back into a
+            ## flat argument list (mirrors the lmerControl->glmerControl
+            ## backward-compatibility unpacking kludge in glmer(), lmer.R)
             if(is.null(ctrl)) {
                 ctrl <- list(optimizer=optimizer[..i])
             } else {
-                if(is.call(ctrl)) # typically true
-                    ctrl <- lapply(as.list(ctrl)[-1], eval)
+                ctrl <- eval(ctrl, envir = environment(formula(object)))
+                ctrl <- c(ctrl[!names(ctrl) %in% c("checkControl","checkConv")],
+                          ctrl$checkControl, ctrl$checkConv)
                 ctrl$optimizer <- optimizer[..i]
             }
             ## add method/algorithm to optCtrl as necessary

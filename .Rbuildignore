@@ -34,7 +34,7 @@ R/TAGS
 src/mcmcsamp\.h$
 src/mcmcsamp\.cpp$
 ^\.github$
-^\.claude$
+(^|/)\.claude$
 ^CLAUDE\.md$
 revdep/
 Rplots.pdf

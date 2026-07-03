@@ -47,6 +47,9 @@
       inside \code{poly()}; \code{poly()} with pre-specified coefficients
       (stored in \code{predvars}) rejected matrix input even though it
       accepted it during initial model fitting (GH #948)
+      \item \code{allFit()} could fail or emit spurious warnings when
+      refitting a model whose original \code{control} argument specified
+      a non-default \code{optimizer} or \code{optCtrl} (GH #985)
     } % itemize
   } % bug fixes
   \subsection{NEW FEATURES}{
