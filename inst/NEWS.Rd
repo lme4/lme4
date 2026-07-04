@@ -4,7 +4,7 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
-\section{CHANGES IN VERSION 2.0-2}{
+\section{CHANGES IN VERSION 2.0-3}{
   \subsection{BUG FIXES}{
     \itemize{
       \item fixed \code{compDev=FALSE} (R-level PIRLS, used for debugging):
