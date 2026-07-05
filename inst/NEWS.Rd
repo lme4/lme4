@@ -50,6 +50,11 @@
       \item \code{allFit()} could fail or emit spurious warnings when
       refitting a model whose original \code{control} argument specified
       a non-default \code{optimizer} or \code{optCtrl} (GH #985)
+      \item fixed a heap-use-after-free bug in \code{merPredD} construction.
+      This caused intermittent (GC-timing-dependent) \dQuote{Downdated VtV
+      is not positive definite} errors and other spurious failures in
+      \code{glmer()} fits, most visible under memory pressure (e.g. during
+      \code{R CMD check}) or under AddressSanitizer.
     } % itemize
   } % bug fixes
   \subsection{NEW FEATURES}{

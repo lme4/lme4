@@ -168,7 +168,7 @@ merPredD <-
                          .Call(merPredDinstallPars, ptr(), as.numeric(fac))
                      },
                     initializePtr = function() {
-                        Ptr <<- .Call(merPredDCreate, as(X, "matrix"), Lambdat,
+                        Ptr <<- .Call(merPredDCreate, X, Lambdat,
                                       LamtUt, Lind, RZX, Ut, Utr, V, VtV, Vtr,
                                       Xwts, Zt, beta0, delb, delu, theta, u0)
                         .Call(merPredDsetTheta, Ptr, theta)
