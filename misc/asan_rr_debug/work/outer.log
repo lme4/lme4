@@ -1,0 +1,16 @@
+=== attempt 1 ===
+attempt 1: no reverse-continue completion -- see /home/bolker/Documents/R/pkgs/lme4/misc/asan_rr_debug/work/rr_gdb_rw_1.log
+=== attempt 2 ===
+./rr_retry_loop_reverse_walk.sh: line 29: 1635887 Killed                  setsid nohup rr replay -g "$GOTO_EVENT" -p "$TARGET_PID" -s 0 -k "$TRACE" > "$LOGF" 2>&1 < /dev/null
+attempt 2: no reverse-continue completion -- see /home/bolker/Documents/R/pkgs/lme4/misc/asan_rr_debug/work/rr_gdb_rw_2.log
+=== attempt 3 ===
+./rr_retry_loop_reverse_walk.sh: line 29: 1636152 Killed                  setsid nohup rr replay -g "$GOTO_EVENT" -p "$TARGET_PID" -s 0 -k "$TRACE" > "$LOGF" 2>&1 < /dev/null
+attempt 3: no reverse-continue completion -- see /home/bolker/Documents/R/pkgs/lme4/misc/asan_rr_debug/work/rr_gdb_rw_3.log
+=== attempt 4 ===
+./rr_retry_loop_reverse_walk.sh: line 29: 1636387 Killed                  setsid nohup rr replay -g "$GOTO_EVENT" -p "$TARGET_PID" -s 0 -k "$TRACE" > "$LOGF" 2>&1 < /dev/null
+attempt 4: no reverse-continue completion -- see /home/bolker/Documents/R/pkgs/lme4/misc/asan_rr_debug/work/rr_gdb_rw_4.log
+=== attempt 5 ===
+./rr_retry_loop_reverse_walk.sh: line 29: 1636633 Killed                  setsid nohup rr replay -g "$GOTO_EVENT" -p "$TARGET_PID" -s 0 -k "$TRACE" > "$LOGF" 2>&1 < /dev/null
+attempt 5: no reverse-continue completion -- see /home/bolker/Documents/R/pkgs/lme4/misc/asan_rr_debug/work/rr_gdb_rw_5.log
+=== attempt 6 ===
+./rr_retry_loop_reverse_walk.sh: line 29: 1636928 Killed                  setsid nohup rr replay -g "$GOTO_EVENT" -p "$TARGET_PID" -s 0 -k "$TRACE" > "$LOGF" 2>&1 < /dev/null

@@ -1,0 +1,12 @@
+Loading required package: Matrix
+[1] 4.090747 2.774144
+[1] 4.243545 2.913982
+[1] 4.006388 2.996176
+[1] 3.784839 3.062762
+[1] 3.565662 2.999408
+Launch debugger with
+  'gdb' '-l' '10000' '-ex' 'set sysroot /' '-ex' 'target extended-remote 127.0.0.1:63523' '/usr/local/lib/R/bin/exec/R' 
+
+--------------------------------------------------
+ ---> Reached target process 1558209 at event 50000.
+--------------------------------------------------
