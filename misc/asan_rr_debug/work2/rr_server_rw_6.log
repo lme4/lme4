@@ -1,7 +1,0 @@
-Launch debugger with
-  'gdb' '-l' '10000' '-ex' 'set sysroot /' '-ex' 'target extended-remote 127.0.0.1:2521' '/usr/local/lib/R/bin/exec/R' 
-
---------------------------------------------------
- ---> Reached target process 1639764 at event 5000.
---------------------------------------------------
-Loading required package: Matrix
