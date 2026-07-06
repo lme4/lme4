@@ -159,6 +159,84 @@ instance/environment, itself kept alive via `rho$pp` where `rho` is the
 on the optimizer's call stack) should protect it for as long as the fit is
 running? This has not yet been answered.
 
+### Rcpp 1.1.2 diff investigation: `X` is ALTREP-wrapped, but that's not the discriminator
+
+Since the bug only appeared after the Rcpp 1.1.1.1 → 1.1.2 upgrade, checked
+whether the *actual* diff between those two versions (Rcpp 1.1.1.1 is CRAN's
+internal name for what Rcpp's own `NEWS.Rd` calls the non-itemized "1.1.1-1"
+hotfix, built directly on 1.1.1 — so the real diff is exactly the "Changes in
+Rcpp release version 1.1.2" `NEWS.Rd` section) contains anything relevant to
+memory/pointer handling.
+
+**Found a concrete, on-topic change:** Rcpp PR #1462 (closing #1461, "Return
+`dataptr()` again to avoid getting an invalid address for empty vectors")
+removed direct-accessor specializations (`REAL(x)`, `INTEGER(x)`, ...) from
+`r_vector_start<RTYPE>()` in `inst/include/Rcpp/internal/r_vector.h`, so
+*all* vector types — including `REALSXP` — now go through the generic
+`Rcpp::dataptr(x)` → `DATAPTR_RO(x)` path (R's ALTREP-aware read-only
+data-pointer accessor). This is exactly the function behind
+`Rcpp::Vector<REALSXP>::begin()`, which RcppEigen's
+`Exporter<Eigen::Map<Eigen::Matrix<T,Dynamic,Dynamic>>>::get()`
+(`RcppEigenWrap.h:212`) calls to build the pointer backing `d_X`. So this
+Rcpp version bump did change, specifically, how the pointer aliased by
+`d_X` gets obtained — a real, on-topic difference, not a coincidence of
+timing.
+
+**Empirically verified `X` genuinely is ALTREP-wrapped in production fits**
+(not just hypothetically possible for some other kind of R object). Traced
+it to `checkScaleX()` in `R/modular.R:157`: `structure(X, msgScaleX = wmsg)`
+runs on **every** `(g)lmer()` fit and is exactly the kind of "add an
+attribute without touching the data" operation R can satisfy by wrapping the
+object in its generic `"wrapper"` ALTREP class instead of duplicating.
+Confirmed directly with a tiny standalone probe (`ALTREP(x)` called from a
+`.Call`-registered C function, not part of the package) on the real `X`
+reaching `merPredDCreate` in a live `glmer(cbpp)` fit — `ALTREP(X)` is
+`TRUE`. A hand test additionally confirmed both `REAL(x)` and `DATAPTR_RO(x)`
+return the identical, stable address across repeated calls and explicit
+`gc()` calls for such a wrapped object (as they should, by the ALTREP
+contract) — so there's no simple "the two accessors return different
+addresses" story.
+
+**Ran a 40-iteration stress test** of `test-covariance_structures.R` with
+`R/AllClass.R`'s `initializePtr()` temporarily instrumented (gated on
+`LME4_ALTREP_LOG`/`LME4_ALTREP_PROBE_SO` env vars) to log, on every call,
+whether `X` was ALTREP and its data pointer/SEXP address:
+
+- **5/40 runs (12.5%) failed** with `Downdated VtV`, consistent with the
+  previously-observed 1-in-3-to-5 range (a bit lower here, within sample
+  noise for n=40).
+- **`ALTREP(X)` was `TRUE` for the failing model in all 40 runs — both the
+  35 that succeeded and the 5 that failed.** It does not discriminate.
+  (An earlier, premature read of partial data suggested failing runs had
+  fewer non-ALTREP calls logged than successful ones; that turned out to be
+  a trivial artifact of the script halting immediately after the uncaught
+  error, before reaching a later, unrelated model that happens to be the one
+  non-ALTREP call in the sequence — not a real correlation.)
+- **Conclusion: ALTREP-wrapping of `X` is real but is not, by itself, the
+  discriminating factor** between crashing and non-crashing runs. The Rcpp
+  1.1.2 `DATAPTR_RO` change remains a plausible contributor to *why this
+  became visible after the upgrade* (worth keeping in mind if anyone
+  compares against Rcpp 1.1.1.1 directly), but doesn't explain the
+  intermittency by itself, and doesn't need further chasing as an isolated
+  hypothesis.
+
+**Unexpected, stronger finding from the same stress test:** all 5 failures,
+with no exceptions, landed on the exact same model —
+`gm <- glmer(use ~ age + urban + (1 + urban | district), data =
+Contraception, family = binomial)` at `test-covariance_structures.R:400`,
+the 13th of ~24-25 model fits in the file. If failure risk were spread
+evenly across all fits in the script this would be a ~1.5×10⁻⁶ coincidence,
+so this specific model is genuinely more hazard-prone, not merely "first in
+line." It's a binomial GLMM (PIRLS re-weighting, repeated `updateXwts()`
+calls against the same once-constructed `d_X` Map across iterations) as
+opposed to the many Gaussian `lmer()` fits earlier in the same file that
+never failed. Whether the `us()`/`cs()`/`diag()` structured-covariance
+variants of the same model (later in the same file) are equally hazardous
+is not yet known from this run, since every failing run halted at line 400
+before reaching them — this is worth targeted follow-up (e.g. instrumenting
+`updateXwts()` itself to log call count/pointer stability across PIRLS
+iterations specifically for this model).
+
 ### Two things that are *not* this bug (for future readers)
 
 1. **`test-isSingular.R:99`** deliberately simulates data from
