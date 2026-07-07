@@ -55,6 +55,10 @@
       is not positive definite} errors and other spurious failures in
       \code{glmer()} fits, most visible under memory pressure (e.g. during
       \code{R CMD check}) or under AddressSanitizer.
+      \item fixed a second, unrelated heap-use-after-free with the same
+      symptoms, triggered by an interaction between R's ALTREP-wrapped
+      vectors and Rcpp's data-pointer accessors (exposed by the Rcpp 1.1.2
+      upgrade).
     } % itemize
   } % bug fixes
   \subsection{NEW FEATURES}{

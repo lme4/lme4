@@ -20,14 +20,38 @@ namespace lme4 {
     typedef Eigen::Map<VectorXd>  MVec;
     typedef Eigen::Map<VectorXi>  MiVec;
 
+    // Build a dense-matrix Map using REAL() (a writable accessor) rather
+    // than Rcpp::as<MMat>(), which (since Rcpp 1.1.2, PR #1462) routes
+    // through the read-only DATAPTR_RO(). For an ALTREP "wrapper" object
+    // still sharing its data, DATAPTR_RO() returns a pointer that a later,
+    // independent R-level writable access to the same SEXP (e.g. `pp$X %*%
+    // spars` in mkdevfun(), R/lmer.R) can silently invalidate by triggering
+    // R's copy-on-write duplication underneath us, orphaning the buffer
+    // this Map still points into (see misc/README_asan_problems.md).
+    // Calling REAL() here forces that duplication-if-shared to happen now,
+    // up front, so the pointer captured below is guaranteed stable for the
+    // lifetime of the Map -- matching the behaviour Rcpp itself provided
+    // prior to 1.1.2.
+    static MMat asMMatWritable(SEXP x) {
+        if (TYPEOF(x) != REALSXP)
+            throw invalid_argument("Wrong R type for mapped matrix");
+        int nrow = Rf_xlength(x), ncol = 1;
+        if (Rf_isMatrix(x)) {
+            int *dims = INTEGER(Rf_getAttrib(x, R_DimSymbol));
+            nrow = dims[0];
+            ncol = dims[1];
+        }
+        return MMat(REAL(x), nrow, ncol);
+    }
+
     merPredD::merPredD(SEXP X, SEXP Lambdat, SEXP LamtUt, SEXP Lind,
                        SEXP RZX, SEXP Ut, SEXP Utr, SEXP V, SEXP VtV,
                        SEXP Vtr, SEXP Xwts, SEXP Zt, SEXP beta0,
                        SEXP delb, SEXP delu, SEXP theta, SEXP u0)
-        : d_X(       as<MMat>(X)),
-          d_RZX(     as<MMat>(RZX)),
-          d_V(       as<MMat>(V)),
-          d_VtV(     as<MMat>(VtV)),
+        : d_X(       asMMatWritable(X)),
+          d_RZX(     asMMatWritable(RZX)),
+          d_V(       asMMatWritable(V)),
+          d_VtV(     asMMatWritable(VtV)),
           d_Zt(      as<MSpMatrixd>(Zt)),
           d_Ut(      as<MSpMatrixd>(Ut)),
           d_LamtUt(  as<MSpMatrixd>(LamtUt)),

@@ -237,6 +237,122 @@ before reaching them — this is worth targeted follow-up (e.g. instrumenting
 `updateXwts()` itself to log call count/pointer stability across PIRLS
 iterations specifically for this model).
 
+### Likely ROOT CAUSE identified (2026-07-06, via colleague's gdb session)
+
+**Answers the open question above** ("why does GC ever consider `X`
+unreachable"). The mechanism is a property of R's generic ALTREP `"wrapper"`
+class, not of GC/reachability at all — `X` doesn't become unreachable in the
+ordinary sense; rather, the *specific memory `d_X` points at* gets silently
+detached from the object that's keeping it alive, while `d_X`'s raw pointer
+still points at the old location.
+
+**The mechanism:**
+
+1. R's generic `"wrapper"` ALTREP class (used whenever `structure()`/`attr<-`
+   adds an attribute to a vector without duplicating it — see `checkScaleX()`
+   above) stores the real data as an internal `WRAPPER_WRAPPED(x)` slot,
+   reached via `CAR`/`SETCAR` (`src/main/altclasses.c`).
+2. `DATAPTR_RO(x)` (read-only access — what Rcpp 1.1.2's `dataptr()` now
+   uses, per PR #1462 above) just returns the pointer to whatever is
+   currently in that slot. It does **not** check/force privatisation.
+3. `REAL(x)` / `DATAPTR(x)` (writable access) does check: if
+   `MAYBE_SHARED(WRAPPER_WRAPPED(x))`, it replaces the slot's contents with
+   `shallow_duplicate(data)` (`WRAPPER_WRAPPED_RW`, `altclasses.c:1442-1449`)
+   *before* returning a pointer into the new copy. This is R's normal
+   copy-on-write mechanism operating transparently underneath the ALTREP
+   wrapper.
+4. **The bug:** `merPredDCreate` builds `d_X` once, at construction, from
+   whatever `DATAPTR_RO(X)` returns at that moment (step 2 — no
+   privatisation). If `X`'s wrapped data is still `MAYBE_SHARED` at that
+   point, `d_X`'s raw Eigen pointer aliases the *shared* buffer, not a
+   private one.
+5. Later, **every single deviance-function evaluation** during optimisation
+   calls back into R-level code that does a genuine `%*%` on the R-level `X`
+   binding: `mkdevfun()`'s `nAGQ > 0` branch (`R/lmer.R:347`,
+   `offset <- baseOffset + pp$X %*% spars`) — and `nAGQ` **defaults to `1L`**
+   in `glmer()`, so this is the default code path for essentially every fit
+   with any fixed effect, confirmed by `grep`. `%*%` (`do_matprod`,
+   `src/main/array.c:1423`) calls `REAL(x)` — a *writable* accessor — on `X`.
+6. Since `X`'s wrapped data is (still) `MAYBE_SHARED`, this triggers step 3:
+   R silently swaps the wrapper's internal slot to point at a fresh private
+   copy. The *original* buffer — the one `d_X`'s Eigen::Map still points
+   into — is now referenced by nothing (the ALTREP wrapper was its only
+   strong referrer) and becomes eligible for GC. Once GC actually reclaims
+   it, `d_X` is a dangling pointer: heap-use-after-free, surfacing later as
+   corrupted `VtV`/`Downdated VtV is not positive definite`.
+7. Confirmed directly with a gdb watchpoint on `((SEXP)Xs)->u.listsxp` during
+   `example(cbpp)`: the wrapped-data slot visibly changes mid-optimisation,
+   inside `WRAPPER_WRAPPED_RW` → `SETCAR`, called from
+   `ALTVEC_DATAPTR_EX`/`DATAPTR`/`do_matprod`, with the R call stack at that
+   point showing `nM$newf(fn(nM$xeval()))` → `fn(nM$xeval())` — i.e. exactly
+   the deviance-function evaluation during Nelder-Mead optimisation.
+
+**Why the Rcpp 1.1.1.1 → 1.1.2 upgrade exposed this:** pre-1.1.2 Rcpp built
+`d_X` via direct `REAL(X)` (a *writable* accessor) at construction time in
+`merPredDCreate` itself. That forced the shared→private duplication
+immediately, up front, before `d_X` ever cached a pointer — so `d_X` was
+always privately owned and stable from the start, and the later `pp$X %*%
+spars` call would find the wrapper's data already private (`MAYBE_SHARED`
+false) and would *not* re-duplicate. Rcpp 1.1.2 switched to `DATAPTR_RO`
+(read-only, no forced duplication) for building the same pointer, so `d_X`
+now aliases shared data that something else can — and, on the default
+code path, reliably does — invalidate later.
+
+**Why holding the wrapper SEXP alive via `XPtr`'s `prot` slot didn't fix
+it** (colleague's first attempted patch, `src/external.cpp`, holding all
+constructor args alive via `R_SetExternalPtrProtected`): that only keeps
+the *wrapper object* (`Xs`) alive. It does nothing to protect the
+*original wrapped data* SEXP, which lived only in the wrapper's internal
+`CAR` slot — precisely the slot that gets overwritten by `SETCAR` in step
+6. Once overwritten, the original data has no surviving references
+regardless of what holds the wrapper alive.
+
+**Fix implemented and confirmed (2026-07-06).** Force materialisation to a
+private, writable pointer when building the `Eigen::Map`s in
+`merPredD::merPredD` (`src/predModule.cpp`: `d_X`, `d_RZX`, `d_V`,
+`d_VtV` — all four went through the same `as<MMat>()` → `Exporter` →
+`Rcpp::Vector<REALSXP>::begin()` → `dataptr()` path). Added a small static
+helper, `asMMatWritable(SEXP x)`, that replicates `RcppEigenWrap.h`'s
+`Exporter` dimension logic but obtains the data pointer via `REAL(x)`
+(the writable/materialising accessor) instead of `Rcpp::as<MMat>()`'s
+read-only `DATAPTR_RO()` path, and used it for all four dense-matrix
+fields in place of `as<MMat>(...)`. This restores the pre-1.1.2 forced-
+privatisation-at-construction behaviour explicitly, independent of
+whatever accessor Rcpp/RcppEigen choose to route through internally in
+future versions. Applied to all four Map fields for consistency, though
+`d_X` is the only one independently touched by R-level code afterward via
+`pp$X %*% spars`, so it's the only one confirmed hazardous.
+
+**Verification:**
+- Compiles cleanly, normal (non-ASan) build reinstalled without issue.
+- **60/60 iterations** of `testthat::test_file("test-covariance_structures.R")`
+  in fresh `Rscript` subprocesses passed clean — zero `Downdated VtV`
+  failures, versus the ~12.5% (5/40) failure rate measured pre-fix under
+  identical conditions.
+- **Rebuilt with the exact ASan instrumentation that originally caught the
+  heap-use-after-free** (`-fsanitize=address -fno-omit-frame-pointer -g -O0`
+  in `src/Makevars`, `LD_PRELOAD=$(gcc -print-file-name=libasan.so)
+  ASAN_OPTIONS=detect_leaks=0`, `R CMD INSTALL --preclean`). Under this
+  build: **5/5 clean runs of `example(cbpp)`** (the exact reproduction used
+  in the colleague's gdb session that identified the root cause) and **8/8
+  clean runs of `test-covariance_structures.R`** — no ASan errors, no
+  `Downdated VtV`, across 13 total ASan-instrumented runs. Since ASan was
+  previously shown to *increase* the failure rate (timing/layout
+  perturbation makes the race easier to hit), a clean run under ASan is
+  much stronger evidence than a clean plain run.
+- Also re-ran `test-predict.R` and `test-isSingular.R` (the other two files
+  known to reproduce the bug) once each post-fix: both pass clean.
+- `src/Makevars` was returned to its original state
+  (`PKG_CXXFLAGS = -DNDEBUG -DEIGEN_DONT_VECTORIZE`, no ASan flags) after
+  ASan verification; confirmed via `git diff` showing no changes to that
+  file.
+
+**Not yet done:** a full `R CMD check`/whole-test-suite run (the most
+reliable historical trigger, see "Where the bug currently reproduces"
+below) hasn't been repeated post-fix; worth doing before considering this
+closed. The `src/predModule.cpp` diff (currently uncommitted, along with
+this README update) is ready for review/commit.
+
 ### Two things that are *not* this bug (for future readers)
 
 1. **`test-isSingular.R:99`** deliberately simulates data from
