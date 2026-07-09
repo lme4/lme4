@@ -1,0 +1,1062 @@
+RESI
+evolvability
+glmertree
+glmmSeq
+glmmTMB
+mermboost
+nadir
+panelr
+robustlmm
+simr
+steppedwedge
+
+
+Changes to worse in reverse depends:
+
+Package: evolvability
+Check: re-building of vignette outputs
+New result: ERROR
+  Error(s) in re-building vignettes:
+    ...
+  --- re-building ‘Analyzing_rates_of_evolution.Rmd’ using rmarkdown
+  
+  Quitting from Analyzing_rates_of_evolution.Rmd:210-214 [unnamed-chunk-24]
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  <error/rlang_error>
+  Error in `model.frame.default()`:
+  ! invalid type (closure) for variable '(weights)'
+  ---
+  Backtrace:
+      ▆
+   1. └─evolvability::rate_gls(...)
+   2.   └─evolvability::Almer(...)
+   3.     ├─lme4::lFormula(...)
+   4.     │ └─lme4:::mkFormula(...)
+   5.     │   └─base::eval(mf, parent_env)
+   6.     │     └─base::eval(mf, parent_env)
+   7.     ├─stats::model.frame(...)
+   8.     └─stats::model.frame.default(...)
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  
+  Error: processing vignette 'Analyzing_rates_of_evolution.Rmd' failed with diagnostics:
+  invalid type (closure) for variable '(weights)'
+  --- failed re-building ‘Analyzing_rates_of_evolution.Rmd’
+  
+  --- re-building ‘Phylogenetic_mixed_model.Rmd’ using rmarkdown
+  
+  Quitting from Phylogenetic_mixed_model.Rmd:57-60 [unnamed-chunk-6]
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  <error/rlang_error>
+  Error in `model.frame.default()`:
+  ! invalid type (closure) for variable '(weights)'
+  ---
+  Backtrace:
+      ▆
+   1. └─evolvability::Almer(y ~ 1 + (1 | species), data = dt, A = list(species = A))
+   2.   ├─lme4::lFormula(...)
+   3.   │ └─lme4:::mkFormula(...)
+   4.   │   └─base::eval(mf, parent_env)
+   5.   │     └─base::eval(mf, parent_env)
+   6.   ├─stats::model.frame(...)
+   7.   └─stats::model.frame.default(...)
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  
+  Error: processing vignette 'Phylogenetic_mixed_model.Rmd' failed with diagnostics:
+  invalid type (closure) for variable '(weights)'
+  --- failed re-building ‘Phylogenetic_mixed_model.Rmd’
+  
+  SUMMARY: processing the following files failed:
+    ‘Analyzing_rates_of_evolution.Rmd’ ‘Phylogenetic_mixed_model.Rmd’
+  
+  Error: Vignette re-building failed.
+  Execution halted
+
+Package: glmertree
+Check: re-building of vignette outputs
+New result: ERROR
+  Error(s) in re-building vignettes:
+    ...
+  --- re-building ‘glmertree.Rnw’ using Sweave
+  Loading required package: lme4
+  Loading required package: Matrix
+  Loading required package: partykit
+  Loading required package: grid
+  Loading required package: libcoin
+  Loading required package: mvtnorm
+  
+  Error: processing vignette 'glmertree.Rnw' failed with diagnostics:
+   chunk 6 
+  Error in setParams(object, newparams) : 
+    must specify sigma when using a family with an estimated scale/dispersion parameter
+  
+  --- failed re-building ‘glmertree.Rnw’
+  
+  SUMMARY: processing the following file failed:
+    ‘glmertree.Rnw’
+  
+  Error: Vignette re-building failed.
+  Execution halted
+
+Package: glmertree
+Check: tests
+New result: ERROR
+    Running ‘test_glmertree.R’ [2s/2s]
+  Running the tests in ‘tests/test_glmertree.R’ failed.
+  Complete output:
+    > library("glmertree")
+    Loading required package: lme4
+    Loading required package: Matrix
+    Loading required package: partykit
+    Loading required package: grid
+    Loading required package: libcoin
+    Loading required package: mvtnorm
+    > options(width = 70, prompt = "R> ", continue = "+  ", digits = 4)
+    R> 
+    R> data("DepressionDemo", package = "glmertree")
+    R> summary(DepressionDemo)
+       depression          treatment     cluster        age    
+     Min.   : 3.00   Treatment 1:78   1      :15   Min.   :18  
+     1st Qu.: 7.00   Treatment 2:72   2      :15   1st Qu.:39  
+     Median : 9.00                    3      :15   Median :45  
+     Mean   : 9.12                    4      :15   Mean   :45  
+     3rd Qu.:11.00                    5      :15   3rd Qu.:52  
+     Max.   :16.00                    6      :15   Max.   :69  
+                                      (Other):60               
+        anxiety        duration     depression_bin
+     Min.   : 3.0   Min.   : 1.00   0:78          
+     1st Qu.: 8.0   1st Qu.: 5.00   1:72          
+     Median :10.0   Median : 7.00                 
+     Mean   :10.3   Mean   : 6.97                 
+     3rd Qu.:12.0   3rd Qu.: 9.00                 
+     Max.   :18.0   Max.   :17.00                 
+                                                  
+    R> 
+    R> lmm_tree <- lmertree(depression ~ treatment | cluster | age + duration + anxiety,
+    +    data = DepressionDemo)
+    Error in setParams(object, newparams) : 
+      must specify sigma when using a family with an estimated scale/dispersion parameter
+    Calls: lmertree
+    Execution halted
+
+Package: glmmSeq
+Check: examples
+New result: ERROR
+  Running examples in ‘glmmSeq-Ex.R’ failed
+  The error most likely occurred in:
+  
+  > base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+  > ### Name: fcPlot
+  > ### Title: Plotly or ggplot fold change plots
+  > ### Aliases: fcPlot
+  > ### Keywords: hplot
+  > 
+  > ### ** Examples
+  > 
+  > data(PEAC_minimal_load)
+  > 
+  > disp <- apply(tpm, 1, function(x) {
+  + (var(x, na.rm = TRUE)-mean(x, na.rm = TRUE))/(mean(x, na.rm = TRUE)**2)
+  + })
+  > 
+  > glmmFit <- glmmSeq(~ Timepoint * EULAR_6m + (1 | PATID),
+  +                      countdata = tpm[1:5, ],
+  +                      metadata = metadata,
+  +                      dispersion = disp,
+  +                      verbose = FALSE)
+  Warning: the ‘findbars’ function has moved to the reformulas package. Please update your imports, or ask an upstream package maintainer to do so.
+  Warning: the ‘subbars’ function has moved to the reformulas package. Please update your imports, or ask an upstream package maintainer to do so.
+  Warning: the ‘nobars’ function has moved to the reformulas package. Please update your imports, or ask an upstream package maintainer to do so.
+  All genes returned an error. Check call. Check sufficient data in each group
+                                                                                                                                            MS4A1 
+  "Error in model.frame.default(data = data, offset = offset, drop.unused.levels = TRUE,  : \n  invalid type (closure) for variable '(offset)'\n" 
+  > 
+  > fcPlot(object = glmmFit,
+  +       x1var = "Timepoint",
+  +       x2var = "EULAR_6m",
+  +       x2Values = c("Good", "Non-response"),
+  +       pCutoff = 0.05,
+  +       useAdjusted = FALSE,
+  +       plotCutoff = 1,
+  +       graphics = "plotly")
+  Error in object@stats : 
+    no applicable method for `@` applied to an object of class "character"
+  Calls: fcPlot -> colnames -> is.data.frame
+  Execution halted
+
+Package: glmmSeq
+Check: re-building of vignette outputs
+New result: ERROR
+  Error(s) in re-building vignettes:
+    ...
+  --- re-building ‘glmmSeq.rmd’ using rmarkdown
+  
+    |                                                                  |   0%
+    |=========================================================         |  86%  eta 0.1 secs 
+    |==========================================================        |  88%  eta 0.1 secs 
+    |===========================================================       |  90%  eta 0.1 secs 
+    |=============================================================     |  92%  eta 0 secs   
+    |==============================================================    |  94%  eta 0 secs   
+    |===============================================================   |  96%  eta 0 secs   
+    |================================================================= |  98%  eta 0 secs   
+    |==================================================================| 100%               
+    |==================================================================| 100%  (0.608 secs) 
+  
+  Quitting from glmmSeq.rmd:273-275 [unnamed-chunk-18]
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  <error/rlang_error>
+  Error in `results@modelData`:
+  ! no applicable method for `@` applied to an object of class "character"
+  ---
+  Backtrace:
+      ▆
+   1. ├─kable(results@modelData) %>% kable_styling()
+   2. ├─kableExtra::kable_styling(.)
+   3. └─knitr::kable(results@modelData)
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  
+  Error: processing vignette 'glmmSeq.rmd' failed with diagnostics:
+  no applicable method for `@` applied to an object of class "character"
+  --- failed re-building ‘glmmSeq.rmd’
+  
+  SUMMARY: processing the following file failed:
+    ‘glmmSeq.rmd’
+  
+  Error: Vignette re-building failed.
+  Execution halted
+
+Package: glmmTMB
+Check: tests
+New result: ERROR
+    Running ‘AAAtest-all.R’ [62s/62s]
+  Running the tests in ‘tests/AAAtest-all.R’ failed.
+  Complete output:
+    > if (require("testthat")) {
+    +     pkg <- "glmmTMB"
+    +     require(pkg, character.only=TRUE)
+    +     print(sessionInfo())
+    +     test_check(pkg, reporter="summary")
+    +     print(warnings()) # TODO? catch most of these by expect_warning(..)
+    + } else {
+    +     warnings("Package 'testthat' not available, cannot run unit tests for package",
+    + 	     sQuote(pkg))
+    + }
+    Loading required package: testthat
+    Loading required package: glmmTMB
+    R Under development (unstable) (2026-07-08 r90215)
+    Platform: x86_64-pc-linux-gnu
+    Running under: Debian GNU/Linux forky/sid
+    
+    Matrix products: default
+    BLAS:   /home/hornik/tmp/R-d-gcc-16/lib/libRblas.so 
+    LAPACK: /usr/lib/x86_64-linux-gnu/lapack/liblapack.so.3.12.1;  LAPACK version 3.12.0
+    
+    locale:
+     [1] LC_CTYPE=C.UTF-8       LC_NUMERIC=C           LC_TIME=C.UTF-8       
+     [4] LC_COLLATE=C           LC_MONETARY=C.UTF-8    LC_MESSAGES=C.UTF-8   
+     [7] LC_PAPER=C.UTF-8       LC_NAME=C              LC_ADDRESS=C          
+    [10] LC_TELEPHONE=C         LC_MEASUREMENT=C.UTF-8 LC_IDENTIFICATION=C   
+    
+    time zone: Europe/Vienna
+    tzcode source: system (glibc)
+    
+    attached base packages:
+    [1] stats     graphics  grDevices utils     datasets  methods   base     
+    
+    other attached packages:
+    [1] glmmTMB_1.1.14 testthat_3.3.2
+    
+    loaded via a namespace (and not attached):
+     [1] nlme_3.1-169        cli_3.6.6           TH.data_1.1-5      
+     [4] rlang_1.3.0         estimability_2.0.0  otel_0.2.0         
+     [7] reformulas_0.4.4    xtable_1.8-8        minqa_1.2.8        
+    [10] zoo_1.8-15          TMB_1.9.21          lme4_2.0-3         
+    [13] brio_1.1.5          grid_4.7.0          MASS_7.3-65        
+    [16] mvtnorm_1.4-1       lifecycle_1.0.5     numDeriv_2016.8-1.1
+    [19] multcomp_1.4-30     compiler_4.7.0      codetools_0.2-20   
+    [22] coda_0.19-4.1       emmeans_2.0.3       sandwich_3.1-1     
+    [25] Rcpp_1.1.2          mgcv_1.9-4          lattice_0.22-9     
+    [28] nloptr_2.2.1        R6_2.6.1            Rdpack_2.6.6       
+    [31] splines_4.7.0       rbibutils_2.4.1     magrittr_2.0.5     
+    [34] Matrix_1.7-5        tools_4.7.0         boot_1.3-32        
+    [37] survival_3.8-9     
+    Anova: ...............
+    VarCorr: ....1
+    altopt: 
+    alternative optimizers: S
+    basics: .............SS.....S......S
+    trickier examples: SS.SSSS.............
+    bootMer: 
+    bootMer: SS
+    checkRank: ................................................
+    control: SS.....
+    ddf: ....
+    diagnose: .S..
+    disp: ...
+    downstream: S.....
+    edgecases: 
+    test edge cases: .
+    env: 
+    basic examples: ...
+    equalto: .........
+    families: .....................SSSSSSSSS.........................................
+    formulas: 
+    formula parsing: ................
+    mapequal: ........
+    mapopt: S
+    methods: ...............................S..........................................S..............S.......................................................................................
+    misc: .
+    offset: SSSSSSSSS
+    predict: .....SSSSS.................S..SSS....S..S...S.............S......................
+    priors: ...........SS
+    propto: .........
+    reml: ........
+    rr: ..........
+    saveload: 
+    Saving and loading glmmTMB objects: .
+    simulate: .........
+    simulate_new: ....S...............
+    smooths: ......
+    sparseX: 
+    sparse X models: .......
+    start: ..
+    utils: ...........................................................................................................
+    varstruc: ............SSS.S
+    weight: .........
+    zi: 
+    ZI models: SS
+    
+    ══ Skipped ═════════════════════════════════════════════════════════════════════
+    1. downstream methods work with optim() ('test-altopt.R:11:3') - Reason: On CRAN
+    
+    2. Update Gaussian ('test-basics.R:85:3') - Reason: On CRAN
+    
+    3. Variance structures ('test-basics.R:94:3') - Reason: On CRAN
+    
+    4. Multiple RE, reordering ('test-basics.R:124:6') - Reason: On CRAN
+    
+    5. close to lme4 results ('test-basics.R:164:5') - Reason: On CRAN
+    
+    6. basic zero inflation ('test-basics.R:218:8') - Reason: On CRAN
+    
+    7. alternative binomial model specifications ('test-basics.R:237:5') - Reason: On CRAN
+    
+    8. NA handling ('test-basics.R:258:5') - Reason: On CRAN
+    
+    9. quine NB fit ('test-basics.R:276:5') - Reason: On CRAN
+    
+    10. contrasts arg ('test-basics.R:287:5') - Reason: On CRAN
+    
+    11. zero disp setting ('test-basics.R:298:5') - Reason: On CRAN
+    
+    12. Bernoulli responses ('test-bootMer.R:12:3') - Reason: On CRAN
+    
+    13. binomial responses ('test-bootMer.R:22:5') - Reason: On CRAN
+    
+    14. profile method ('test-control.R:16:3') - Reason: On CRAN
+    
+    15. parallel regions ('test-control.R:50:3') - Reason: On CRAN
+    
+    16. diagnose works with Tweedie fits ('test-diagnose.R:16:5') - Reason: On CRAN
+    
+    17. emmeans ('test-downstream.R:22:5') - Reason: On CRAN
+    
+    18. beta ('test-families.R:103:3') - Reason: On CRAN
+    
+    19. nbinom ('test-families.R:125:5') - Reason: On CRAN
+    
+    20. dbetabinom ('test-families.R:186:5') - Reason: On CRAN
+    
+    21. truncated ('test-families.R:259:5') - Reason: On CRAN
+    
+    22. truncated_genpois ('test-families.R:336:3') - Reason: On CRAN
+    
+    23. truncated_compois ('test-families.R:352:5') - Reason: On CRAN
+    
+    24. compois ('test-families.R:362:5') - Reason: On CRAN
+    
+    25. genpois ('test-families.R:372:5') - Reason: On CRAN
+    
+    26. tweedie ('test-families.R:380:5') - Reason: On CRAN
+    
+    27. (code run outside of `test_that()`) - Reason: empty test
+    
+    28. anova ML/REML checks ('test-methods.R:135:5') - Reason: On CRAN
+    
+    29. simulate with re.form = NA ('test-methods.R:410:1') - Reason: empty test
+    
+    30. various binomial response types work ('test-methods.R:490:3') - Reason: On CRAN
+    
+    31. LM with offset as argument ('test-offset.R:27:3') - Reason: On CRAN
+    
+    32. LM with offset in formula ('test-offset.R:35:5') - Reason: On CRAN
+    
+    33. LM with offset in formula - variable not in environment ('test-offset.R:48:5') - Reason: On CRAN
+    
+    34. LM with offset in dispersion formula ('test-offset.R:57:5') - Reason: On CRAN
+    
+    35. LM with multiple offsets (cond/dispersion) ('test-offset.R:65:5') - Reason: On CRAN
+    
+    36. LM with random crap in the formula ('test-offset.R:74:5') - Reason: On CRAN
+    
+    37. offset in do.call ('test-offset.R:81:5') - Reason: On CRAN
+    
+    38. LONG offset in do.call ('test-offset.R:90:5') - Reason: On CRAN
+    
+    39. offset works with attributes ('test-offset.R:101:3') - Reason: On CRAN
+    
+    40. new levels of fixed effect factor ('test-predict.R:37:5') - Reason: On CRAN
+    
+    41. new levels in RE term ('test-predict.R:44:5') - Reason: On CRAN
+    
+    42. new levels in AR1 (OK) ('test-predict.R:51:5') - Reason: On CRAN
+    
+    43. two-column response ('test-predict.R:59:5') - Reason: On CRAN
+    
+    44. Prediction with dispformula=~0 ('test-predict.R:67:5') - Reason: On CRAN
+    
+    45. scale ('test-predict.R:181:5') - Reason: On CRAN
+    
+    46. scale_RE ('test-predict.R:203:5') - Reason: On CRAN
+    
+    47. complex bases in dispformula ('test-predict.R:210:5') - Reason: On CRAN
+    
+    48. fix_predvars works for I(x^2) ('test-predict.R:223:5') - Reason: On CRAN
+    
+    49. contrasts carried over ('test-predict.R:292:5') - Reason: On CRAN
+    
+    50. offset-only model (GH #625) ('test-predict.R:345:5') - Reason: On CRAN
+    
+    51. inverse-link prediction ('test-predict.R:364:3') - Reason: On CRAN
+    
+    52. nzprob doesn't segfault ('test-predict.R:455:5') - Reason: On CRAN
+    
+    53. prior specs ('test-priors.R:125:5') - Reason: On CRAN
+    
+    54. dropping priors for rank-def X matrix ('test-priors.R:166:1') - Reason: empty test
+    
+    55. simulate_new, returning pars ('test-simulate_new.R:49:1') - Reason: empty test
+    
+    56. ar1 and hetar1 require factor time ('test-varstruc.R:97:3') - Reason: On CRAN
+    
+    57. varcorr_print ('test-varstruc.R:124:5') - Reason: On CRAN
+    
+    58. cov_struct_order ('test-varstruc.R:177:5') - Reason: On CRAN
+    
+    59. basic hetar1 ('test-varstruc.R:194:5') - Reason: On CRAN
+    
+    60. zi ('test-zi.R:12:3') - Reason: On CRAN
+    
+    61. zi beta and Gamma ('test-zi.R:37:5') - Reason: On CRAN
+    
+    ══ Failed ══════════════════════════════════════════════════════════════════════
+    ── 1. Error ('test-VarCorr.R:92:1'): (code run outside of `test_that()`) ───────
+    <notSubsettableError/error/condition>
+    Error in `value[[1]]`: object of type 'closure' is not subsettable
+    Backtrace:
+        ▆
+     1. ├─stats::simulate(...)
+     2. └─lme4:::simulate.formula_lhs_(...)
+     3.   └─lme4::.simulateFun(...)
+     4.     └─base::lapply(...)
+     5.       └─lme4 (local) FUN(X[[i]], ...)
+    
+    ══ DONE ════════════════════════════════════════════════════════════════════════
+    Error:
+    ! Test failures.
+    Execution halted
+
+Package: mermboost
+Check: examples
+New result: ERROR
+  Running examples in ‘mermboost-Ex.R’ failed
+  The error most likely occurred in:
+  
+  > base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+  > ### Name: mer_cvrisk
+  > ### Title: Cluster-sensitive Cross-Validation
+  > ### Aliases: mer_cvrisk cvrisk.mermboost
+  > 
+  > ### ** Examples
+  > 
+  > data(Orthodont)
+  > 
+  > mod <- mermboost(distance ~ bbs(age, knots = 4) + bols(Sex) + (1 |Subject),
+  +                  data = Orthodont, family = gaussian,
+  +                  control = boost_control(mstop = 100))
+  Warning: the ‘findbars’ function has moved to the reformulas package. Please update your imports, or ask an upstream package maintainer to do so.
+  Data has been sorted by the id variable.
+  Warning: the ‘nobars’ function has moved to the reformulas package. Please update your imports, or ask an upstream package maintainer to do so.
+  Error in model.frame.default(data = Z0, weights = weights, drop.unused.levels = TRUE,  : 
+    invalid type (closure) for variable '(weights)'
+  Calls: mermboost ... mkFormula -> eval -> eval -> <Anonymous> -> model.frame.default
+  Execution halted
+
+Package: nadir
+Check: examples
+New result: ERROR
+  Running examples in ‘nadir-Ex.R’ failed
+  The error most likely occurred in:
+  
+  > base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+  > ### Name: lnr_glmer
+  > ### Title: Generalized Linear Mixed-Effects ('lme4::glmer') Learner
+  > ### Aliases: lnr_glmer
+  > 
+  > ### ** Examples
+  > 
+  > # random intercepts for each level of cyl column:
+  > suppressMessages({
+  + # singular fit, but that's ok if all you need is prediction:
+  + lnr_glmer(mtcars, mpg ~ (1|cyl) + disp + wt, family = Gamma)(mtcars)
+  + })
+  Error in model.frame.default(data = data, weights = weights, drop.unused.levels = TRUE,  : 
+    invalid type (closure) for variable '(weights)'
+  Calls: suppressMessages ... mkFormula -> eval -> eval -> <Anonymous> -> model.frame.default
+  Execution halted
+  Examples with CPU (user + system) or elapsed time > 5s
+                    user system elapsed
+  cv_super_learner 7.782  0.076   7.859
+
+Package: nadir
+Check: tests
+New result: ERROR
+    Running ‘testthat.R’ [58s/58s]
+  Running the tests in ‘tests/testthat.R’ failed.
+  Complete output:
+    > # This file is part of the standard setup for testthat.
+    > # It is recommended that you do not modify it.
+    > #
+    > # Where should you do additional test configuration?
+    > # Learn more about the roles of various files in:
+    > # * https://r-pkgs.org/testing-design.html#sec-tests-files-overview
+    > # * https://testthat.r-lib.org/articles/special-files.html
+    > 
+    > library(testthat)
+    > library(nadir)
+    > 
+    > test_check("nadir")
+    Saving _problems/test-continuous-learners-31.R
+    Saving _problems/test-continuous-learners-68.R
+    [ FAIL 2 | WARN 0 | SKIP 0 | PASS 32 ]
+    
+    ══ Failed tests ════════════════════════════════════════════════════════════════
+    ── Error ('test-continuous-learners.R:30:3'): all continuous learners can be trained and predict on mtcars ──
+    Error in `model.frame.default(data = data, weights = weights, drop.unused.levels = TRUE, formula = mpg ~ (1 + cyl) + hp)`: invalid type (closure) for variable '(weights)'
+    Backtrace:
+         ▆
+      1. └─nadir::lnr_lmer(data = mtcars, formula = mpg ~ (1 | cyl) + hp) at test-continuous-learners.R:30:3
+      2.   ├─lme4::lmer(...)
+      3.   │ └─base::eval(mc, parent.frame(1L))
+      4.   │   └─base::eval(mc, parent.frame(1L))
+      5.   ├─lme4::lFormula(...)
+      6.   │ └─lme4:::mkFormula(...)
+      7.   │   └─base::eval(mf, parent_env)
+      8.   │     └─base::eval(mf, parent_env)
+      9.   ├─stats::model.frame(...)
+     10.   └─stats::model.frame.default(...)
+    ── Error ('test-continuous-learners.R:67:3'): all binary learners can be trained and predict on mtcars ──
+    Error in `model.frame.default(data = data, weights = weights, drop.unused.levels = TRUE, formula = am ~ (1 + cyl) + hp)`: invalid type (closure) for variable '(weights)'
+    Backtrace:
+         ▆
+      1. └─nadir::lnr_glmer(...) at test-continuous-learners.R:67:3
+      2.   ├─lme4::glmer(...)
+      3.   │ └─base::eval(mc, parent.frame(1L))
+      4.   │   └─base::eval(mc, parent.frame(1L))
+      5.   ├─lme4::glFormula(...)
+      6.   │ └─lme4:::mkFormula(...)
+      7.   │   └─base::eval(mf, parent_env)
+      8.   │     └─base::eval(mf, parent_env)
+      9.   ├─stats::model.frame(...)
+     10.   └─stats::model.frame.default(...)
+    
+    [ FAIL 2 | WARN 0 | SKIP 0 | PASS 32 ]
+    Error:
+    ! Test failures.
+    Execution halted
+
+Package: panelr
+Check: examples
+New result: ERROR
+  Running examples in ‘panelr-Ex.R’ failed
+  The error most likely occurred in:
+  
+  > base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+  > ### Name: formula.wbm
+  > ### Title: Retrieve model formulas from 'wbm' objects
+  > ### Aliases: formula.wbm
+  > 
+  > ### ** Examples
+  > 
+  > data("WageData")
+  > wages <- panel_data(WageData, id = id, wave = t)
+  > model <- wbm(lwage ~ lag(union) + wks, data = wages)
+  Error in model.frame.default(data = data, weights = weights, offset = offset,  : 
+    invalid type (closure) for variable '(weights)'
+  Calls: wbm ... mkFormula -> eval -> eval -> <Anonymous> -> model.frame.default
+  Execution halted
+
+Package: panelr
+Check: re-building of vignette outputs
+New result: ERROR
+  Error(s) in re-building vignettes:
+    ...
+  --- re-building ‘reshape.Rmd’ using rmarkdown
+  --- finished re-building ‘reshape.Rmd’
+  
+  --- re-building ‘wbm.Rmd’ using rmarkdown
+  
+  Quitting from wbm.Rmd:238-246 [unnamed-chunk-5]
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  <error/rlang_error>
+  Error in `model.frame.default()`:
+  ! invalid type (closure) for variable '(weights)'
+  ---
+  Backtrace:
+       ▆
+    1. └─panelr::wbm(lwage ~ ns(exp, df = 3) | blk, data = wages)
+    2.   ├─lme4::lmer(...)
+    3.   │ └─base::eval(mc, parent.frame(1L))
+    4.   │   └─base::eval(mc, parent.frame(1L))
+    5.   ├─lme4::lFormula(...)
+    6.   │ └─lme4:::mkFormula(...)
+    7.   │   └─base::eval(mf, parent_env)
+    8.   │     └─base::eval(mf, parent_env)
+    9.   ├─stats::model.frame(...)
+   10.   └─stats::model.frame.default(...)
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  
+  Error: processing vignette 'wbm.Rmd' failed with diagnostics:
+  invalid type (closure) for variable '(weights)'
+  --- failed re-building ‘wbm.Rmd’
+  
+  SUMMARY: processing the following file failed:
+    ‘wbm.Rmd’
+  
+  Error: Vignette re-building failed.
+  Execution halted
+
+Package: panelr
+Check: tests
+New result: ERROR
+    Running ‘testthat.R’ [37s/37s]
+  Running the tests in ‘tests/testthat.R’ failed.
+  Complete output:
+    > library(testthat)
+    > library(panelr)
+    Loading required package: lme4
+    Loading required package: Matrix
+    
+    Attaching package: 'panelr'
+    
+    The following object is masked from 'package:stats':
+    
+        filter
+    
+    > 
+    > test_check("panelr")
+    Saving _problems/test-utils-286.R
+    Saving _problems/test_splines-16.R
+    Saving _problems/test_splines-26.R
+    Saving _problems/test_splines-35.R
+    Saving _problems/test_wbm-15.R
+    [ FAIL 5 | WARN 0 | SKIP 0 | PASS 265 ]
+    
+    ══ Failed tests ════════════════════════════════════════════════════════════════
+    ── Error ('test-utils.R:286:1'): (code run outside of `test_that()`) ───────────
+    Error in `model.frame.default(data = data, weights = weights, offset = offset, drop.unused.levels = TRUE, formula = lwage ~ `imean(union)` + union + (1 + id))`: invalid type (closure) for variable '(weights)'
+    Backtrace:
+         ▆
+      1. └─panelr::wbm(lwage ~ union, data = w, pvals = FALSE) at test-utils.R:286:1
+      2.   ├─lme4::lmer(...)
+      3.   │ └─base::eval(mc, parent.frame(1L))
+      4.   │   └─base::eval(mc, parent.frame(1L))
+      5.   ├─lme4::lFormula(...)
+      6.   │ └─lme4:::mkFormula(...)
+      7.   │   └─base::eval(mf, parent_env)
+      8.   │     └─base::eval(mf, parent_env)
+      9.   ├─stats::model.frame(...)
+     10.   └─stats::model.frame.default(...)
+    ── Error ('test_splines.R:16:3'): wbm works with ns() in formula ───────────────
+    Error in `model.frame.default(data = data, weights = weights, offset = offset, drop.unused.levels = TRUE, formula = lwage ~ +ns_exp.w1 + ns_exp.w2 + ns_exp.w3 + blk + ns_exp.b1 + ns_exp.b2 + ns_exp.b3 + (1 + id))`: invalid type (closure) for variable '(weights)'
+    Backtrace:
+         ▆
+      1. └─panelr::wbm(lwage ~ ns(exp, df = 3) | blk, data = wages) at test_splines.R:16:3
+      2.   ├─lme4::lmer(...)
+      3.   │ └─base::eval(mc, parent.frame(1L))
+      4.   │   └─base::eval(mc, parent.frame(1L))
+      5.   ├─lme4::lFormula(...)
+      6.   │ └─lme4:::mkFormula(...)
+      7.   │   └─base::eval(mf, parent_env)
+      8.   │     └─base::eval(mf, parent_env)
+      9.   ├─stats::model.frame(...)
+     10.   └─stats::model.frame.default(...)
+    ── Error ('test_splines.R:26:3'): wbm works with bs() in formula ───────────────
+    Error in `model.frame.default(data = data, weights = weights, offset = offset, drop.unused.levels = TRUE, formula = lwage ~ +bs_exp.w1 + bs_exp.w2 + bs_exp.w3 + blk + bs_exp.b1 + bs_exp.b2 + bs_exp.b3 + (1 + id))`: invalid type (closure) for variable '(weights)'
+    Backtrace:
+         ▆
+      1. ├─base::suppressWarnings(...) at test_splines.R:25:3
+      2. │ └─base::withCallingHandlers(...)
+      3. └─panelr::wbm(lwage ~ bs(exp, df = 3) | blk, data = wages) at test_splines.R:26:3
+      4.   ├─lme4::lmer(...)
+      5.   │ └─base::eval(mc, parent.frame(1L))
+      6.   │   └─base::eval(mc, parent.frame(1L))
+      7.   ├─lme4::lFormula(...)
+      8.   │ └─lme4:::mkFormula(...)
+      9.   │   └─base::eval(mf, parent_env)
+     10.   │     └─base::eval(mf, parent_env)
+     11.   ├─stats::model.frame(...)
+     12.   └─stats::model.frame.default(...)
+    ── Error ('test_splines.R:35:3'): wbm works with poly() in formula ─────────────
+    Error in `model.frame.default(data = data, weights = weights, offset = offset, drop.unused.levels = TRUE, formula = lwage ~ +poly_exp.w1 + poly_exp.w2 + blk + poly_exp.b1 + poly_exp.b2 + (1 + id))`: invalid type (closure) for variable '(weights)'
+    Backtrace:
+         ▆
+      1. └─panelr::wbm(lwage ~ poly(exp, degree = 2) | blk, data = wages) at test_splines.R:35:3
+      2.   ├─lme4::lmer(...)
+      3.   │ └─base::eval(mc, parent.frame(1L))
+      4.   │   └─base::eval(mc, parent.frame(1L))
+      5.   ├─lme4::lFormula(...)
+      6.   │ └─lme4:::mkFormula(...)
+      7.   │   └─base::eval(mf, parent_env)
+      8.   │     └─base::eval(mf, parent_env)
+      9.   ├─stats::model.frame(...)
+     10.   └─stats::model.frame.default(...)
+    ── Error ('test_wbm.R:15:1'): (code run outside of `test_that()`) ──────────────
+    Error in `model.frame.default(data = data, weights = weights, offset = offset, drop.unused.levels = TRUE, formula = wks ~ `imean(union)` + `imean(lwage)` + union + lwage + blk + (1 + id))`: invalid type (closure) for variable '(weights)'
+    Backtrace:
+         ▆
+      1. └─panelr::wbm(wks ~ union + lwage | blk, data = wages) at test_wbm.R:15:1
+      2.   ├─lme4::lmer(...)
+      3.   │ └─base::eval(mc, parent.frame(1L))
+      4.   │   └─base::eval(mc, parent.frame(1L))
+      5.   ├─lme4::lFormula(...)
+      6.   │ └─lme4:::mkFormula(...)
+      7.   │   └─base::eval(mf, parent_env)
+      8.   │     └─base::eval(mf, parent_env)
+      9.   ├─stats::model.frame(...)
+     10.   └─stats::model.frame.default(...)
+    
+    [ FAIL 5 | WARN 0 | SKIP 0 | PASS 265 ]
+    Error:
+    ! Test failures.
+    Execution halted
+
+Package: RESI
+Check: tests
+New result: ERROR
+    Running ‘testthat.R’ [185s/185s]
+  Running the tests in ‘tests/testthat.R’ failed.
+  Complete output:
+    > # This file is part of the standard setup for testthat.
+    > # It is recommended that you do not modify it.
+    > #
+    > # Where should you do additional test configuration?
+    > # Learn more about the roles of various files in:
+    > # * https://r-pkgs.org/tests.html
+    > # * https://testthat.r-lib.org/reference/test_package.html#special-files
+    > 
+    > library(testthat)
+    > library(RESI)
+    > 
+    > test_check("RESI")
+    Loading required package: carData
+    Loading required namespace: splines
+    Loading required namespace: survival
+    Loading required namespace: pscl
+    Loading required namespace: gee
+    Beginning Cgee S-function, @(#) geeformula.q 4.13 98/01/27
+    running glm to get initial regression estimate
+          (Intercept)    diagnosesevere      drugstandard              time 
+          -0.08759224       -1.31391092        0.05960381        1.49985707 
+    drugstandard:time 
+          -1.01744498 
+    Beginning Cgee S-function, @(#) geeformula.q 4.13 98/01/27
+    running glm to get initial regression estimate
+    (Intercept) 
+      0.0902573 
+    Loading required namespace: geepack
+    Loading required namespace: glmtoolbox
+    Loading required namespace: lme4
+    boundary (singular) fit: see help('isSingular')
+    Beginning Cgee S-function, @(#) geeformula.q 4.13 98/01/27
+    running glm to get initial regression estimate
+          (Intercept)    diagnosesevere      drugstandard              time 
+          -0.08759224       -1.31391092        0.05960381        1.49985707 
+    drugstandard:time 
+          -1.01744498 
+    Loading required namespace: glmmTMB
+    Updating model fit failed. Try running with providing data argument
+    Updating model fit failed. Try running with providing data argument
+    Saving _problems/test-resi-291.R
+    [ FAIL 1 | WARN 0 | SKIP 0 | PASS 83 ]
+    
+    ══ Failed tests ════════════════════════════════════════════════════════════════
+    ── Failure ('test-resi.R:291:3'): RESI estimates are in between the confidence limits ──
+    Expected `... & ...` to be TRUE.
+    Differences:
+    `actual`:   FALSE
+    `expected`: TRUE 
+    
+    
+    [ FAIL 1 | WARN 0 | SKIP 0 | PASS 83 ]
+    Error:
+    ! Test failures.
+    Execution halted
+
+Package: robustlmm
+Check: tests
+New result: NOTE
+    Running ‘DAS-scale.R’ [0s/0s]
+    Running ‘DASvar-fallback.R’ [5s/5s]
+    Running ‘PsiFunction.R’ [7s/7s]
+    Running ‘asymptoticEfficiency.R’ [2s/2s]
+    Running ‘bisquare-psi.R’ [5s/5s]
+    Running ‘bootstrapWald.R’ [17s/17s]
+    Running ‘cache-invalidation.R’ [9s/10s]
+    Running ‘compare-methods.R’ [10s/10s]
+    Comparing ‘compare-methods.Rout’ to ‘compare-methods.Rout.save’ ... OK
+    Running ‘custom-redescending-psi.R’ [5s/5s]
+    Running ‘expectations.R’ [0s/0s]
+    Running ‘fitDatasets-new-methods.R’ [31s/31s]
+    Running ‘fitDatasets.R’ [26s/26s]
+    Running ‘genericFunctions.R’ [4s/4s]
+    Running ‘getME.R’ [4s/4s]
+    Comparing ‘getME.Rout’ to ‘getME.Rout.save’ ...
+  275,276c275,276
+  <  $ dims: Named int [1:13] 180 180 2 178 40 4 1 2 0 2 ...
+  <   ..- attr(*, "names")= chr [1:13] "N" "n" "p" "nmp" ...
+  ---
+  >  $ dims: Named int [1:12] 180 180 2 178 40 4 1 2 0 2 ...
+  >   ..- attr(*, "names")= chr [1:12] "N" "n" "p" "nmp" ...
+  454,455c454,455
+  <   ..$ dims: Named int [1:13] 180 180 2 178 40 4 1 2 0 2 ...
+  <   .. ..- attr(*, "names")= chr [1:13] "N" "n" "p" "nmp" ...
+  ---
+  >   ..$ dims: Named int [1:12] 180 180 2 178 40 4 1 2 0 2 ...
+  >   .. ..- attr(*, "names")= chr [1:12] "N" "n" "p" "nmp" ...
+    Running ‘influence.R’ [0s/0s]
+    Running ‘multipleGroupingFactorsTestData.R’ [0s/0s]
+    Running ‘offset.R’ [5s/5s]
+    Running ‘psi-rho-funs.R’ [4s/4s]
+    Running ‘ransac.R’ [21s/21s]
+    Running ‘rlmerMod.R’ [0s/0s]
+    Running ‘sandwich-vs-bootstrap.R’ [0s/0s]
+    Running ‘simulationStudies.R’ [3s/3s]
+    Running ‘stahel-obr.R’ [9s/9s]
+    Running ‘subset.R’ [0s/0s]
+    Running ‘tau.R’ [0s/0s]
+    Running ‘testMatrices.R’ [0s/0s]
+    Running ‘test_generateLongitudinalDatasets.R’ [0s/0s]
+    Running ‘vcov-jsweep-smoke.R’ [0s/0s]
+    Running ‘weights.R’ [7s/7s]
+
+Package: simr
+Check: re-building of vignette outputs
+New result: ERROR
+  Error(s) in re-building vignettes:
+    ...
+  --- re-building ‘examples.Rmd’ using rmarkdown
+  --- finished re-building ‘examples.Rmd’
+  
+  --- re-building ‘fromscratch.Rmd’ using rmarkdown
+  
+  Quitting from fromscratch.Rmd:44-49 [unnamed-chunk-4]
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  <error/rlang_error>
+  Error in `mkMerMod()`:
+  ! unexpected parameter vector length: length(pars)=3, npar=3, nAGQ=1; (expected length(pars)==npar iff nAGQ==0)
+  ---
+  Backtrace:
+      ▆
+   1. └─simr::makeGlmer(...)
+   2.   └─simr:::makeMer(formula, family, fixef, VarCorr, , data, deparse(substitute(data)))
+   3.     ├─base::suppressWarnings(...)
+   4.     │ └─base::withCallingHandlers(...)
+   5.     └─lme4::glmer(formula, family = family, data = data, control = glmerSet(theta))
+   6.       └─lme4::mkMerMod(...)
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  
+  Error: processing vignette 'fromscratch.Rmd' failed with diagnostics:
+  unexpected parameter vector length: length(pars)=3, npar=3, nAGQ=1; (expected length(pars)==npar iff nAGQ==0)
+  --- failed re-building ‘fromscratch.Rmd’
+  
+  SUMMARY: processing the following file failed:
+    ‘fromscratch.Rmd’
+  
+  Error: Vignette re-building failed.
+  Execution halted
+
+Package: simr
+Check: tests
+New result: ERROR
+    Running ‘test-all.R’ [25s/25s]
+  Running the tests in ‘tests/test-all.R’ failed.
+  Complete output:
+    > if(require(testthat)) {
+    + 
+    +     test_check("simr")
+    + }
+    Loading required package: testthat
+    Loading required package: simr
+    Loading required package: lme4
+    Loading required package: Matrix
+    
+    Attaching package: 'simr'
+    
+    The following object is masked from 'package:lme4':
+    
+        getData
+    
+    The following object is masked from 'package:testthat':
+    
+        compare
+    
+    Saving _problems/test_new-39.R
+    [ FAIL 1 | WARN 0 | SKIP 0 | PASS 115 ]
+    
+    ══ Failed tests ════════════════════════════════════════════════════════════════
+    ── Error ('test_new.R:39:5'): makeGlmer works ──────────────────────────────────
+    Error in `mkMerMod(rho, opt, glmod$reTrms, fr = glmod$fr, mc = mcout, lme4conv = cc)`: unexpected parameter vector length: length(pars)=3, npar=3, nAGQ=1; (expected length(pars)==npar iff nAGQ==0)
+    Backtrace:
+        ▆
+     1. └─simr::makeGlmer(...) at test_new.R:39:5
+     2.   └─simr:::makeMer(formula, family, fixef, VarCorr, , data, deparse(substitute(data)))
+     3.     ├─base::suppressWarnings(...)
+     4.     │ └─base::withCallingHandlers(...)
+     5.     └─lme4::glmer(formula, family = family, data = data, control = glmerSet(theta))
+     6.       └─lme4::mkMerMod(...)
+    
+    [ FAIL 1 | WARN 0 | SKIP 0 | PASS 115 ]
+    Error:
+    ! Test failures.
+    Execution halted
+
+Package: steppedwedge
+Check: examples
+New result: ERROR
+  Running examples in ‘steppedwedge-Ex.R’ failed
+  The error most likely occurred in:
+  
+  > base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+  > ### Name: analyze
+  > ### Title: Analyze a stepped wedge dataset
+  > ### Aliases: analyze
+  > 
+  > ### ** Examples
+  > 
+  > # Load data
+  > test_data <- load_data(time ="period", cluster_id = "cluster", individual_id = NULL,
+  + treatment = "trt", outcome = "outcome_cont", data = sw_data_example)
+  Stepped wedge dataset loaded. Discrete time design with 15 clusters, 5 sequences, and 6 time points.
+  > 
+  > # Analysis example 1: TATE estimand for exposure times 1 through 4
+  > results_tate <- analyze(dat = test_data, method = "mixed", estimand_type = "TATE",
+  + estimand_time = c(1, 4), exp_time = "ETI")
+  Error in model.frame.default(data = dat, offset = offset, drop.unused.levels = TRUE,  : 
+    invalid type (closure) for variable '(offset)'
+  Calls: analyze ... mkFormula -> eval -> eval -> <Anonymous> -> model.frame.default
+  Execution halted
+
+Package: steppedwedge
+Check: tests
+New result: ERROR
+    Running ‘testthat.R’ [5s/5s]
+  Running the tests in ‘tests/testthat.R’ failed.
+  Complete output:
+    > # This file is part of the standard setup for testthat.
+    > # It is recommended that you do not modify it.
+    > #
+    > # Where should you do additional test configuration?
+    > # Learn more about the roles of various files in:
+    > # * https://r-pkgs.org/testing-design.html#sec-tests-files-overview
+    > # * https://testthat.r-lib.org/articles/special-files.html
+    > 
+    > library(testthat)
+    > library(steppedwedge)
+    > 
+    > test_check("steppedwedge")
+    Stepped wedge dataset loaded. Discrete time design with 2 clusters, 2 sequences, and 3 time points.
+    Saving _problems/test-analyze_data-33.R
+    Saving _problems/test-analyze_data-40.R
+    Saving _problems/test-analyze_data-47.R
+    Saving _problems/test-analyze_data-78.R
+    Saving _problems/test-analyze_data-88.R
+    Stepped wedge dataset loaded. Discrete time design with 2 clusters, 2 sequences, and 3 time points.
+    Stepped wedge dataset loaded. Discrete time design with 2 clusters, 2 sequences, and 3 time points.
+    [ FAIL 5 | WARN 0 | SKIP 0 | PASS 24 ]
+    
+    ══ Failed tests ════════════════════════════════════════════════════════════════
+    ── Error ('test-analyze_data.R:32:3'): Correct model type and estimand_type for IT mixed model ──
+    Error in `model.frame.default(data = dat, offset = offset, drop.unused.levels = TRUE, formula = outcome ~ factor(time) - 1 + treatment + (1 + cluster_id) + (1 + ij))`: invalid type (closure) for variable '(offset)'
+    Backtrace:
+         ▆
+      1. └─steppedwedge::analyze(...) at test-analyze_data.R:32:3
+      2.   ├─lme4::lmer(formula, data = dat, offset = offset)
+      3.   │ └─base::eval(mc, parent.frame(1L))
+      4.   │   └─base::eval(mc, parent.frame(1L))
+      5.   ├─lme4::lFormula(...)
+      6.   │ └─lme4:::mkFormula(...)
+      7.   │   └─base::eval(mf, parent_env)
+      8.   │     └─base::eval(mf, parent_env)
+      9.   ├─stats::model.frame(...)
+     10.   └─stats::model.frame.default(...)
+    ── Error ('test-analyze_data.R:39:3'): Correct model type and estimand_type for ETI mixed model, TATE ──
+    Error in `model.frame.default(data = dat, offset = offset, drop.unused.levels = TRUE, formula = outcome ~ factor(time) - 1 + factor(exposure_time) + (1 + cluster_id) + (1 + ij))`: invalid type (closure) for variable '(offset)'
+    Backtrace:
+         ▆
+      1. └─steppedwedge::analyze(...) at test-analyze_data.R:39:3
+      2.   ├─lme4::lmer(formula, data = dat, offset = offset)
+      3.   │ └─base::eval(mc, parent.frame(1L))
+      4.   │   └─base::eval(mc, parent.frame(1L))
+      5.   ├─lme4::lFormula(...)
+      6.   │ └─lme4:::mkFormula(...)
+      7.   │   └─base::eval(mf, parent_env)
+      8.   │     └─base::eval(mf, parent_env)
+      9.   ├─stats::model.frame(...)
+     10.   └─stats::model.frame.default(...)
+    ── Error ('test-analyze_data.R:46:3'): Correct model type and estimand_type for ETI mixed model, PTE ──
+    Error in `model.frame.default(data = dat, offset = offset, drop.unused.levels = TRUE, formula = outcome ~ factor(time) - 1 + factor(exposure_time) + (1 + cluster_id) + (1 + ij))`: invalid type (closure) for variable '(offset)'
+    Backtrace:
+         ▆
+      1. └─steppedwedge::analyze(...) at test-analyze_data.R:46:3
+      2.   ├─lme4::lmer(formula, data = dat, offset = offset)
+      3.   │ └─base::eval(mc, parent.frame(1L))
+      4.   │   └─base::eval(mc, parent.frame(1L))
+      5.   ├─lme4::lFormula(...)
+      6.   │ └─lme4:::mkFormula(...)
+      7.   │   └─base::eval(mf, parent_env)
+      8.   │     └─base::eval(mf, parent_env)
+      9.   ├─stats::model.frame(...)
+     10.   └─stats::model.frame.default(...)
+    ── Error ('test-analyze_data.R:77:3'): Model coefficients are returned correctly ──
+    Error in `model.frame.default(data = dat, offset = offset, drop.unused.levels = TRUE, formula = outcome ~ factor(time) - 1 + treatment + (1 + cluster_id) + (1 + ij))`: invalid type (closure) for variable '(offset)'
+    Backtrace:
+         ▆
+      1. └─steppedwedge::analyze(...) at test-analyze_data.R:77:3
+      2.   ├─lme4::lmer(formula, data = dat, offset = offset)
+      3.   │ └─base::eval(mc, parent.frame(1L))
+      4.   │   └─base::eval(mc, parent.frame(1L))
+      5.   ├─lme4::lFormula(...)
+      6.   │ └─lme4:::mkFormula(...)
+      7.   │   └─base::eval(mf, parent_env)
+      8.   │     └─base::eval(mf, parent_env)
+      9.   ├─stats::model.frame(...)
+     10.   └─stats::model.frame.default(...)
+    ── Error ('test-analyze_data.R:87:3'): Function handles different family and link functions ──
+    Error in `model.frame.default(data = dat, offset = offset, drop.unused.levels = TRUE, formula = outcome ~ factor(time) - 1 + treatment + (1 + cluster_id) + (1 + ij))`: invalid type (closure) for variable '(offset)'
+    Backtrace:
+         ▆
+      1. └─steppedwedge::analyze(...) at test-analyze_data.R:87:3
+      2.   ├─lme4::glmer(formula, family = family, data = dat, offset = offset)
+      3.   │ └─base::eval(mc, parent.frame(1L))
+      4.   │   └─base::eval(mc, parent.frame(1L))
+      5.   ├─lme4::glFormula(...)
+      6.   │ └─lme4:::mkFormula(...)
+      7.   │   └─base::eval(mf, parent_env)
+      8.   │     └─base::eval(mf, parent_env)
+      9.   ├─stats::model.frame(...)
+     10.   └─stats::model.frame.default(...)
+    
+    [ FAIL 5 | WARN 0 | SKIP 0 | PASS 24 ]
+    Error:
+    ! Test failures.
+    Execution halted
