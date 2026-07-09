@@ -1,10 +1,10 @@
 %%
 %% This is file `jss.cls',
-\def\fileversion{2.3}
+\def\fileversion{3.6}
 \def\filename{jss}
-\def\filedate{2013/09/05}
+\def\filedate{2026/04/28}
 %%
-%% Package `jss' to use with LaTeX2e for JSS publications (http://www.jstatsoft.org/)
+%% Package `jss' to use with LaTeX2e for JSS publications (https://www.jstatsoft.org/)
 %% License: GPL-2 | GPL-3
 %% Copyright: (C) Achim Zeileis
 %% Please report errors to Achim.Zeileis@R-project.org
@@ -51,9 +51,10 @@
 \ProcessOptions
 \LoadClass[11pt,a4paper,twoside]{article}
 %% required packages
-\RequirePackage{graphicx,color,ae,fancyvrb}
+\RequirePackage{graphicx,xcolor,fancyvrb}
 \RequirePackage[T1]{fontenc}
 \IfFileExists{upquote.sty}{\RequirePackage{upquote}}{}
+\IfFileExists{lmodern.sty}{\RequirePackage{lmodern}}{}
 %% bibliography
 \if@shortnames
   \usepackage[authoryear,round]{natbib}
@@ -104,6 +105,7 @@
 \newcommand{\Plainreviewer}[1]{\def\@Plainreviewer{#1}}
 \newcommand{\Softwaretitle}[1]{\def\@Softwaretitle{#1}}
 \newcommand{\URL}[1]{\def\@URL{#1}}
+\newcommand{\DOI}[1]{\def\@DOI{#1}}
 %% for internal use
 \newcommand{\Seriesname}[1]{\def\@Seriesname{#1}}
 \newcommand{\Hypersubject}[1]{\def\@Hypersubject{#1}}
@@ -113,7 +115,7 @@
 \newcommand{\Seconddate}[1]{\def\@Seconddate{#1}}
 \newcommand{\Reviewauthor}[1]{\def\@Reviewauthor{#1}}
 %% defaults
-\author{Firstname Lastname\\Affiliation}
+\author{Givenname Familyname\\Affiliation}
 \title{Title}
 \Abstract{---!!!---an abstract is required---!!!---}
 \Plainauthor{\@author}
@@ -124,15 +126,15 @@
 \Submitdate{yyyy-mm-dd}
 \Acceptdate{yyyy-mm-dd}
 \Address{
-  Firstname Lastname\\
+  Givenname Familyname\\
   Affiliation\\
   Address, Country\\
   E-mail: \email{name@address}\\
-  URL: \url{http://link/to/webpage/}
+  URL: \url{https://link/to/webpage/}
 }
 
-\Reviewer{Firstname Lastname\\Affiliation}
-\Plainreviewer{Firstname Lastname}
+\Reviewer{Givenname Familyname\\Affiliation}
+\Plainreviewer{Givenname Familyname}
 \Booktitle{Book Title}
 \Bookauthor{Book Author}
 \Publisher{Publisher}
@@ -141,7 +143,8 @@
 \ISBN{x-xxxxx-xxx-x}
 \Pages{xv + 123}
 \Price{USD 69.95 (P)}
-\URL{http://link/to/webpage/}
+\URL{https://link/to/webpage/}
+\DOI{10.18637/jss.v000.i00}
 \if@article
   \Seriesname{Issue}
   \Hypersubject{Journal of Statistical Software}
@@ -227,14 +230,14 @@
     \vspace{.1\baselineskip}
     {\fontfamily{pzc} \fontsize{13}{15} \selectfont Journal of Statistical Software}
     \hfill
-    \url{http://www.jstatsoft.org/}\\ \nopagebreak
-    published by the American Statistical Association
+    \url{https://www.jstatsoft.org/}\\ \nopagebreak
+    published by the Foundation for Open Access Statistics
     \hfill
-    \url{http://www.amstat.org/}\\[.3\baselineskip] \nopagebreak
-    {Volume~\@Volume, \@Seriesname~\@Issue}
+    \url{https://www.foastat.org/}\\[.3\baselineskip] \nopagebreak
+    {\@Month{} \@Year, Volume~\@Volume, \@Seriesname~\@Issue}
     \hfill
     \@Firstdate\\ \nopagebreak
-    {\@Month{} \@Year}
+    {\href{https://doi.org/\@DOI}{\tt doi:\@DOI}}
     \hfill
     \@Seconddate  \nopagebreak
     \vspace{.3\baselineskip}
@@ -250,6 +253,7 @@
 %% required packages
 \RequirePackage{hyperref}
 %% new \maketitle
+\newcommand{\centerheader}[1]{\null\hfill#1\hfill\null}
 \def\@myoddhead{
   {\color{white} JSS}\\[-1.42cm]
   \hspace{-2em} \includegraphics[height=23mm,keepaspectratio]{jsslogo} \hfill
@@ -258,7 +262,7 @@
    {\fontfamily{pzc} \fontsize{28}{32} \selectfont Journal of Statistical Software}
    \vfill
    {\it \small \@Month{} \@Year, Volume~\@Volume, \@Seriesname~\@Issue.%
-            \hfill \href{http://www.jstatsoft.org/}{http://www.jstatsoft.org/}}}\\[0.1cm]
+            \hfill \href{https://doi.org/\@DOI}{doi:\,\@DOI}}}\\[0.1cm]
      \hrule height 3pt}}
 \if@review
   \renewcommand{\maketitle}{
@@ -284,9 +288,9 @@
 
     \thispagestyle{empty}
     \if@nojss
-      \markboth{\centerline{\@Shorttitle}}{\centerline{\@Hyperauthor}}
+      \markboth{\centerheader{\@Shorttitle}}{\centerheader{\@Hyperauthor}}
     \else
-      \markboth{\centerline{\@Shorttitle}}{\centerline{\@Hypersubject}}
+      \markboth{\centerheader{\@Shorttitle}}{\centerheader{\@Hypersubject}}
     \fi
     \pagestyle{myheadings}
   }
@@ -307,13 +311,13 @@
    \setcounter{footnote}{0}
 
    \if@noheadings
-    %% \markboth{\centerline{\@Shorttitle}}{\centerline{\@Hypersubject}}
+    %% \markboth{\centerheader{\@Shorttitle}}{\centerheader{\@Hypersubject}}
     \else
      \thispagestyle{empty}
       \if@nojss
-        \markboth{\centerline{\@Shorttitle}}{\centerline{\@Hyperauthor}}
+        \markboth{\centerheader{\@Shorttitle}}{\centerheader{\@Hyperauthor}}
       \else
-        \markboth{\centerline{\@Shorttitle}}{\centerline{\@Hypersubject}}
+        \markboth{\centerheader{\@Shorttitle}}{\centerheader{\@Hypersubject}}
       \fi
      \pagestyle{myheadings}
    \fi
@@ -414,11 +418,12 @@
   \renewcommand{\subsubsection}{\secdef \jsssubsubsec \jsssubsubsecnn}
 \fi
 %% colors
+\AtBeginDocument{%
 \definecolor{Red}{rgb}{0.5,0,0}
 \definecolor{Blue}{rgb}{0,0,0.5}
+}
 \if@review
   \hypersetup{%
-    hyperindex = {true},
     colorlinks = {true},
     linktocpage = {true},
     plainpages = {false},
@@ -431,7 +436,6 @@
   }
 \else
   \hypersetup{%
-    hyperindex = {true},
     colorlinks = {true},
     linktocpage = {true},
     plainpages = {false},
@@ -464,20 +468,20 @@
 \if@notitle
   %% \AtBeginDocument{\maketitle}
 \else
-  \AtBeginDocument{\maketitle}
+  \@ifundefined{AddToHook}{\AtBeginDocument{\maketitle}}{\AddToHook{begindocument/end}[maketitle]{\maketitle}}
 \fi
 %% commands
 \newcommand\code{\bgroup\@makeother\_\@makeother\~\@makeother\$\@codex}
 \def\@codex#1{{\normalfont\ttfamily\hyphenchar\font=-1 #1}\egroup}
 %%\let\code=\texttt
 \let\proglang=\textsf
-\newcommand{\pkg}[1]{{\fontseries{b}\selectfont #1}}
+\newcommand{\pkg}[1]{{\fontseries{m}\fontseries{b}\selectfont #1}}
 \newcommand{\email}[1]{\href{mailto:#1}{\normalfont\texttt{#1}}}
 \ifx\csname urlstyle\endcsname\relax
   \newcommand\@doi[1]{doi:\discretionary{}{}{}#1}\else
   \newcommand\@doi{doi:\discretionary{}{}{}\begingroup
 \urlstyle{tt}\Url}\fi
-\newcommand{\doi}[1]{\href{http://dx.doi.org/#1}{\normalfont\texttt{\@doi{#1}}}}
+\newcommand{\doi}[1]{\href{https://doi.org/#1}{\normalfont\texttt{\@doi{#1}}}}
 \newcommand{\E}{\mathsf{E}}
 \newcommand{\VAR}{\mathsf{VAR}}
 \newcommand{\COV}{\mathsf{COV}}
