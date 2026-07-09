@@ -347,8 +347,7 @@ Gauss-Hermite rules.
 To summarize:
 \begin{enumerate}
 \item Like a GLM, the definition of a GLMM incorporates a distribution family and a link function.
-  The distribution family determines the unit deviances, $d(y_i,\mu_i),i=1,\dots,n$. Distributions in the exponential distribution family have a canonical link which is the default link in \code{glm} and in
-  \code{glmer} for those families
+  The distribution family determines the unit deviances, $d(y_i,\mu_i),i=1,\dots,n$. Distributions in the exponential distribution family have a canonical link which is the default link in \code{glm} and in \code{glmer} for those families.
 \item As in an LMM the linear predictor, $\bm\eta=\bm X\bm\beta+\bm Z\bm b$, incorporates fixed-effects      
   parameters, $\bm\beta$, and random effects, $\mc B\sim\mc N(\bm 0,\bm\Sigma_{\bm\theta})$.
 \item The parameters $\bm\theta$ determine a triangular relative covariance factor, $\bm\Lambda_{\bm\theta}$,
@@ -372,7 +371,7 @@ To summarize:
 The iteratively reweighted least squares (IRLS) algorithm is an
 efficient method of determining the maximum likelihood
 estimates of the coefficients in a GLM.
-As the name IRLS implies this is an iterative algorithm where the $k+1$st
+As the name IRLS implies this is an iterative algorithm where the $(k+1)$st
 coefficient vector, $\bm\beta^{(k+1)}$, is determined from $\bm\beta^{(k)}$, and the process
 continues until convergence.
 At the $k$th iteration, the linear predictor is $\bm\eta^{(k)}=\bm X\bm\beta^{(k)}$ and
@@ -966,15 +965,17 @@ adding an observation-level random effect to the model \citep{harrisonComparison
 which we can do by creating a new factor based on observation
 number and using \code{update()} on the previous model (we switch the optimizer to BOBYQA for both phases
 for one of the updates):
-<<cbppModelII, warning=FALSE>>=
+<<cbppModelII, warning=FALSE, message=FALSE>>=
 cbpp2 <- transform(cbpp2,obs=factor(seq(nrow(cbpp2))))
 bob_opt <- glmerControl(optimizer = "bobyqa")
-gm2 <- update(gm1,.~.+(1|obs), control = bob_opt)  ## herd and observation-level REs
-gm3 <- update(gm1,.~.-(1|herd)+(1|obs))  ## observation-level REs only
+## herd and observation-level REs
+gm2 <- update(gm1,.~.+(1|obs), control = bob_opt)  
+## observation-level REs only
+gm3 <- update(gm1,.~.-(1|herd)+(1|obs))  
 @
 
-<<diagnose, echo=FALSE, warning=FALSE>>=
-aa <- allFit(gm2)
+<<diagnose, echo=FALSE, warning=FALSE, message=FALSE, results='hide'>>=
+aa <- allFit(gm2, verbose=FALSE)
 ok <- summary(aa)[["which.OK"]]
 lapply(aa[ok], \(x) x@optinfo$conv$lme4$messages)
 @ 
@@ -1217,15 +1218,15 @@ different optimizers using \code{allFit()}.
 The command \code{allFit(show.meth.tab=TRUE)} lists the optimizers \code{lme4}
 currently supports.
 
-To use \code{allFit()}, supply the initial fitted model as input. Useful 
-results are obtained from \code{summary(allFit())}: 
+To use \code{allFit()}, supply the initial fitted model as input. Useful
+results are obtained from \code{summary(allFit())}; the components below
+(other than \code{\$which.OK}) apply only to the optimizers that succeeded:
 \begin{itemize}
-  \item \code{\$which.OK} returns which optimizers worked. Below only applies to
-  optimizers that were successful.
-  \item \code{\$llik} returns log-likelihoods
-  \item \code{\$fixef} fixed-effect estimates 
-  \item \code{\$sdcor} random-effect standard deviations and correlations
-  \item \code{\$theta} random-effect parameters on the Cholesky scale
+  \item \code{\$which.OK} --- which optimizers worked
+  \item \code{\$llik} --- log-likelihoods
+  \item \code{\$fixef} --- fixed-effect estimates
+  \item \code{\$sdcor} --- random-effect standard deviations and correlations
+  \item \code{\$theta} --- random-effect parameters on the Cholesky scale
 \end{itemize}
 
 We will show the summary results for \code{\$sdcor}; the other components are similar.
@@ -1505,7 +1506,7 @@ cm.homdiag <- glmer(update(base_form, . ~ . + diag(1 + urban|district, hom = TRU
 cm.homcs <- glmer(update(base_form, . ~ . + cs(1 + urban|district, hom = TRUE)), Contraception, binomial, control = cc)
 @
 
-For example, the compound symmetric fit is
+For example, the compound symmetric model is fitted as follows:
 
 <<cm_cs, message = FALSE, warning = FALSE>>=
 cm.cs <- glmer(use ~ age*ch + I(age^2) + urban + cs(1 + urban | district),
