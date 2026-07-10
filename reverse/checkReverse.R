@@ -54,6 +54,7 @@ function (args) {
     ## Wishlist for KH/tools::check_packages_in_dir:
     ## * support no-check/only-install mode
     ## * support building library tree on top of package being checked
+    iam.mikael <- Sys.info()[["user"]] == "mikael"
 
     stopifnot(is.character(args))
     args.prefix <- sub("^(--.*?=)(.*)$", "\\1", args)
@@ -124,7 +125,11 @@ function (args) {
     .libPaths(libpaths)
 
     repos <- utils:::.expand_BioC_repository_URLs(
-        c("CRAN"     = "https://cloud.r-project.org",
+        c("CRAN.local" =
+              if (iam.mikael)
+                  "file:///Users/mikael/CRAN"
+              else NULL,
+          "CRAN"     = "https://cloud.r-project.org",
           "BioCsoft" = "%bm/packages/%v/bioc",
           "BioCann"  = "%bm/packages/%v/data/annotation",
           "BioCexp"  = "%bm/packages/%v/data/experiment",
@@ -140,7 +145,7 @@ function (args) {
         ## Insert early return after call to utils::install.packages;
         ## the return value is a character vector storing the names of
         ## packages whose installation failed.
-        stopifnot(getRversion() >= "4.3", getRversion() < "4.7")
+        stopifnot(getRversion() >= "4.3", getRversion() < "4.8")
         body(cpid)[[43L]] <-
         substitute(env = list(.__ORIG__. = body(cpid)[[43L]]), {
             outfiles <- Sys.glob(file.path(outdir, "install_*.out"))
@@ -163,7 +168,7 @@ function (args) {
         list(arrow = c("LIBARROW_BINARY=false",
                        "ARROW_R_DEV=true",
                        "ARROW_DEPENDENCY_SOURCE=BUNDLED",
-                       if (Sys.info()[["user"]] == "mikael")
+                       if (iam.mikael)
                            "PKG_CONFIG=\"pkg-config --static\"",
                        NULL))
     out <- cpid(outdir, reverse = reverse, Ncpus = Ncpus, clean = clean,
