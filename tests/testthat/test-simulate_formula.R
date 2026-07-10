@@ -59,6 +59,14 @@ suppressWarnings(try(rm(list = c("simulate.formula_lhs_", "simulate.formula_lhs_
                                  "simulate.formula_lhs_array"),
                         envir = .GlobalEnv), silent = TRUE))
 
+## a one-sided formula with neither 'family' nor 'newparams' used to fall
+## through to the generic (and unhelpful) "No applicable method for LHS of
+## type 'NULL'" error; it should instead report the missing arguments.
+test_that("one-sided formula without family/newparams gives an informative error", {
+    expect_error(simulate(~1 + (1|Days), newdata=sleepstudy),
+                 "must specify all of.*formula.*newdata.*newparams")
+})
+
 ## in general, we shouldn't have it such that weights and offsets leak into the
 ## global environment.
 

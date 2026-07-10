@@ -110,6 +110,15 @@
       once-per-session deprecation warnings for formula-processing
       functions that moved to \pkg{reformulas} are now implemented
       internally.
+      \item performing \emph{de novo} simulation (i.e., calling
+      \code{simulate()} with a one-sided formula rather than a fitted
+      model or a two-sided formula) without specifying \code{family}
+      or \code{newparams} now gives a more informative error. This
+      only affects the one-sided-formula dispatch path that is
+      internal to \pkg{lme4}; the two-sided
+      \code{simulate.formula}/\code{simulate.formula_lhs} dispatch
+      mechanism shared with \pkg{ergm} (see GH #566) is unchanged, so
+      \pkg{ergm}'s behavior should not be affected.
     } % itemize
   } % user-visible changes
 } % 2.0-2

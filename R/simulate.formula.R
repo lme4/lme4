@@ -120,19 +120,18 @@ simulate.formula <- function(object, nsim=1, seed=NULL, ..., basis, newdata, dat
 }
 
 #' @describeIn simulate.formula A method for one-sided formulas (no LHS) that
-#'   routes to [.simulateFun()] when \code{family} or \code{newparams} are
-#'   provided, enabling \code{simulate(~re_formula, family=..., newdata=...,
-#'   newparams=...)} usage.
+#'   routes to [.simulateFun()], enabling \code{simulate(~re_formula,
+#'   family=..., newdata=..., newparams=...)} usage. \code{ergm} (and other
+#'   packages using the shared \code{simulate.formula}/\code{simulate.formula_lhs}
+#'   dispatch mechanism from GH#566) only ever supply two-sided formulas, so
+#'   they never reach this method; this method exists only to give one-sided
+#'   formulas a clearer error message than the generic
+#'   \code{simulate.formula_lhs()} fallback would.
 #'
 #' @export
 simulate.formula_lhs_ <- function(object, nsim=1, seed=NULL, ...) {
-  extra <- list(...)
-  if (!is.null(extra[["newparams"]]) || !is.null(extra[["family"]])) {
-    class(object) <- setdiff(class(object), c("formula_lhs_", "formula_lhs"))
-    .simulateFun(formula=object, nsim=nsim, seed=seed, ...)
-  } else {
-    NextMethod()
-  }
+  class(object) <- setdiff(class(object), c("formula_lhs_", "formula_lhs"))
+  .simulateFun(formula=object, nsim=nsim, seed=seed, ...)
 }
 
 #' @describeIn simulate.formula A function to catch the situation when there is no method implemented for the class to which the LHS evaluates.
