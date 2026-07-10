@@ -743,8 +743,12 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
                function(name) {
                  value <- old[[name]]
                  ## if we have that weights/offsets did not exist,
-                 ## need to add an extra [[1]] to value to access the NULL value
-                 if (is.null(value[[1]])) {
+                 ## need to add an extra [[1]] to value to access the NULL value;
+                 ## guard with !is.function() first since a pre-existing
+                 ## weights/offset value may be a closure (e.g. stats::weights
+                 ## leaking from another package, GH #988), which can't be
+                 ## subsetted with [[
+                 if (!is.function(value) && is.null(value[[1]])) {
                    rm(list = name, envir = environment(formula))
                  } else {
                    assign(name, value, envir = environment(formula))

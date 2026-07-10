@@ -123,6 +123,24 @@ test_that("weights and offset do not leak into or overwrite calling environment"
   expect_equal(offset,   7L)
 })
 
+test_that("pre-existing non-subsettable weights/offset don't break simulate (GH#988)", {
+  ## e.g. glmmTMB (<=1.1.14) leaks a copy of stats::weights into the
+  ## calling/global environment; restoring it via value[[1]] used to
+  ## error out with "object of type 'closure' is not subsettable"
+  weights <- stats::weights
+
+  dd <- data.frame(a = gl(10, 10), b = rnorm(100))
+  expect_error(
+    suppressMessages(
+      simulate(~ 1 + (b | a), newdata = dd, family = poisson,
+               newparams = list(beta = c("(Intercept)" = 1),
+                                 theta = c(1, 1, 1)))
+    ),
+    NA
+  )
+  expect_true(is.function(weights))
+})
+
 test_that("simulate.merMod returns correct dimensions and works with newdata", {
   fm1 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
   
