@@ -48,7 +48,7 @@ variable.
 
 (example, useful if we want to cut and paste code below)
 ```bash
-export NEW=2.0-2
+export NEW=2.0-3
 export OLD=2.0-1
 export CCUSER=bolker
 export CCACCOUNT=def-bolker

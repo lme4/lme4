@@ -58,7 +58,7 @@
       \item fixed a second, unrelated heap-use-after-free with the same
       symptoms, triggered by an interaction between R's ALTREP-wrapped
       vectors and Rcpp's data-pointer accessors (exposed by the Rcpp 1.1.2
-      upgrade).
+      upgrade; invaluable help from Ivan Krylov).
     } % itemize
   } % bug fixes
   \subsection{NEW FEATURES}{
