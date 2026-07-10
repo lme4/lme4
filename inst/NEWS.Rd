@@ -119,6 +119,12 @@
       \code{simulate.formula}/\code{simulate.formula_lhs} dispatch
       mechanism shared with \pkg{ergm} (see GH #566) is unchanged, so
       \pkg{ergm}'s behavior should not be affected.
+      \item \emph{de novo} simulation (see previous item) for a
+      family with an estimated scale parameter (e.g. Gaussian, Gamma)
+      without specifying \code{sigma} as part of \code{newparams}
+      now gives an error (it previously gave a bogus result based on
+      the residual dispersion from a \code{merMod} object with default
+      \code{beta} and \code{theta} values)
     } % itemize
   } % user-visible changes
 } % 2.0-2

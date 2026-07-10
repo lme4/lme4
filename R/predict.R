@@ -85,6 +85,14 @@ get.orig.levs <- function(object, FUN=levels, newdata=NULL, sparse = FALSE, ...)
 ##' from (theta, beta) to alpha=(theta, beta, phi)
 ##' @param inplace logical specifying if object should be modified in place; not yet
 ##' @param subset logical; needs to be true, if only parts of params are to be reset
+##' @param requireSigma logical; if TRUE, error if \code{object} has an
+##' estimated scale/dispersion parameter and \code{params$sigma} is not
+##' specified, rather than silently retaining \code{object}'s existing
+##' sigma. Used for "de novo" simulation from a formula (where there is no
+##' meaningful existing sigma to fall back on); left \code{FALSE} for
+##' \code{predict()}/\code{simulate()} on an already-fitted object, where
+##' silently keeping the existing sigma is the correct (and relied-upon,
+##' e.g. by \pkg{glmertree}'s internal backfitting) behavior.
 ##' @examples
 ##' fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
 ##' fm1M <- setParams(fm1,list(theta=rep(1,3)))
@@ -92,11 +100,11 @@ get.orig.levs <- function(object, FUN=levels, newdata=NULL, sparse = FALSE, ...)
 ##' getME(fm1,"theta") ## check that original didn't get messed up
 ##' ## check that @resp and @pp are the only reference class slots ...
 ##' sapply(slotNames(fm1),function(x) class(slot(fm1,x)))
-setParams <- function(object, params, inplace=FALSE, subset=FALSE) {
+setParams <- function(object, params, inplace=FALSE, subset=FALSE, requireSigma=FALSE) {
     pNames <- c("beta", "theta", "par")
     if (object@devcomp$dims[["useSc"]]) {
         pNames <- c(pNames, "sigma")
-        if (is.null(params$sigma)) {
+        if (requireSigma && is.null(params$sigma)) {
             stop("must specify sigma when using a family with an estimated scale/dispersion parameter")
         }
     }
@@ -702,7 +710,13 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
 
     if (...length() > 0) warning("unused arguments ignored")
 
-    if (missing(object) && (is.null(formula) || is.null(newdata) || is.null(newparams))) {
+    ## captured before 'object' is (possibly) constructed below, since a
+    ## "fake" object built on the fly from 'formula' has no meaningful
+    ## pre-existing sigma to fall back on (GH #972); a real, already-fitted
+    ## object does, and callers (e.g. glmertree's backfitting) rely on that
+    objectMissing <- missing(object)
+
+    if (objectMissing && (is.null(formula) || is.null(newdata) || is.null(newparams))) {
         stop("if ",sQuote("object")," is missing, must specify all of ",
              sQuote("formula"),", ",sQuote("newdata"),", and ",
              sQuote("newparams"))
@@ -766,7 +780,7 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
       }
     }
 
-    if (missing(object)) {
+    if (objectMissing) {
 
         ## construct fake-fitted object from data, params
         ## copied from glm(): DRY; this all stems from the
@@ -808,7 +822,7 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
     stopifnot((nsim <- as.integer(nsim[1])) > 0,
               is(object, "merMod"))
     if (!is.null(newparams)) {
-        object <- setParams(object, newparams)
+        object <- setParams(object, newparams, requireSigma = objectMissing)
     }
 
     if (!missing(use.u)) {

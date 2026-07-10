@@ -698,6 +698,28 @@ test_that("stop on unspecified sigma", {
              newparams = list(beta = 0, theta = 1)),
              "must specify sigma")
 })
+test_that("stop on unspecified sigma, two-sided formula + family=gaussian", {
+    expect_error(simulate(Reaction ~ Days + (Days | Subject),
+             newdata = sleepstudy,
+             family = gaussian,
+             newparams = list(beta = c(250, 10), theta = 1)),
+             "must specify sigma")
+})
+test_that("predict() on an already-fitted object may omit sigma from newparams", {
+    ## unlike de novo simulation from a formula (above), setParams()
+    ## should *not* require sigma when modifying an already-fitted
+    ## object's parameters: the existing sigma is retained. This is
+    ## relied upon by glmertree's internal backfitting, which calls
+    ## predict(lme, newdata=data, newparams=list(beta=b)) without sigma.
+    fm1 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
+    b <- fixef(fm1)
+    b[] <- 0
+    expect_no_error(
+        suppressWarnings(suppressMessages(
+            predict(fm1, newdata = sleepstudy, newparams = list(beta = b))
+        ))
+    )
+})
 test_that("correct ordering of cov strucs", {
     set.seed(101)
     dd <- expand.grid(f1 = 1:10, f2 = 1:20, rep = 1:10)
