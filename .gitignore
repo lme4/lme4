@@ -29,6 +29,8 @@ Rplots.pdf
 ## NEWS.md
 cache/
 figure/
+*_cache/
+*_files/
 *.aux
 *.log
 *.bbl

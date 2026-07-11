@@ -1,4 +1,3 @@
-
 ---
 title: "Covariance Structures"
 output: rmarkdown::html_vignette
@@ -20,11 +19,9 @@ knitr::opts_chunk$set(
 
 ## Introduction
 
-The current version of `lme4` offers four covariance classes/structures: `Covariance.us` (unstructured), `Covariance.diag` (diagonal), `Covariance.cs` (compound symmetry), and `Covariance.ar1` (autoregressive order 1). The syntax for use is somewhat similar to the `glmmTMB` package (see [covariance structures in glmmTMB](https://glmmtmb.github.io/glmmTMB/articles/covstruct.html)), although the results are slightly different.
+The current version of `lme4` offers four covariance classes/structures: `Covariance.us` (unstructured), `Covariance.diag` (diagonal), `Covariance.cs` (compound symmetry), and `Covariance.ar1` (autoregressive order 1). The syntax for use is similar to the `glmmTMB` package (see [covariance structures in glmmTMB](https://glmmtmb.github.io/glmmTMB/articles/covstruct.html)), although the results are slightly different.
 
-The first half of this vignette provide a more detailed explanation of how the 
-new machinery works, and the second half of the vignette will compare `lme4` 
-and `glmmTMB` implementations and results.
+This vignette provides a detailed mathematical exposition of the new machinery, along with brief notes on the appropriate syntax. In a separate document, we provide comparisons of results between `glmmTMB` and `lme4` (the computations are too slow to satisfy CRAN timing requirements; if we tried to store and re-load saved fits, they would be too big to satisfy CRAN package size requirements).
 
 ### Background
 
@@ -35,30 +32,36 @@ In matrix notation, a linear mixed model can be represented as:
 \[
 \mathbf{y} = \mathbf{X} \boldsymbol \beta + \mathbf Z \mathbf{b} + \boldsymbol{\epsilon}
 \]
-Where $\mathbf{b}$ represents an unknown vector of random effects. The 
-\code{Covariance} class helps define the structure of the variance-covariance 
-matrix as specified as $\textrm{Var}(\mathbf{b})$. Typically, we denote the 
-variance-covariance matrix as $\mathbf \Sigma$.
+Where $\mathbf{b}$ represents an unknown vector of random effects, with $\mathbf b \sim \textrm{MVN}(\mathbf 0, \boldsymbol \Sigma)$.
 
-<!-- can't use \usepackage{bm}: https://stackoverflow.com/a/33226711/190277 -->
-First, we create the relative co-factor $\mathbf \Lambda_{\mathbf \theta}$ which is a 
+<!-- can't use \usepackage{bm} for MathJax output: https://stackoverflow.com/a/33226711/190277 -->
+We create the relative co-factor $\mathbf \Lambda_{\mathbf \theta}$ which is a 
 $q \times q$ block diagonal  matrix that depends on the variance-component 
-parameter $\theta$. Let $\sigma$ be the scale parameter of the variance of a 
+parameter vector $\boldsymbol \theta$. Let $\sigma$ be the scale parameter of the variance of a 
 linear mixed model. In `lme4`, the variance-covariance matrix is constructed by:
 \[
 {\mathbf \Sigma}_{\mathbf{\theta}} = 
 \sigma^2 {\mathbf \Lambda}_{\mathbf \theta} {\mathbf \Lambda}_{\mathbf \theta}^{\top},
 \]
 
-For generalized linear mixed models, $\mathbf \Lambda$ instead represents the *unscaled* Cholesky factor; that is,
+For generalized linear mixed models, $\mathbf \Lambda_\theta$ instead represents the *unscaled* Cholesky factor; that is,
 the scaling term $\sigma^2$ is omitted from the equation above.
 
-The major difference between the four covariance classes (`Covariance.us` (unstructured), `Covariance.diag` (diagonal), `Covariance.cs` (compound symmetry), and `Covariance.ar1` (autoregressive order 1)) is the construction of the the relative Cholesky factor $\mathbf \Lambda_{\mathbf \theta}$.
+The major difference between the four covariance classes (`Covariance.us` (unstructured), `Covariance.diag` (diagonal), `Covariance.cs` (compound symmetry), and `Covariance.ar1` (autoregressive order 1)) is in the construction of the the relative Cholesky factor $\mathbf \Lambda_{\mathbf \theta}$.
 
 ### Covariance Structures
 
-Suppose there are $p$ number of random effect terms for a particular
-grouping variable. The *unstructured covariance*, which is the default 
+Suppose that a particular random-effects term has $p_i$ varying effects (i.e., the number of columns of the
+model matrix constructed from the left-hand side `f` of the random-effects formula `(f|g)`.
+If the grouping variable (`g`) has $\ell_i$ levels 
+and $q_i = \ell_i p_i$.
+In general the covariance matrix for the term, $\mathbf \Sigma_i$, is a $q \times q$ block diagonal matrix
+composed of homogeneous $p_i \times p_i$ blocks; the (relative) Cholesky factor $\boldsymbol \Lambda_i$ has a similar structure. 
+In what follows we will describe the construction of these
+*template matrices*, for either the covariance matrix or the Cholesky factor.
+
+
+The *unstructured covariance*, which is the default 
 in `lme4`, of size $p \times p$ has the following form:
 \[
 \mathbf{\Sigma}
@@ -69,6 +72,9 @@ in `lme4`, of size $p \times p$ has the following form:
 \sigma_{p1} & \sigma_{p2} & \dots & \sigma^{2}_{p} \\
 \end{bmatrix}	
 \]
+
+To specify unstructured (general positive-semidefinite) covariances for a particular term, specify either `(f|g)` (as in `lme4` < 2.0)
+or `us(f|g)`.
 
 The next three covariance structures can either be heterogeneous or homogeneous.
 If we have a homogeneous covariance structure (`hom = TRUE`), then we assume 
@@ -86,6 +92,18 @@ The *diagonal covariance* has the following form:
 \]
 By default, we assume a heterogeneous diagonal covariance structure.
 
+To specify a diagonal covariance structure, use `diag(f|g)` (or `diag(f|g, hom = FALSE)`).
+Unlike the unstructured covariance matrix, which is invariant to the parameterization of the terms in the varying effects model `f`,
+the diagonal covariance matrix (and the others described below) depend on the contrasts assigned to factor variables and on the inclusion of an intercept term.
+For example, suppose that `f` represents a factor variable with $n$ levels, and that the standard treatment contrasts are used. The template matrices will be $n \times n$.
+
+* If the intercept is not included (i.e. the term is specified as `(0+f|g)` or `(f-1|g)`), then the variances $\sigma^2_1, \dots, \sigma^2_n$ will represent variances of observations in each level of the factor around the population mean;
+* if the intercept is included (the term is specified as `(f|g)` or `(1+f|g)`), $\sigma^2_1$ will represent the among-cluster variance of observations from the first (baseline) level of `f`; $\sigma^2_2, \dots $\sigma^2_n$ will represent variances of *differences* in expected values between observations from levels 2 to $n$ and those in the baseline level.
+
+If a different, non-default contrast is used, then the variances describe variation in the corresponding parameters. For example, with successive-difference contrasts (`MASS::contr.sdif()`) $\sigma^2_1$ would estimate among-cluster variance for observations at the first level, $\sigma^2_2$ would estimate variance in the difference between level 2 and level 1, and so forth.
+
+Similar points apply to the compound symmetric and autoregressive covariance structures below.
+
 The *compound symmetric covariance* has the following form:
 \[
 \mathbf{\Sigma}
@@ -98,6 +116,8 @@ The *compound symmetric covariance* has the following form:
 \end{bmatrix}	
 \]
 By default, we assume a heterogeneous compound symmetric covariance structure.
+
+Use `cs(f|g)` or `cs(f|g, hom = TRUE)` to specify a compound symmetric structure.
 
 The *AR1 (auto-regressive order 1) covariance* has the following form:
 \[
@@ -113,11 +133,13 @@ The *AR1 (auto-regressive order 1) covariance* has the following form:
 Unlike the diagonal and compound symmetric structures, by default we assume a
 homogeneous ar1 covariance structure.
 
+Use `ar1(f|g)` or `ar1(f|g, het = TRUE)` to specify an AR1 structure.
+
 ### Construction of the Relative Co-factor
 
 For the unstructured covariance matrix, `lme4` estimates the following parameters in `par`:
 $\mathbf{\theta} = (\theta_{1}, \theta_{2}, \dots, \theta_{p(p+1)/2})$ to construct the relative
-co-factor ${\mathbf \Lambda}_{\mathbf{\theta}}$ (this is the same as in previous versions):
+co-factor ${\mathbf \Lambda}_{\mathbf{\theta}}$ (this procedure is the same as in pre-2.0 versions of `lme4`):
 \[
 \Lambda_{\mathbf{\theta}} = \begin{bmatrix}
 \theta_1 & 0 & 0 & \dots & 0 \\
@@ -170,7 +192,7 @@ Then the elements of ${\mathbf \Lambda}$ are given by:
 0 & \text{if } i < j \text{ (above diagonal)}
 \end{cases}
 \]
-In the code, one can extract the values $\theta_{ij}$ via the `getTheta()` function 
+Users can extract the values $\theta_{ij}$ via the `getTheta()` function 
 of the `Covariance.cs` object, in which `theta` will be a vector in the column-wise 
 elements of ${\mathbf \Lambda}$.
  
@@ -200,7 +222,7 @@ the variance covariance matrices of a model, from a `merMod` object.
 
 We'll fit the standard `sleepstudy` example, except that we will use a
 model with a compound symmetric covariance structure. Because this model has only two varying effects (intercept and slope with respect to day) per subject, and
- hence the covariance matrix is $2 \times 2$, there is no difference in overall model fit between the compound-symmetric and the unstructured covariance matrices. Howevever, the models are parameterized differently, so this example will highlight the differences between `par` and `theta`.
+ hence the covariance matrix is $2 \times 2$, there is no difference in overall model fit between the compound-symmetric and the unstructured covariance matrices. However, the models are parameterized differently, so this example will highlight the differences between `par` and `theta`.
 
 ```{r cs-fit}
 library(lme4)
@@ -227,319 +249,14 @@ library(Matrix)
 image(getME(fm1.cs, "Lambda"))
 ```
 
-To most users, the most crucial information is simply the variance-covariance matrices. Extracte these via `VarCorr.merMod()` (the list has one element per random-effect term in the model --- in this case, only one):
+To most users, the most crucial information is simply the variance-covariance matrices. Extract these via `VarCorr.merMod()` (the list has one element per random-effect term in the model --- in this case, only one):
 
 ```{r varcorr}
 vc_mat <- VarCorr(fm1.cs)
 vc_mat$Subject
 ```
 
-## Comparisons with glmmTMB
-
-### Reason for Computational Differences
-
-When fitting linear mixed models, `lme4`  parameterizes the random-effects variance–covariance matrix on an unconstrained scale, using box-constrained optimization algorithms to ensure that the variance-covariance matrix is positive semidefinite. For unstructured covariance matrices, this means that the elements of $\mathbf \theta$ that parameterize the diagonal elements of $\mathbf \Lambda$ are constrained to be $\ge 0$ (for diagonal models, all of the elements of $\mathbf \theta$ fill the diagonal of $\mathbf \Lambda$ and hence are $\ge 0$; for models such as the compound-symmetric or AR1 models that use correlation parameters, we constrain $|\rho| \le 1$. As discussed in @Bates_JSS, this constrained parameterization works well for handling model where the 
-estimated covariance matrix is *singular* (i.e. $\mathbf \Sigma$ is only positive semidefinite, not positive definite). In addition, for linear mixed models `lme4` profiles the fixed-effect parameters out of the objective function [@Bates_JSS]; finally, the scale parameter $\sigma$ is not estimated directly, but is derived from the residual variance or deviance of the fitted model.
-
-In contrast, `glmmTMB` uses direct maximum likelihood estimation via Template Model Builder (TMB), fitting to the full parameter vector $\{\mathbf \theta, \mathbf \beta, \sigma^2\}$. Covariance parameters are fitted on a transformed (unconstrained) scale: log scale for standard deviations and various scales for correlation parameters (see the `glmmTMB` [covariance structures vignette](https://cran.r-project.org/package=glmmTMB/vignettes/covstruct.html) for details). This parameterization simplifies fitting (a box-constrained algorithm isn't necessary), but is less convenient in singular fits and other cases where the maximum likelihood estimate is infinite on the unconstrained scale.
-
-Despite these differences, we will show examples where `lme4` and `glmmTMB` provide similar estimates when they both use maximum likelihood estimation. By default, `lme4` uses the restricted maximum likelihood; hence in the following examples, we use `lmer(..., REML = FALSE)` to compare against `glmmTMB`.
-
-### Comparison Setup
-
-```{r comparison-setup}
-if (!requireNamespace("glmmTMB", quietly = TRUE)) {
-  knitr::opts_chunk$set(eval = FALSE)
-} else {
-  library(glmmTMB)
-}
-
-## Often want to ignore attributes and class.
-## Set a fairly large tolerance for convenience.
-all.equal.nocheck <- function(x, y, tolerance = 3e-5, ..., check.attributes = FALSE, check.class = FALSE) {
-  require("Matrix", quietly = TRUE)
-  ## working around mode-matching headaches
-  if (is(x, "Matrix")) x <- matrix(x)
-  if (is(y, "Matrix")) y <- matrix(y)
-  all.equal(x, y, ..., tolerance = tolerance, check.attributes = check.attributes, check.class = check.class)
-}
-
-get.cor1 <- function(x) {
-  v <- VarCorr(x)
-  vv <- if (inherits(x, "merMod")) v$group else v$cond$group
-  attr(vv, "correlation")[1,2]
-}
-```
-
-### Unstructured (General Positive Definite)
-
-This is the default setting for both `lme4` and `glmmTMB`. Below we simulate a dataset with known `beta`, `theta` and `sigma` values.
-
-```{r unstruc-sim}
-n_groups <- 20
-n_per_group <- 20
-n <- n_groups * n_per_group
-
-set.seed(1)
-dat.us <- data.frame(
-  group = rep(1:n_groups, each = n_per_group),
-  x1 = rnorm(n),
-  x2 = rnorm(n)
-)
-## Constructing a similar dataset for the other examples
-gdat.us <- dat.diag <- gdat.diag <- dat.us
-
-form <- y ~ 1 + x1 * x2 + us(1 + x1|group)
-dat.us$y <- simulate(form[-2], 
-                    newdata = dat.us,
-                    family = gaussian,
-                    newparams = list(beta = c(-7, 5, -100, 20),
-                                     theta = c(2.5, 1.4, 6.3),
-                                     sigma = 2))[[1]]
-
-form2 <- y ~ 1 + x1 + us(1 + x1|group)
-gdat.us$y <- simulate(
-  form2[-2],
-  newdata = gdat.us,
-  family = binomial,
-  newparams = list(
-    beta  = c(-1.5, 0.5),     
-    theta = c(0.3, 0.1, 0.3)
-  ))[[1]]
-```
-
-
-### Linear Mixed Model
-
-```{r compare-lmm}
-lme4.us <- lmer(form, data = dat.us, REML = "FALSE")
-glmmTMB.us <- glmmTMB(form, dat = dat.us)
-
-## Fixed effects
-fixef(lme4.us); fixef(glmmTMB.us)$cond
-all.equal.nocheck(fixef(lme4.us), fixef(glmmTMB.us)$cond)
-
-## Sigma
-sigma(lme4.us); sigma(glmmTMB.us)
-all.equal.nocheck(sigma(lme4.us), sigma(glmmTMB.us))
-
-## Log likelihoods
-logLik(lme4.us); logLik(glmmTMB.us)
-all.equal.nocheck(logLik(lme4.us), logLik(glmmTMB.us))
-```
-
-As expected, calculations related to the random-effects term differ slightly beyond this point.
-
-```{r compare-cov}
-## Variance-Covariance Matrix
-vcov(lme4.us); vcov(glmmTMB.us)$cond
-all.equal.nocheck(vcov(lme4.us), vcov(glmmTMB.us)$cond)
-
-## Variance and Covariance Components
-all.equal.nocheck(VarCorr(lme4.us)$group,
-          VarCorr(glmmTMB.us)$cond$group)
-
-## Conditional Modes of the Random Effects
-all.equal.nocheck(ranef(lme4.us)$group, ranef(glmmTMB.us)$cond$group)
-```
-
-### Generalized Linear Mixed Model
-
-```{r compare-glmm}
-glme4.us <- glmer(form2, data = gdat.us, family = binomial)
-gglmmTMB.us <- glmmTMB(form2, dat = gdat.us, family = binomial)
-
-## Fixed effects
-fixef(glme4.us); fixef(gglmmTMB.us)$cond
-all.equal.nocheck(fixef(glme4.us), fixef(gglmmTMB.us)$cond)
-
-## Sigma
-all.equal.nocheck(sigma(glme4.us), sigma(gglmmTMB.us))
-
-## Log likelihoods
-logLik(glme4.us); logLik(gglmmTMB.us)
-all.equal.nocheck(logLik(glme4.us), logLik(gglmmTMB.us))
-```
-
-As expected, calculations related to the random-effects term differ slightly beyond this point.
-
-```{r compare-glmm-cov}
-## Variance-Covariance Matrix
-vcov(glme4.us); vcov(gglmmTMB.us)$cond
-all.equal.nocheck(vcov(glme4.us), vcov(gglmmTMB.us)$cond)
-
-## Variance and Covariance Components
-all.equal.nocheck(VarCorr(glme4.us)$group,
-          VarCorr(gglmmTMB.us)$cond$group)
-
-## Conditional Modes of the Random Effects
-all.equal.nocheck(ranef(glme4.us)$group, ranef(gglmmTMB.us)$cond$group)
-```
-
-### Diagonal
-
-The syntax is the same for fitting a heterogeneous diagonal covariance structure for `lme4` and `glmmTMB`. It changes when we want to fit a *homogeneous* diagonal covariance structure.
-
-To fit a homogeneous diagonal covariance structure we would write:
-
-```{r, fit-homog-diag, eval = FALSE}
-lme4.us <- lmer(Reaction ~ Days + diag(Days | Subject, hom = TRUE), sleepstudy)
-glmmTMB.us <- glmmTMB(Reaction ~ Days + homdiag(Days | Subject), sleepstudy)
-```
-
-We will focus on comparisons of an estimated *heterogeneous* diagonal covariance structure.
-
-```{r sim-het-diag}
-form <- y ~ 1 + x1 * x2 + diag(1|group)
-dat.diag$y <- simulate(form[-2], 
-                       newdata = dat.diag,
-                       family = gaussian,
-                       newparams = list(beta = c(-7, 5, -100, 20),
-                                        theta = c(2.5),
-                                        sigma = 2))[[1]]
-```
-
-
-```{r fit-het-diag}
-lme4.diag <- lmer(form, data = dat.diag, REML = "FALSE")
-glmmTMB.diag <- glmmTMB(form, dat = dat.diag)
-
-## Fixed effects
-fixef(lme4.diag); fixef(glmmTMB.diag)$cond
-all.equal.nocheck(fixef(lme4.diag), fixef(glmmTMB.diag)$cond)
-
-## Sigma
-sigma(lme4.diag); sigma(glmmTMB.diag)
-all.equal.nocheck(sigma(lme4.diag), sigma(glmmTMB.diag))
-
-## Log likelihoods
-logLik(lme4.diag); logLik(glmmTMB.diag)
-all.equal.nocheck(logLik(lme4.diag), logLik(glmmTMB.diag))
-
-## Variance-Covariance Matrix
-vcov(lme4.diag); vcov(glmmTMB.diag)$cond
-all.equal.nocheck(vcov(lme4.diag), vcov(glmmTMB.diag)$cond)
-
-## Variance and Covariance Components
-all.equal.nocheck(VarCorr(lme4.diag)[[1]], 
-          VarCorr(glmmTMB.diag)$cond$group)
-
-## Conditional Modes of the Random Effects
-all.equal.nocheck(ranef(lme4.diag)$group, ranef(glmmTMB.diag)$cond$group)
-```
-
-### Compound Symmetry
-
-Similar to the diagonal case, the syntax is the same for fitting a heterogeneous compound symmetry covariance structure for `lme4` and `glmmTMB`: 
-
-```{r cs-fit-2, eval = FALSE}
-lme4.us <- lmer(Reaction ~ Days + cs(Days | Subject, hom = TRUE), sleepstudy)
-glmmTMB.us <- glmmTMB(Reaction ~ Days + cs(Days | Subject), sleepstudy)
-```
-
-Again, it differs when we want to fit a *homogeneous* compound symmetry covariance structure, which we will use for our comparisons.
-
-```{r simgroup}
-simGroup <- function(g, n=6, phi=0.6) {
-  x <- MASS::mvrnorm(mu = rep(0,n),
-                     Sigma = phi^as.matrix(dist(1:n)) )  
-  y <- x + rnorm(n)                              
-  times <- factor(1:n)
-  group <- factor(rep(g,n))
-  data.frame(y, times, group)
-}
-
-set.seed(1)
-dat.cs <- do.call("rbind", lapply(1:2000, simGroup))
-```
-
-<!-- this is the slow one ... cache? -->
-```{r more-comp, cache=TRUE}
-lme4.cs <- lmer(y ~ times + cs(0 + times | group, hom = TRUE), data = dat.cs, REML = FALSE)
-glmmTMB.cs <- glmmTMB(y ~ times + homcs(0 + times | group), data = dat.cs)
-
-## Fixed effects
-fixef(lme4.cs); fixef(glmmTMB.cs)$cond
-all.equal.nocheck(fixef(lme4.cs), fixef(glmmTMB.cs)$cond)
-
-## Sigma
-sigma(lme4.cs); sigma(glmmTMB.cs)
-all.equal.nocheck(sigma(lme4.cs), sigma(glmmTMB.cs))
-
-## Log likelihoods
-logLik(lme4.cs); logLik(glmmTMB.cs)
-all.equal.nocheck(logLik(lme4.cs), logLik(glmmTMB.cs))
-
-## Variance-Covariance Matrix
-all.equal.nocheck(vcov(lme4.cs), vcov(glmmTMB.cs)$cond)
-
-## Variance and Covariance Components
-all.equal.nocheck(VarCorr(lme4.cs)[[1]], 
-          VarCorr(glmmTMB.cs)$cond$group)
-
-## Conditional Modes of the Random Effects
-all.equal.nocheck(ranef(lme4.cs)$group, ranef(glmmTMB.cs)$cond$group)
-
-## Comparing against the predicted rho value
-lme4.rho <- get.cor1(lme4.cs)
-glmmTMB.rho <- get.cor1(glmmTMB.cs)
-lme4.rho; glmmTMB.rho
-all.equal.nocheck(lme4.rho, glmmTMB.rho)
-```
-
-### Autoregressive Order 1
-
-For this comparison, we focus on a simulated data set with $\rho = 0.7$.
-
-```{r ar1-sim}
-set.seed(1)
-dat.ar1 <- do.call("rbind", lapply(1:2000, function(g) simGroup(g, phi = 0.7)))
-```
-
-Unlike the diagonal and compound symmetry case, the syntax differs for fitting either a heterogeneous or a homogeneous AR1 model for `lme4` and `glmmTMB`.
-
-For a *heterogeneous* AR1 covariance structure we would write the following:
-
-```{r het-ar1-fit, eval = FALSE}
-lme4.ar1 <- lmer(y ~ times + ar1(0 + times | group, hom = FALSE),
-                 data = dat.ar1, REML = FALSE)
-glmmTMB.ar1 <- glmmTMB(y ~ times + hetar1(0 + times | group), data = dat.ar1)
-```
-
-We will instead focus on comparisons for a *homogeneous* AR1 covariance structure.
-
-```{r ar1-fit, cache=TRUE}
-lme4.ar1 <- lmer(y ~ times + ar1(0 + times | group, hom = TRUE), data = dat.ar1, REML = FALSE)
-glmmTMB.ar1 <- glmmTMB(y ~ times + ar1(0 + times | group), data = dat.ar1)
-
-## Fixed effects
-fixef(lme4.ar1); fixef(glmmTMB.ar1)$cond
-all.equal.nocheck(fixef(lme4.ar1), fixef(glmmTMB.ar1)$cond)
-
-## Sigma
-sigma(lme4.ar1); sigma(glmmTMB.ar1)
-all.equal.nocheck(sigma(lme4.ar1), sigma(glmmTMB.ar1))
-
-## Log likelihoods
-logLik(lme4.ar1); logLik(glmmTMB.ar1)
-all.equal.nocheck(logLik(lme4.ar1), logLik(glmmTMB.ar1))
-
-## Variance-Covariance Matrix
-all.equal.nocheck(vcov(lme4.ar1), vcov(glmmTMB.ar1)$cond)
-
-## Variance and Covariance Components
-all.equal.nocheck(VarCorr(lme4.ar1)$group, 
-                  VarCorr(glmmTMB.ar1)$cond$group)
-
-## Conditional Modes of the Random Effects
-all.equal.nocheck(ranef(lme4.ar1)$group, ranef(glmmTMB.ar1)$cond$group)
-
-## Comparing against the predicted rho value
-lme4.ar1.rho <- get.cor1(lme4.ar1)
-glmmTMB.ar1.rho <- get.cor1(glmmTMB.ar1)
-lme4.ar1.rho; glmmTMB.ar1.rho
-all.equal.nocheck(lme4.ar1.rho, glmmTMB.ar1.rho)
-```
+For detailed comparisons with `glmmTMB`, see `browseURL(system.file("extra_docs", "covariance_structure_comparison.html", package = "lme4"))`.
 
 ## References
 
