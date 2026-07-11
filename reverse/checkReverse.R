@@ -61,7 +61,7 @@ function (args) {
     args.suffix <- sub("^(--.*?=)(.*)$", "\\2", args)
 
     tarfile <- args[i.tarfile <- grep("^[^-].*[.]tar[.]gz$", args)]
-    stopifnot(length(tarfile) == 1L)
+    stopifnot(length(tarfile) > 0L)
 
     libclean <- FALSE
     preclean <- TRUE
@@ -71,7 +71,7 @@ function (args) {
     libpaths <- character(0L)
        Ncpus <- 1L
 
-    for (i in seq_along(args))
+    for (i in seq_along(args)[-i.tarfile])
     switch (args.prefix[[i]],
             "--libclean" =
                 libclean <- TRUE,
@@ -95,13 +95,14 @@ function (args) {
                 libpaths <- strsplit(args.suffix[[i]], ":")[[1L]],
             "--jobs=" =
                    Ncpus <- as.integer(args.suffix[[i]]),
-            if (i != i.tarfile)
             stop(gettextf("invalid command line option '%s'",
                           args[[i]]),
                  domain = NA))
 
-    if (is.null(outdir))
+    if (is.null(outdir)) {
+        stopifnot(length(tarfile) == 1L)
         outdir <- sprintf("%s.reverse", tarfile)
+    }
     if (!dir.exists(outdir))
         dir.create(outdir)
     else {
@@ -156,7 +157,7 @@ function (args) {
             .__ORIG__.
         })
     }
-    reverse <-
+    reverse <- if (length(tarfile) == 1L)
         list(which = c("Depends", "Imports", "LinkingTo",
                        "Suggests", "Enhances"))
     check.vars <-
