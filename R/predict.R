@@ -722,66 +722,14 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
              sQuote("newparams"))
     }
 
-    ## watch out for https://github.com/lme4/lme4/issues/481
-    ## don't modify 'weights' in formula environment permanently
     nullWts <- FALSE
-    ## below is needed to ensure weights and offsets don't leak into
-    ## the formula environment (only when formula is non-NULL, i.e. the
-    ## simulate.formula path); for the simulate.merMod path (formula=NULL),
-    ## initialize the local weights/offset variables directly
-    if (!is.null(formula)) {
-      old <- list()
-      for (var in c("weights", "offset")) {
-        old[[var]] <- if (exists(var, environment(formula), inherits = FALSE)) {
-          get(var, environment(formula), inherits = FALSE)
-        } else {
-          list(NULL)  ## note https://cran.r-project.org/doc/FAQ/R-FAQ.html#How-can-I-set-components-of-a-list-to-NULL_003f
-        }
-      }
-      on.exit(
-        lapply(names(old),
-               function(name) {
-                 value <- old[[name]]
-                 ## if we have that weights/offsets did not exist,
-                 ## need to add an extra [[1]] to value to access the NULL value;
-                 ## guard with !is.function() first since a pre-existing
-                 ## weights/offset value may be a closure (e.g. stats::weights
-                 ## leaking from another package, GH #988), which can't be
-                 ## subsetted with [[
-                 if (!is.function(value) && is.null(value[[1]])) {
-                   rm(list = name, envir = environment(formula))
-                 } else {
-                   assign(name, value, envir = environment(formula))
-                 }
-               }),
-        add = TRUE
-      )
-
-      assign("weights",
-             if (!is.null(weights)) weights
-             else if (is.null(newdata)) weights(object)
-             else { nullWts <- TRUE; rep(1, nrow(newdata)) },
-             environment(formula))
-
-      assign("offset",
-             if (!is.null(offset)) offset
-             else if (is.null(newdata)) offset(object)
-             else rep(0, nrow(newdata)),
-             environment(formula))
-    } else {
-      ## simulate.merMod path: initialize local weights/offset variables
-      ## (these were not set by the user, so derive from the fitted object)
-      if (is.null(weights)) {
+    if (is.null(weights)) {
         if (is.null(newdata)) {
-          weights <- weights(object)
+            weights <- weights(object)
         } else {
-          nullWts <- TRUE
-          weights <- rep(1, nrow(newdata))
+            nullWts <- TRUE # this flags that 'weights' wasn't supplied by the user
+            weights <- rep(1,nrow(newdata))
         }
-      }
-      if (is.null(offset)) {
-        offset <- if (is.null(newdata)) offset(object) else rep(0, nrow(newdata))
-      }
     }
 
     if (objectMissing) {
@@ -924,10 +872,6 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
             if(nullWts) weights <- rowSums(r)
         }
 
-        ## fallback -- need weights to not be null. this is to ensure that the 
-        ## lme4 simulate example doesn't fail.
-        if (is.null(weights)) weights <- rep(1, n)
-        
         if (is.null(sfun <- simfunList[[family$family]])) {
             ## family$simulate just won't work ...
             ## sim funs must be hard-coded, see below

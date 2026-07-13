@@ -375,6 +375,38 @@ mkFormula <- function(formula, mc, data, contrasts, control,
     fr.form <- sub_specials(fr.form., specials = c("|", "||"),
                             keep_args = c(2L, 2L))
     environment(fr.form.) <- environment(fr.form) <- environment(formula)
+    ## model.frame.default resolves 'weights'/'offset' (and other extras)
+    ## by evaluating them with 'data' searched first and environment(formula)
+    ## as a fallback -- *not* the frame from which [g]lFormula was called
+    ## (see the 'extras' handling in stats:::model.frame.default). So, to
+    ## allow 'weights'/'offset' expressions that aren't columns of 'data' to
+    ## be looked up in the caller's frame as a fallback, temporarily assign
+    ## their values (evaluated the same way, but with the caller's frame
+    ## substituted for environment(formula) as the fallback) into the
+    ## formula's environment, restoring its previous state on exit so
+    ## nothing is permanently added to (or overwritten in) that environment.
+    formula_env <- environment(fr.form)
+    existed <- logical(0)
+    old <- list()
+    for (i in c("weights", "offset")) {
+        if (!is.null(mc[[i]])) {
+            existed[i] <- exists(i, envir = formula_env, inherits = FALSE)
+            if (existed[i]) old[[i]] <- get(i, envir = formula_env, inherits = FALSE)
+            assign(i, eval(mc[[i]], data, parent_env), envir = formula_env)
+        }
+    }
+    if (length(existed) > 0L) {
+        on.exit(
+            for (nm in names(existed)) {
+                if (existed[[nm]]) {
+                    assign(nm, old[[nm]], envir = formula_env)
+                } else {
+                    rm(list = nm, envir = formula_env)
+                }
+            },
+            add = TRUE
+        )
+    }
     mf$formula <- fr.form
     fr <- eval(mf, parent_env)
     if (check_zero_rows && nrow(fr) == 0L) stop("0 (non-NA) cases")
