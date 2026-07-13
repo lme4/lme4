@@ -390,7 +390,8 @@ mkFormula <- function(formula, mc, data, contrasts, control,
     old <- list()
     for (i in c("weights", "offset")) {
         if (!is.null(mc[[i]])) {
-            existed[i] <- exists(i, envir = formula_env, inherits = FALSE)
+            existed[i] <- exists(i, envir = formula_env, inherits = FALSE) &&
+                !is.function(get(i, envir = formula_env, inherits = FALSE))
             if (existed[i]) old[[i]] <- get(i, envir = formula_env, inherits = FALSE)
             assign(i, eval(mc[[i]], data, parent_env), envir = formula_env)
         }
@@ -400,9 +401,13 @@ mkFormula <- function(formula, mc, data, contrasts, control,
             for (nm in names(existed)) {
                 if (existed[[nm]]) {
                     assign(nm, old[[nm]], envir = formula_env)
-                } else {
-                    rm(list = nm, envir = formula_env)
                 }
+                ## else: leave the value we just assigned in place, rather than
+                ## rm()-ing it -- restores pre-2.0-2 behaviour where a real
+                ## weights/offset value assigned here persists in the formula's
+                ## environment.  Several downstream packages (mermboost, and
+                ## emmeans's recover_data.call() as used by glmmSeq) rely on
+                ## being able to find it there after the fact.
             },
             add = TRUE
         )
