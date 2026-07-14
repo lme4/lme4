@@ -390,8 +390,17 @@ mkFormula <- function(formula, mc, data, contrasts, control,
     old <- list()
     for (i in c("weights", "offset")) {
         if (!is.null(mc[[i]])) {
-            existed[i] <- exists(i, envir = formula_env, inherits = FALSE) &&
-                !is.function(get(i, envir = formula_env, inherits = FALSE))
+            ## Checking for a pre-existing binding can force an unrelated
+            ## promise (e.g. a same-named formal argument of a caller whose
+            ## own frame happens to be environment(formula), as when a
+            ## wrapper builds its formula via as.formula() without setting
+            ## env= explicitly). Treat a failure to resolve it the same as
+            ## "no pre-existing value to preserve" rather than propagating
+            ## the error.
+            existed[i] <- tryCatch(
+                exists(i, envir = formula_env, inherits = FALSE) &&
+                    !is.function(get(i, envir = formula_env, inherits = FALSE)),
+                error = function(e) FALSE)
             if (existed[i]) old[[i]] <- get(i, envir = formula_env, inherits = FALSE)
             assign(i, eval(mc[[i]], data, parent_env), envir = formula_env)
         }
