@@ -41,7 +41,7 @@ Rplots.pdf
 R/scaleX.R
 \.Rout
 .vscode
-docs/
+^docs/
 Sweave.sty
 ^reverse$
 tests/testthat/test-summary_testlevel.*
