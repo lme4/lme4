@@ -305,6 +305,7 @@ test_that("change in deviance name for anova", {
 })
 
 test_that("confint", {
+  skip_on_cran()
   load(system.file("testdata", "gotway_hessianfly.rda", package = "lme4"))
   ## generated via:
   ## gotway_hessianfly_fit <- glmer(cbind(y, n-y) ~ gen + (1|block),
@@ -915,6 +916,7 @@ test_that("cooks distance on subject-level influence", {
 })
 
 test_that("cooks distance on glmer models", {
+  skip_on_cran()
   inf <- influence(gm1)
   inf.h <- influence(gm1, "herd", ncpus=1)
   cook <- cooks.distance(inf)
