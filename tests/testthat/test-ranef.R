@@ -65,9 +65,9 @@ test_that("multiple terms work", {
     expect_equal(as.data.frame(rr)[c(1,19),],
                  structure(
                      list(grpvar = c("Subject", "Subject"),
-                          term = structure(1:2, .Label = c("(Intercept)", "Days"), class = "factor"),
+                          term = structure(1:2, levels = c("(Intercept)", "Days"), class = "factor"),
                           grp = structure(c(9L, 9L),
-                                          .Label = c("309", "310", "370", "349", "350", "334", "335", "371", "308", "369",
+                                          levels = c("309", "310", "370", "349", "350", "334", "335", "371", "308", "369",
                                                      "351", "332", "372", "333", "352", "331", "330", "337"), class = "factor"),
                           condval = c(1.5116973008, 9.32373076098),
                           condsd  = c(12.238845590, 2.33546851406)),

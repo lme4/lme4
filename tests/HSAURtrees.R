@@ -28,7 +28,7 @@ if (.Platform$OS.type != "windows") withAutoprint({
     oldres <- structure(c(5.23645064474105, 4.73568475545248, 2.65289926317093,
                           1.29043984816924, 1.59329381563025,
                           0.532663142106669, 1.16703186884403
-                          ), .Names = c("speciesspruce", "speciespine",
+                          ), names = c("speciesspruce", "speciespine",
                                         "speciesbeech",
                                         "speciesoak", "specieshardwood",
                                         "plot:lattice.(Intercept)",

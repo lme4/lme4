@@ -117,8 +117,8 @@ gBc2 <- glmer(y ~ x + (1|block), data=dBc, family=binomial(link="cloglog"))
 ## family="binomial",link="cloglog")
 glmmadmbfit <- list(fixef = c("(Intercept)" = -0.717146132730349, x =2.83642900561633),
                     VarCorr = structure(list(
-                        block = structure(0.79992, .Dim = c(1L, 1L),
-                                          .Dimnames = list("(Intercept)", "(Intercept)"))),
+                        block = structure(0.79992, dim = c(1L, 1L),
+                                          dimnames = list("(Intercept)", "(Intercept)"))),
                         class = "VarCorr"))
 stopifnot(all.equal(fixef(gBc2), glmmadmbfit$fixef, tolerance=5e-3))
 ## pretty loose tolerance ...

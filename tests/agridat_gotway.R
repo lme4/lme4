@@ -16,10 +16,10 @@ lme4.0fit <- structure(list(fixef = structure(c(1.50345713031203, -0.19385325938
 -0.540808391060274, -1.43419379979154, -0.203701042949808, -0.978322555343941, 
 -0.604078624475678, -1.67742449813309, -1.39842466673692, -0.681709344788684, 
 -1.46295367186169, -1.45908310198959, -3.55285756517073, -2.50731975980307, 
--2.08716296677356, -2.96974270029992), .Names = c("(Intercept)", 
+-2.08716296677356, -2.96974270029992), names = c("(Intercept)", 
 "genG02", "genG03", "genG04", "genG05", "genG06", "genG07", "genG08", 
 "genG09", "genG10", "genG11", "genG12", "genG13", "genG14", "genG15", 
-"genG16")), theta = structure(0.0319087494293615, .Names = "block.(Intercept)")), .Names = c("fixef", 
+"genG16")), theta = structure(0.0319087494293615, names = "block.(Intercept)")), names = c("fixef", 
 "theta"))
 
 ## start doesn't work because we don't get there

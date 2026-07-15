@@ -6,7 +6,7 @@ source(system.file("test-tools-1.R", package = "Matrix"))# identical3() etc
 all.EQ <- function(u,v, ...) all.equal.X(u, v, except = c("call", "frame"), ...)
 S4_2list <- function(obj) {   # no longer used
    sn <- slotNames(obj)
-   structure(lapply(sn, slot, object = obj), .Names = sn)
+   setNames(lapply(sn, slot, object = obj), sn)
 }
 
 if (lme4:::testLevel() <= 1)

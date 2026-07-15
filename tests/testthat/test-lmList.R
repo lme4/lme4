@@ -62,7 +62,7 @@ test_that("simulated", {
     expect_equal(coef(fm3.1),
     structure(list(`(Intercept)` = c(45.8945525606396, 50.1127995110841,
                  49.5320538515225, 52.4286874305165, 48.7716343882989)),
-              .Names = "(Intercept)",
+              names = "(Intercept)",
               row.names = c("A",
                             "B", "C", "D", "E"), class = "data.frame",
               label = "Coefficients", effectNames = "(Intercept)",
@@ -205,7 +205,7 @@ test_that("pooled",
     expect_equal(ci_lme4_nopool1[1:3,,1],
                  structure(c(179.433862895996, 193.026448122379, 186.785722998616,
                              308.951475285822, 217.083442786712, 220.182727910474),
-                           .Dim = c(3L, 2L), .Dimnames = list(c("308", "309", "310"),
+                           dim = c(3L, 2L), dimnames = list(c("308", "309", "310"),
                                                               c("2.5 %", "97.5 %"))))
 })
 
