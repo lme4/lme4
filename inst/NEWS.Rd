@@ -4,7 +4,36 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
-\section{CHANGES IN VERSION 2.0-3}{
+\section{CHANGES IN VERSION 2.1-0}{
+  \subsection{USER-VISIBLE CHANGES}{
+    \itemize{
+      \item how \code{lme4} searches for model components
+      such as weights and offsets has changed; \code{[g]lmer} no longer copies
+      \code{weights} and \code{offset} objects from the parent frame
+      (environment of the calling function) into the environment of
+      the formula; the \code{simulate.merMod} method modifies the
+      formula's environment, but restores it when exiting.
+      This change makes the scoping
+      logic more consistent with other R functions and solves problems
+      of leakage/overwriting of these objects (e.g. see GH #481).
+      This change may cause failures in some cases where the
+      formula and the weights are defined in separate environments
+      before passing them to \code{[g]lmer}.
+      Such failures
+      can generally be solved by adding a statement such as
+      \code{assign("weights", weights, environment(formula))} (see
+      \url{https://github.com/lme4/lme4/pull/961} and
+      \url{https://github.com/lme4/lme4/pull/811} for more detail,
+      and \url{https://github.com/lme4/lme4/issues/742} for an example).
+      \item the dependency on \pkg{rlang} has been removed; the
+      once-per-session deprecation warnings for formula-processing
+      functions that moved to \pkg{reformulas} are now implemented
+      internally.
+    } % itemize
+  } % user-visible changes
+} % 2.1-0 (devel)
+
+\section{CHANGES IN VERSION 2.0-6}{
   \subsection{BUG FIXES}{
     \itemize{
       \item fixed \code{compDev=FALSE} (R-level PIRLS, used for debugging):
@@ -88,28 +117,6 @@
       \item exported covariance methods documented in
       \code{help("Covariance-class")} (\code{getPar}, \code{getTheta},
       etc.)
-      \item how \code{lme4} searches for model components
-      such as weights and offsets has changed; \code{[g]lmer} no longer copies
-      \code{weights} and \code{offset} objects from the parent frame
-      (environment of the calling function) into the environment of
-      the formula; the \code{simulate.merMod} method modifies the
-      formula's environment, but restores it when exiting.
-      This change makes the scoping
-      logic more consistent with other R functions and solves problems
-      of leakage/overwriting of these objects (e.g. see GH #481).
-      This change may cause failures in some cases where the
-      formula and the weights are defined in separate environments
-      before passing them to \code{[g]lmer}.
-      Such failures
-      can generally be solved by adding a statement such as
-      \code{assign("weights", weights, environment(formula))} (see
-      \url{https://github.com/lme4/lme4/pull/961} and
-      \url{https://github.com/lme4/lme4/pull/811} for more detail,
-      and \url{https://github.com/lme4/lme4/issues/742} for an example).
-      \item the dependency on \pkg{rlang} has been removed; the
-      once-per-session deprecation warnings for formula-processing
-      functions that moved to \pkg{reformulas} are now implemented
-      internally.
       \item performing \emph{de novo} simulation (i.e., calling
       \code{simulate()} with a one-sided formula rather than a fitted
       model or a two-sided formula) without specifying \code{family}
@@ -127,7 +134,7 @@
       \code{beta} and \code{theta} values)
     } % itemize
   } % user-visible changes
-} % 2.0-2
+} % 2.0-6
 
 \section{CHANGES IN VERSION 2.0-1 (2026-03-05)}{
   \subsection{BUG FIXES}{
