@@ -97,14 +97,14 @@ if (lme4:::testLevel() > 1 || .Platform$OS.type!="windows") withAutoprint({
     coef_m1_lme4.0 <- structure(c(-1.39853505102576,
                                   -0.992334712470269, -1.12867541092127,
                                   -1.58037389566025),
-                                .Names = c("(Intercept)", "period2", "period3",
+                                names = c("(Intercept)", "period2", "period3",
                                            "period4"))
 
     ## library(glmmADMB)
     ## mg <- glmmadmb(cbind(incidence, size - incidence) ~ period + (1 | herd),
     ##                family = "binomial", data = cbpp)
     coef_m1_glmmadmb <- structure(c(-1.39853810064827, -0.99233330126975, -1.12867317840779,
-                                    -1.58031150854503), .Names = c("(Intercept)", "period2", "period3",
+                                    -1.58031150854503), names = c("(Intercept)", "period2", "period3",
                                                                    "period4"))
 
     ## library(glmmML)
@@ -112,7 +112,7 @@ if (lme4:::testLevel() > 1 || .Platform$OS.type!="windows") withAutoprint({
     ##              cluster=herd,
     ##             family = "binomial", data = cbpp)
     coef_m1_glmmML <- structure(c(-1.39853234657711, -0.992336901732793, -1.12867036466201,
-                                  -1.58030977686564), .Names = c("(Intercept)", "period2", "period3",
+                                  -1.58030977686564), names = c("(Intercept)", "period2", "period3",
                                                                  "period4"))
 
     ## lme4[r 1636], 64-bit ubuntu 11.10:

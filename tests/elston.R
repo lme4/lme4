@@ -36,14 +36,14 @@ if (.Platform$OS.type != "windows") {
 
     ## lme4 summary results:
     t1 <- structure(c(1.288, 0.048, 1.36, 0, 0), class = "proc_time",
-                    .Names = c("user.self",
+                    names = c("user.self",
                                "sys.self", "elapsed", "user.child", "sys.child"))
 
     c1 <- structure(c(11.3559080756861, 1.1804105508475, -0.978704335712111,
                       -0.0237607330254979, 0.293232458048324, 0.562551624933584,
                       0.279548178949372,
                       -424.771990224991, 1.36),
-                    .Names = c("(Intercept)", "YEAR96",
+                    names = c("(Intercept)", "YEAR96",
                                "YEAR97", "HEIGHT", "INDEX", "BROOD", "LOCATION",
                                "logLik", "time.elapsed"
                                ))
@@ -52,7 +52,7 @@ if (.Platform$OS.type != "windows") {
                              11.3559080756861, 1.1804105508475,
                              -0.978704335712111, -0.0237607330254979
                              ),
-                           .Names = c("", "", "", "(Intercept)",
+                           names = c("", "", "", "(Intercept)",
                                       "YEAR96", "YEAR97",  "HEIGHT"))
 
     pars <- function(x) unlist(getME(x,c("theta","beta")))

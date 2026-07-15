@@ -466,7 +466,7 @@ get.which <- function(which, nvp, nptot, parnames, verbose=FALSE) {
                        ## FIXME: where did the contrasts information go??
                        ##      mm@contrasts
                        ),
-                  lapply(structure(nX, .Names=nX),
+                  lapply(setNames(nX, nX),
                          function(nm) slot(X, nm))))
     } else {
         structure(mm[, -w, drop=FALSE],

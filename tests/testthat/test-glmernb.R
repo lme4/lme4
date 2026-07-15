@@ -53,7 +53,7 @@ test_that("basic", {
    ## make sure *different* fixed effects from previous fit ... 
    expect_equal(fixef(m.nb3),
                 structure(c(2.93061, -0.29779, 0.02586),
-                          .Names = c("(Intercept)", 
+                          names = c("(Intercept)", 
                           "f11", "f12")),tol=1e-5)
    
    ## make sure 'data' is in call even if unnamed
