@@ -33,7 +33,7 @@
   } % user-visible changes
 } % 2.1-0 (devel)
 
-\section{CHANGES IN VERSION 2.0-6}{
+\section{CHANGES IN VERSION 2.0-6 (2026-07-16)}{
   \subsection{BUG FIXES}{
     \itemize{
       \item fixed \code{compDev=FALSE} (R-level PIRLS, used for debugging):
