@@ -2257,7 +2257,7 @@ vcov.merMod <- function(object, correlation = TRUE, sigm = sigma(object),
     }
 
     ## FIXME: try to catch non-PD matrices
-    rr <- tryCatch(as(V, "dpoMatrix"), error = function(e)e)
+    rr <- tryCatch(as_dpoMatrix(V), error = function(e)e)
     if (inherits(rr, "error")) {
         warning(gettextf("Computed variance-covariance matrix problem: %s;\nreturning NA matrix",
                          rr$message), domain = NA)

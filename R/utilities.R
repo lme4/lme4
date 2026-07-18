@@ -1072,7 +1072,7 @@ scale_vcov <- function(vv, sc, ce) {
   vv["(Intercept)", other_vars] <- updated_2
   vv[other_vars, "(Intercept)"] <- updated_2
   vv[other_vars, other_vars] <- vv[other_vars, other_vars] * outer(1/sc, 1/sc)
-  vv <- as(vv, "dpoMatrix")
+  vv <- as_dpoMatrix(vv)
 }
 
 ##' Used for padding NAs to Cmat accordingly in predict.merMod
@@ -1166,4 +1166,10 @@ get_grpvars <- function(formula, return_val = c("char", "symbol")) {
   ff3 <- lapply(ff2, "[[", 3) ## get argument after |
   if (return_val == "symbol") return(ff3)
   vapply(ff3, deparse1, FUN.VALUE = "")
+}
+
+as_dpoMatrix <- function(x) {
+  if (packageVersion("Matrix") < "1.8.0") return(as(x, "dpoMatrix"))
+  pd <- as(as(x, "dMatrix"), "posdefMatrix")
+  if (is(pd, "dpoMatrix")) pd else as(pd, "unpackedMatrix")
 }
