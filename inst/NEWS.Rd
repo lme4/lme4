@@ -269,6 +269,13 @@
       \code{[g]lmerControl()}); default threshold is 1e4 observations.
       If desired, derivatives can be calculated (but not checked)
       by explicitly setting \code{calc.derivs} to TRUE.
+      \item derivative-based convergence checks are similarly skipped
+      for models with large numbers of top-level parameters (number
+      of variance parameters for \code{lmer} or \code{glmer} with
+      \code{nAGQ=0}, variance parameters plus
+      fixed-effect parameters for \code{glmer} with \code{nAGQ>0});
+      threshold is set by \code{[g]lmerControl(check.conv.nparmax=...)},
+      default value 20
       \item Derivative calculations are now skipped for models with
       singular random effects components (unless \code{calc.derivs} is
       explicitly set to TRUE in \code{[g]lmerControl})
