@@ -110,13 +110,15 @@ So disp>1 isn't "erratic," it's a **different, consistent failure mode**:
 instead of inflating theta (disp<1 regime), `glmer` systematically deflates
 it, often collapsing to a singular fit entirely. The -76%/+60% single-run
 numbers above were just noisy draws from this same collapse-prone regime,
-not a separate unexplained phenomenon. Root cause not yet re-derived for
-this side (the §7 mechanism was worked out for the disp<1/inflation
-direction); worth revisiting given how large and consistent the effect is.
-Locked in as a characterization test in
-`tests/testthat/test-gamma_glmm_bias.R` (gated behind
+not a separate unexplained phenomenon. Locked in as a characterization test
+in `tests/testthat/test-gamma_glmm_bias.R` (gated behind
 `LME4_TEST_LEVEL > 1`), alongside the disp=0.05 inflation case, so both
 directions are covered.
+
+**Further update, 2026-07-29 (later the same day):** turns out the §7 fix
+*does* also resolve this side, even though it was only derived/validated
+for disp<1 — see §7 for the full before/after comparison now that the fix
+is implemented (not just prototyped) in `lme4pureR::pirls()`.
 
 A first attempt to reproduce this in a 2-RE random-slope model (`y ~ 1 + x +
 (1+x|f)`, disp=2, 20 groups) did *not* show a clean bias: at 500 obs/group
@@ -328,6 +330,44 @@ being trusted: the unmodified reimplementation matches real `glmer`'s fitted
 theta/beta closely on a spot-checked dataset (0.6351 vs. 0.6346), confirming
 the reimplementation faithfully mirrors lme4's actual PIRLS/Laplace
 formula and isn't just a coincidentally-different computation.
+
+### Implemented in `lme4pureR::pirls()`, and fixes both bias regimes (2026-07-29)
+
+The standalone-script prototypes above were superseded by an actual
+implementation in `lme4pureR`'s own `pirls()` (not just a from-scratch
+reimplementation): a new `phiType` argument, `c("none", "moment",
+"digamma")`. `"none"` (the default) reproduces the original, unmodified
+disp-blind behaviour exactly (verified: all pre-existing `lme4pureR` tests
+still pass byte-for-byte unchanged with this default). `"moment"` and
+`"digamma"` both apply the nested-fixed-point fix from above, differing
+only in how phi is re-estimated each outer iteration (`dev/n` vs. the
+digamma-MLE).
+
+Testing this real implementation (not just the standalone prototype)
+against *both* known bias regimes — including the disp>1/collapse regime
+from the update above, which the fix had never actually been tried against
+— gave a bigger result than expected: **it fixes both**, not just the
+disp<1/inflation side it was derived for.
+
+| | shape=20 (disp=0.05, inflation) | shape=0.5 (disp=2, collapse) |
+|---|---|---|
+| `phiType="none"` | +117.0% bias | -94.5% bias, 97% of fits collapse to ~0 |
+| `phiType="moment"` | **-0.1%** bias | **+4.6%** bias, 0% collapse |
+| `phiType="digamma"` | **-0.1%** bias | -16.0% bias, 0% collapse |
+
+(B=30 replicates per cell, single-RE 30×20 design as in §3.) `moment` and
+`digamma` are essentially tied in the inflation regime, but `moment`
+noticeably *beats* `digamma` in the collapse regime — the crude `dev/n`
+plug-in appears to be fully adequate for correcting the RE-variance bias in
+both directions, making the more complex Gamma-specific digamma-MLE
+possibly unnecessary for this purpose (it may still be worth keeping
+around for more accurate dispersion *reporting*, just not required for the
+theta-bias fix itself). This weakens the scope caveat below: the
+family-specific piece of the fix (the digamma equation) turns out not to be
+the load-bearing part.
+
+Regression tests locking in this comparison:
+`lme4pureR`'s `inst/tinytest/test_pirls_phiType.R`.
 
 ## 8. Corresponding changes needed in `vignettes/glmer.Rnw`
 
