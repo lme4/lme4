@@ -95,14 +95,39 @@ default fit, across true dispersion values:
 | 0.05 | 20 | +114% |
 | 0.20 | 5 | +49% |
 | 1.00 | 1 | **+1.6%** (essentially unbiased) |
-| 3.00 | 0.33 | -76% (erratic, unexplained — separate mechanism) |
-| 8.00 | 0.125 | +60% (erratic, unexplained) |
+| 3.00 | 0.33 | -76% (see update below — collapse regime, not noise) |
+| 8.00 | 0.125 | +60% (small B=5-ish scan; see update below) |
 
 Bias vanishes almost exactly at disp=1. Real Gamma GLMMs are almost always
 disp≪1 (Report4BB: disp≈0.12-0.32; `epil2`: disp≈0.27-0.65) — exactly where
-this bias is worst. The disp>1 (very heavy-tailed Gamma) regime is
-qualitatively different/erratic and not explained by anything below; don't
-extrapolate the disp<1 story there.
+this bias is worst.
+
+**Update, 2026-07-29:** the disp>1 (shape<1) regime is no longer
+unexplained. A cleaner repeat at disp=2 (shape=0.5), same single-RE 30×20
+design, B=100: mean bias **-67.2%**, with the *median* estimate exactly
+0 — a majority of fits hit a singular (zero-variance) boundary solution.
+So disp>1 isn't "erratic," it's a **different, consistent failure mode**:
+instead of inflating theta (disp<1 regime), `glmer` systematically deflates
+it, often collapsing to a singular fit entirely. The -76%/+60% single-run
+numbers above were just noisy draws from this same collapse-prone regime,
+not a separate unexplained phenomenon. Root cause not yet re-derived for
+this side (the §7 mechanism was worked out for the disp<1/inflation
+direction); worth revisiting given how large and consistent the effect is.
+Locked in as a characterization test in
+`tests/testthat/test-gamma_glmm_bias.R` (gated behind
+`LME4_TEST_LEVEL > 1`), alongside the disp=0.05 inflation case, so both
+directions are covered.
+
+A first attempt to reproduce this in a 2-RE random-slope model (`y ~ 1 + x +
+(1+x|f)`, disp=2, 20 groups) did *not* show a clean bias: at 500 obs/group
+it looked essentially unbiased (enough per-group information apparently
+swamps the effect), and at 50 obs/group it showed large bias but confounded
+by frequent singular fits from having only 20 groups to estimate a 2×2
+unstructured RE covariance (the same well-known few-groups instability
+noted in §2, not obviously the same mechanism as the single-RE collapse
+above). Isolating the single-RE case (this update) was needed to get a
+clean, unconfounded read; revisiting the random-slope design is a
+reasonable next step.
 
 ## 4. Mechanism, traced through code
 
