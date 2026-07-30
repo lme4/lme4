@@ -779,6 +779,44 @@ than the single-RE cases validated as unbiased earlier in this document
 the earlier validation doesn't automatically extend to this mixed-term
 design.
 
+### Pairs plots: the plateaus are genuine alternative parameter combinations
+
+Every fitted `theta` (full 6-component native parameterization), `beta`,
+and `sigma` was saved for all 200 starts × 3 methods, not just the
+objective value. Pairs plots (`gap=0`) of all 8 values jointly, one per
+method (`misc/GH643_multistart_pairs_lme4old.png`,
+`_lme4current.png`, `_glmmTMB.png`; script `misc/GH643_multistart_pairs.R`):
+
+- **Both lme4 versions** show visibly discrete clustering across theta
+  *and* beta *and* sigma jointly — e.g. current lme4's `theta1` (group1's
+  first diagonal entry) splits into a near-zero cluster and a ~0.6-0.8
+  cluster, with `beta` and `sigma` shifting together depending on which
+  `theta1` cluster a given start landed in. Confirms the ECDF plateaus
+  are genuine alternative *parameter combinations* co-varying together,
+  not just different objective values reached with similar parameters.
+  Current lme4 shows visibly more cluster variety than old lme4, matching
+  its longer ECDF tail.
+
+- **glmmTMB** looks qualitatively different: `theta1`/`theta2` (group1's
+  log-SD parameters, the truly-singular block) sit at strongly negative
+  values (SD ≈ exp(-7) to exp(-1), i.e. essentially zero) across nearly
+  all 200 starts — correctly and consistently recovering the singular
+  structure regardless of starting point. `beta` and `sigma` are almost
+  perfectly constant (beta ≈ 1.925-1.93, sigma ≈ 2.005-2.02) throughout,
+  completely unaffected by exactly where group1's (functionally
+  irrelevant, near-zero-variance) parameters land. `theta3` (group1's
+  correlation transform) fans out to large values for some fits — the
+  usual artifact of a correlation parameter becoming ill-defined as its
+  corresponding variance shrinks to the boundary, and harmless here since
+  a corner-case correlation on an ~zero-variance term doesn't affect the
+  fit.
+
+So the glmmTMB/lme4 contrast isn't just "tighter in NLL" — glmmTMB is
+actually finding the *correct* (near-singular) structure consistently,
+while both lme4 versions genuinely land on distinct, non-singular
+alternative solutions with fixed effects and dispersion shifting together
+with them.
+
 ### Scope/caveats
 
 Only one dataset has been tested this deeply. Worth checking whether the
