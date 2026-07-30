@@ -659,6 +659,89 @@ understood). The C++ changes (`src/respModule.h`, `src/respModule.cpp`,
 `src/external.cpp`) are committed and pushed to `Gamma_GLMM` (commit
 `99e015f2`).
 
+## 11. Multistart diagnostic (Raue et al. 2013): genuine, severe multimodality — and it's not new
+
+Follow-up to §10, using the method from Raue, A., Schilling, M., Bachmann,
+J., et al. (2013), "Lessons Learned from Quantitative Dynamical Modeling in
+Systems Biology," *PLOS ONE* 8(9):e74335: refit the *same* dataset (the
+rep=14 target from §10, seed 9014) from B=200 random starting points drawn
+from a broad hypercube, and plot the ECDF of the achieved deviance at
+convergence. A single dominant plateau means the optimizer reliably finds
+one (presumably global) optimum regardless of starting point; multiple
+separated plateaus mean multiple genuinely distinct local optima exist —
+real multimodality, not an artifact of any one starting-value choice.
+
+Run for **lme4 2.0-6**, **current (dev, fix)**, and **glmmTMB**, all on the
+identical dataset, same random seed (20260730) generating the starting-point
+ensemble in each script (though not numerically identical starting values
+across lme4 vs glmmTMB, which have different native theta parameterizations
+— see scope note below). Hypercubes: lme4 theta diagonal ~U(0,2), off-diagonal
+~U(-1,1) (its native raw-Cholesky units); glmmTMB theta ~U(-2,2) (its native
+log-SD/unconstrained-corr units, default-initialized at 0); intercept `beta`
+~U(0,4) for both (directly comparable — same units, the log-link intercept).
+Parallelized with `parallel::mclapply`, 10 cores each, all three run
+simultaneously (30 of 32 cores). Scripts: `misc/GH643_multistart_lme4.R`,
+`misc/GH643_multistart_glmmTMB.R`, `misc/GH643_multistart_analysis.R`;
+plot: `misc/GH643_multistart_ecdf.png`.
+
+**Results:**
+
+| | clean | warning | error | distinct deviance plateaus (count ≥2) |
+|---|---|---|---|---|
+| lme4 2.0-6 | 156 | 15 | 29 | **2221 (118), 2243 (32), 2466 (16)**, + several small ones |
+| lme4 current (fix) | 161 | 39 | 0 | **2196 (131), 2221 (18), 2243 (15)**, + several small ones |
+| glmmTMB | 0 | 200 | 0 | **1326 (190)**, 1328 (5), 1330 (2) |
+
+**Both lme4 versions show genuine, severe multimodality** — multiple
+clearly separated plateaus (tens to hundreds of deviance units apart, not
+numerical noise), visible as a multi-step staircase in the ECDF plot.
+**glmmTMB shows essentially none** — 190/200 starts (95%) converge to
+the same value, with the ECDF rising in one dominant jump; the small
+1326/1328/1330 spread is consistent with ordinary numerical tolerance, not
+separated modes.
+
+This changes the framing from §10 in an important way: **old (unmodified)
+lme4 is already just as multimodal as the fixed version** — the multistart
+diagnostic finds 2-3+ real plateaus for *both*. What changed under the fix
+isn't "multimodality was introduced" — it's *which* plateau is most often
+found (old lme4's most common plateau, 2221, has higher deviance than the
+fixed version's most common plateau, 2196 — the fix's most-common mode is
+actually a *better* fit) and how often each is found. Since `glmmTMB` — a
+genuinely different implementation (joint ML via full automatic
+differentiation, not lme4's profile/PIRLS approach) also using a Laplace
+approximation for the random-effect integral — does *not* show this
+pathology on the identical dataset, this points toward the multimodality
+being **specific to lme4's Laplace/PIRLS machinery** (present in both old
+and new versions) rather than an inherent feature of the correctly-specified
+model's likelihood that the fix merely reveals. That said, this hasn't been
+tested on a case where lme4 is *not* multimodal as a baseline comparison, so
+"lme4-specific" vs. "specific to this design regardless of implementation,
+and glmmTMB is just better at it" aren't yet fully distinguished.
+
+**Also notable:** the single *lowest*-deviance fit found across all 200
+starts for the current/fixed lme4 (deviance 2064.4, found by only 1/200
+starts) has `theta ≈ (0.05, 0.64, 0.52, 1.37, 0.05, 1.80)` — neither the
+true structure (group1 ≈ 0) nor the commonly-found "wrong" plateau's
+solution, but a *third*, more extreme pattern. If this is close to the true
+global optimum, it's being found by only 0.5% of random starts — i.e. even
+setting aside which plateau is "correct," the (likely) global optimum here
+is itself hard to reach reliably, independent of the collapse-to-boundary
+question from §9-§10.
+
+**Scope/caveats:** glmmTMB's deviance is not on a numerically comparable
+scale to lme4's `deviance()` (different additive constants in each
+implementation's likelihood bookkeeping — confirmed separately that
+`2*fit$obj$fn(fit$fit$par)` matches `-2*logLik(fit)` for glmmTMB specifically,
+used here to get an NLL value even when `logLik()` returns `NA` for a
+non-positive-definite Hessian, per glmmTMB's troubleshooting vignette; but
+this still isn't on lme4's scale). The *qualitative* comparison (one
+dominant plateau vs. several clearly separated ones) doesn't depend on
+matching scales and is the load-bearing part of this result. Only one
+dataset has been tested this deeply; worth checking whether the degree of
+multimodality tracks how close the true structure is to the singular
+boundary, or is present more generally for Gamma GLMMs with multiple
+random-effect terms regardless of singularity.
+
 ## Practical takeaway (regardless of whether/when this gets fixed upstream)
 
 When advising on Gamma GLMMs (or other estimated-dispersion families) in
