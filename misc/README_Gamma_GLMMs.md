@@ -605,32 +605,59 @@ really is the better (likely global) optimum for these datasets — the fix
 has shifted where the mode of the approximate likelihood sits, and not in
 a way that only affects hard-to-reach corners of parameter space.
 
-**Working hypothesis for the mechanism:** phi is estimated once, globally,
-per model (`dev/n`, pooling residual information across *all*
-random-effect terms), then that single phi reweights the curvature used
-to evaluate every term jointly (§7, §9). That's exactly right for a model
-with one random effect (all the earlier validation), but for a model
-mixing a truly-zero term (group1) with a genuinely-nonzero term (group2),
-a phi calibrated mostly by group2's scale may no longer correctly balance
-the zero-variance boundary case for group1 — pulling it away from zero.
-This is a distinct effect from the NaN-cascade/optimizer-robustness issue
-in §9; it doesn't involve any failed `pwrssUpdate` call or fallback path
-at all, it's a property of the successfully-converged objective itself.
-Not yet tested: whether a per-random-effect-term phi (rather than one
-pooled phi for the whole model) would remove this effect, or whether it's
-intrinsic to using a single dispersion parameter with mixed-scale random
-effects regardless of how phi is estimated.
+**Mechanism, corrected:** an initial hypothesis here was that phi might
+somehow be mis-scoped between the two random-effect terms (e.g. "a phi
+calibrated mostly by group2's scale doesn't correctly balance group1's
+boundary case"). That doesn't survive scrutiny, and shouldn't have been
+proposed: **the model as specified has exactly one conditional response
+distribution and one shape/dispersion parameter, shared by every
+observation regardless of which random-effect term applies to it** —
+there is no such thing as a separate "phi for group1" vs "phi for
+group2" to miscalibrate; phi is not decomposable by term at all. Checked
+directly: at both the non-singular ("wrong") mode and starting from the
+true parameters, the internally-profiled phi converges to essentially the
+identical value (3.3152 vs 3.3149) — confirming the fix's single, jointly
+consistent phi is doing exactly what it's supposed to at both points, and
+ruling out the per-term-miscalibration idea entirely.
 
-**Still open:** test the per-term-phi hypothesis above; decide how to
-adjust `test-isSingular.R`'s expectation given both §9 and §10 — the user
-does not consider that test "adversarial"/contrived (it illustrates
-genuine singularity), so any adjustment should be a real
-accepted-limitation note, not a brushed-off tolerance loosening; and
-consider whether §10's finding changes the recommended scope of the fix
-itself (e.g. whether it should be restricted to single-random-effect-term
-models until the mixed-term case is better understood). The C++ changes
-(`src/respModule.h`, `src/respModule.cpp`, `src/external.cpp`) are
-committed and pushed to `Gamma_GLMM` (commit `99e015f2`).
+So the real, still-open question is why the (correctly single-phi)
+profile-over-theta objective has two modes at all for this design — one
+at the true, singular structure and one substantially away from it, with
+the non-singular one deeper. This is a property of the *profile
+likelihood surface itself*, not of anything term-specific about phi.
+Plausible framings, not yet distinguished: (a) this is a genuine feature
+of Gamma GLMM likelihoods near a variance-component boundary when another
+term in the same model carries substantial signal — a well-known general
+difficulty (profile likelihoods for near-zero variance components are
+often irregular near the boundary), which the fix's more accurate
+handling of phi could be *revealing* rather than *causing*; or (b) it's
+specific to the Laplace approximation itself (with phi now handled
+correctly) being a poor approximation to the true/AGQ marginal likelihood
+in this regime, in a way the previous disp-blind version's own bias
+happened to mask (old lme4's own "clean but wrong" rate was 14%, not
+0% — so some version of this already existed, just less often). This is
+a distinct effect from the NaN-cascade/optimizer-robustness issue in §9;
+it doesn't involve any failed `pwrssUpdate` call or fallback path at all,
+just the successfully-converged objective having a genuine second optimum.
+
+**Still open:** distinguish (a) from (b) above — e.g. compare against
+`glmmTMB` (a genuinely joint single-phi ML fit via full automatic
+differentiation, not lme4's profile/PIRLS-based approach, though it also
+uses a Laplace approximation for the random-effect integral) on the same
+datasets: if glmmTMB also finds the non-singular point as its optimum,
+that points to (a) — a real feature of this design's likelihood, not an
+lme4-specific artifact; if it reliably recovers the near-zero solution,
+that points to (b) — something more specific to lme4's implementation.
+Also still open: decide how to adjust `test-isSingular.R`'s expectation
+given both §9 and §10 — the user does not consider that test
+"adversarial"/contrived (it illustrates genuine singularity), so any
+adjustment should be a real accepted-limitation note, not a brushed-off
+tolerance loosening; and consider whether §10's finding changes the
+recommended scope of the fix itself (e.g. whether it should be restricted
+to single-random-effect-term models until the mixed-term case is better
+understood). The C++ changes (`src/respModule.h`, `src/respModule.cpp`,
+`src/external.cpp`) are committed and pushed to `Gamma_GLMM` (commit
+`99e015f2`).
 
 ## Practical takeaway (regardless of whether/when this gets fixed upstream)
 
