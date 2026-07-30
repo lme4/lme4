@@ -1,54 +1,91 @@
 ## Combine the three multistart runs (lme4 2.0-6, lme4 current/fixed,
-## glmmTMB) and produce a Raue et al. (2013)-style ECDF ("waterfall") plot
-## of achieved deviance across B=200 random starting points each, plus
-## numeric summaries.
+## glmmTMB) and produce (1) a Raue et al. (2013)-style ECDF ("waterfall")
+## plot of achieved -2*logLik across B=200 random starting points each,
+## and (2) histograms of the estimated dispersion (phi = sigma^2) across
+## those same starts.
+##
+## NOTE on deviance(fit) vs -2*logLik(fit) for lme4: these are NOT the same
+## quantity for these fits (confirmed: e.g. 2195.7 vs 1359.9 on one fit --
+## not just a small numerical discrepancy). The lme4 scripts record both
+## but use -2*logLik() (field "neg2ll") as the comparable quantity for this
+## analysis. glmmTMB's script already used the correct comparable quantity
+## (2*fit$obj$fn(fit$fit$par), verified to match -2*logLik(fit) exactly
+## when the Hessian is PD) under the field name "deviance" (not rerun here
+## since it didn't need correcting).
 
 r_old <- readRDS("/tmp/claude-1000/-home-bolker-Documents-R-pkgs-lme4/6bffb877-f2f1-42e7-974f-8b4550ca1ead/scratchpad/report4bb/multistart_lme4old.rds")
 r_cur <- readRDS("/tmp/claude-1000/-home-bolker-Documents-R-pkgs-lme4/6bffb877-f2f1-42e7-974f-8b4550ca1ead/scratchpad/report4bb/multistart_lme4current.rds")
 r_tmb <- readRDS("/tmp/claude-1000/-home-bolker-Documents-R-pkgs-lme4/6bffb877-f2f1-42e7-974f-8b4550ca1ead/scratchpad/report4bb/multistart_glmmTMB.rds")
 
-cat("=== status counts ===\n")
+neg2ll_old <- r_old$neg2ll
+neg2ll_cur <- r_cur$neg2ll
+neg2ll_tmb <- r_tmb$deviance  ## field name predates the neg2ll rename; same quantity
+
+## a small number of lme4-current fits silently hit the C++ fix's flat 1e10
+## sentinel (returned when even the safe phi=1 retry fails inside
+## glmerLaplace()) without the outer optimizer raising an R-level error --
+## they get an lme4 "warning" status but a nonsensical neg2ll (~1e10).
+## Recode these as "degenerate" and exclude from the plots below; they are
+## a distinct, already-diagnosed failure mode (misc/README_Gamma_GLMMs.md
+## #9), not part of the multimodality question this script addresses.
+sentinel_idx <- which(neg2ll_cur > 1e6)
+cat("lme4-current: recoding", length(sentinel_idx), "sentinel-hit fit(s) as 'degenerate' (excluded below)\n")
+r_cur$status[sentinel_idx] <- "degenerate"
+neg2ll_cur[sentinel_idx] <- NA
+
+cat("\n=== status counts ===\n")
 cat("lme4 2.0-6:   "); print(table(r_old$status))
 cat("lme4 current: "); print(table(r_cur$status))
 cat("glmmTMB:      "); print(table(r_tmb$status))
 
-## examine the best (lowest-deviance) mode found by lme4-current, since its
-## minimum (2064) is notably below the ~2196 cluster
-best_i <- which.min(r_cur$deviance)
-cat("\n=== lme4-current best fit found (i=", best_i, ") ===\n")
-cat("deviance:", r_cur$deviance[best_i], " status:", r_cur$status[best_i], "\n")
-cat("theta:", round(r_cur$theta_est[best_i, ], 4), "\n")
-cat("beta:", r_cur$beta_est[best_i], " sigma:", r_cur$sigma_est[best_i], "\n")
-cat("start theta:", round(r_cur$start_theta[best_i, ], 4), " start beta:", r_cur$start_beta[best_i], "\n")
+cat("\n=== max|deviance(fit) - (-2*logLik(fit))| for lme4 fits ===\n")
+cat("old:    ", max(abs(r_old$deviance_fn - r_old$neg2ll), na.rm = TRUE), "\n")
+cat("current:", max(abs(r_cur$deviance_fn - r_cur$neg2ll), na.rm = TRUE), "\n")
 
-## cluster lme4-current's clean-or-warning fits by rounded deviance to see
-## how many distinct plateaus/modes are present
-cat("\n=== lme4-current: distinct deviance values (rounded to nearest 1), with counts ===\n")
-print(sort(table(round(r_cur$deviance[!is.na(r_cur$deviance)])), decreasing = TRUE)[1:10])
+cat("\n=== distinct -2*logLik values (rounded to nearest 1), with counts ===\n")
+cat("lme4 2.0-6:\n"); print(sort(table(round(neg2ll_old[!is.na(neg2ll_old)])), decreasing = TRUE)[1:10])
+cat("\nlme4 current:\n"); print(sort(table(round(neg2ll_cur[!is.na(neg2ll_cur)])), decreasing = TRUE)[1:10])
+cat("\nglmmTMB:\n"); print(sort(table(round(neg2ll_tmb[!is.na(neg2ll_tmb)])), decreasing = TRUE)[1:10])
 
-cat("\n=== lme4-old: distinct deviance values (rounded to nearest 1), with counts ===\n")
-print(sort(table(round(r_old$deviance[!is.na(r_old$deviance)])), decreasing = TRUE)[1:10])
+## dispersion (phi = sigma^2); sigma() returns sqrt(phi) for both lme4 and glmmTMB
+phi_old <- r_old$sigma_est^2
+phi_cur <- r_cur$sigma_est^2
+phi_cur[sentinel_idx] <- NA
+phi_tmb <- r_tmb$sigma_est^2
+cat("\n=== dispersion (phi = sigma^2) summary, true phi = 4 ===\n")
+cat("lme4 2.0-6:   "); print(summary(phi_old))
+cat("lme4 current: "); print(summary(phi_cur))
+cat("glmmTMB:      "); print(summary(phi_tmb))
 
-cat("\n=== glmmTMB: distinct deviance values (rounded to nearest 1), with counts ===\n")
-print(sort(table(round(r_tmb$deviance[!is.na(r_tmb$deviance)])), decreasing = TRUE)[1:10])
-
-## ECDF plot
+## ECDF plot (corrected: -2*logLik, not deviance(fit))
 png("/tmp/claude-1000/-home-bolker-Documents-R-pkgs-lme4/6bffb877-f2f1-42e7-974f-8b4550ca1ead/scratchpad/report4bb/multistart_ecdf.png",
     width = 1000, height = 700, res = 120)
 par(mfrow = c(1, 2))
 
-## panel 1: lme4 old vs current (directly comparable deviance scale)
-xr <- range(c(r_old$deviance, r_cur$deviance), na.rm = TRUE)
-plot(ecdf(r_old$deviance), col = "steelblue", lwd = 2, main = "lme4: old (2.0-6) vs current",
-     xlab = "deviance (-2logLik) at convergence", ylab = "ECDF (fraction of starts)",
+xr <- range(c(neg2ll_old, neg2ll_cur), na.rm = TRUE)
+plot(ecdf(neg2ll_old), col = "steelblue", lwd = 2, main = "lme4: old (2.0-6) vs current",
+     xlab = "-2*logLik at convergence", ylab = "ECDF (fraction of starts)",
      xlim = xr, verticals = TRUE, do.points = FALSE)
-lines(ecdf(r_cur$deviance), col = "firebrick", lwd = 2, verticals = TRUE, do.points = FALSE)
+lines(ecdf(neg2ll_cur), col = "firebrick", lwd = 2, verticals = TRUE, do.points = FALSE)
 legend("bottomright", c("lme4 2.0-6", "lme4 current (fix)"), col = c("steelblue", "firebrick"), lwd = 2, bty = "n")
 
-## panel 2: glmmTMB on its own scale (not directly comparable to lme4's deviance additive constant)
-plot(ecdf(r_tmb$deviance), col = "darkgreen", lwd = 2, main = "glmmTMB",
-     xlab = "deviance (2*NLL) at convergence", ylab = "ECDF (fraction of starts)",
+plot(ecdf(neg2ll_tmb), col = "darkgreen", lwd = 2, main = "glmmTMB",
+     xlab = "-2*logLik at convergence", ylab = "ECDF (fraction of starts)",
      verticals = TRUE, do.points = FALSE)
 
 dev.off()
-cat("\nsaved plot to multistart_ecdf.png\n")
+cat("\nsaved ECDF plot to multistart_ecdf.png\n")
+
+## dispersion histograms
+png("/tmp/claude-1000/-home-bolker-Documents-R-pkgs-lme4/6bffb877-f2f1-42e7-974f-8b4550ca1ead/scratchpad/report4bb/multistart_dispersion_hist.png",
+    width = 1200, height = 450, res = 120)
+par(mfrow = c(1, 3))
+xr_phi <- range(c(phi_old, phi_cur, phi_tmb), na.rm = TRUE)
+hist(phi_old, breaks = 30, col = "steelblue", main = "lme4 2.0-6", xlab = "estimated dispersion (phi)", xlim = xr_phi)
+abline(v = 4, col = "black", lty = 2, lwd = 2)
+hist(phi_cur, breaks = 30, col = "firebrick", main = "lme4 current (fix)", xlab = "estimated dispersion (phi)", xlim = xr_phi)
+abline(v = 4, col = "black", lty = 2, lwd = 2)
+hist(phi_tmb, breaks = 30, col = "darkgreen", main = "glmmTMB", xlab = "estimated dispersion (phi)", xlim = xr_phi)
+abline(v = 4, col = "black", lty = 2, lwd = 2)
+dev.off()
+cat("saved dispersion histogram to multistart_dispersion_hist.png (dashed line = true phi = 4)\n")

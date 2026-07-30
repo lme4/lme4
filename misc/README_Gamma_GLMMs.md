@@ -659,13 +659,13 @@ understood). The C++ changes (`src/respModule.h`, `src/respModule.cpp`,
 `src/external.cpp`) are committed and pushed to `Gamma_GLMM` (commit
 `99e015f2`).
 
-## 11. Multistart diagnostic (Raue et al. 2013): genuine, severe multimodality — and it's not new
+## 11. Multistart diagnostic (Raue et al. 2013): real but modest multimodality, and a correction along the way
 
 Follow-up to §10, using the method from Raue, A., Schilling, M., Bachmann,
 J., et al. (2013), "Lessons Learned from Quantitative Dynamical Modeling in
 Systems Biology," *PLOS ONE* 8(9):e74335: refit the *same* dataset (the
 rep=14 target from §10, seed 9014) from B=200 random starting points drawn
-from a broad hypercube, and plot the ECDF of the achieved deviance at
+from a broad hypercube, and plot the ECDF of the achieved -2*logLik at
 convergence. A single dominant plateau means the optimizer reliably finds
 one (presumably global) optimum regardless of starting point; multiple
 separated plateaus mean multiple genuinely distinct local optima exist —
@@ -673,74 +673,120 @@ real multimodality, not an artifact of any one starting-value choice.
 
 Run for **lme4 2.0-6**, **current (dev, fix)**, and **glmmTMB**, all on the
 identical dataset, same random seed (20260730) generating the starting-point
-ensemble in each script (though not numerically identical starting values
-across lme4 vs glmmTMB, which have different native theta parameterizations
-— see scope note below). Hypercubes: lme4 theta diagonal ~U(0,2), off-diagonal
-~U(-1,1) (its native raw-Cholesky units); glmmTMB theta ~U(-2,2) (its native
-log-SD/unconstrained-corr units, default-initialized at 0); intercept `beta`
-~U(0,4) for both (directly comparable — same units, the log-link intercept).
-Parallelized with `parallel::mclapply`, 10 cores each, all three run
-simultaneously (30 of 32 cores). Scripts: `misc/GH643_multistart_lme4.R`,
+ensemble in each script (not numerically identical starting values across
+lme4 vs glmmTMB, which have different native theta parameterizations).
+Hypercubes: lme4 theta diagonal ~U(0,2), off-diagonal ~U(-1,1) (its native
+raw-Cholesky units); glmmTMB theta ~U(-2,2) (its native log-SD/unconstrained-
+corr units, default-initialized at 0); intercept `beta` ~U(0,4) for both
+(directly comparable — same units, the log-link intercept). Parallelized
+with `parallel::mclapply`, 10 cores each, all three run simultaneously (30
+of 32 cores). Scripts: `misc/GH643_multistart_lme4.R`,
 `misc/GH643_multistart_glmmTMB.R`, `misc/GH643_multistart_analysis.R`;
-plot: `misc/GH643_multistart_ecdf.png`.
+plots: `misc/GH643_multistart_ecdf.png`, `misc/GH643_multistart_dispersion_hist.png`.
 
-**Results:**
+### Correction: `deviance()` is not `-2*logLik()` for these fits
 
-| | clean | warning | error | distinct deviance plateaus (count ≥2) |
-|---|---|---|---|---|
-| lme4 2.0-6 | 156 | 15 | 29 | **2221 (118), 2243 (32), 2466 (16)**, + several small ones |
-| lme4 current (fix) | 161 | 39 | 0 | **2196 (131), 2221 (18), 2243 (15)**, + several small ones |
-| glmmTMB | 0 | 200 | 0 | **1326 (190)**, 1328 (5), 1330 (2) |
+The first pass of this analysis used `deviance(fit)` and found dramatic,
+widely-separated plateaus (hundreds of units apart) for both lme4 versions.
+That turned out to be measuring largely the wrong thing. Flagged directly:
+for a fixed dataset, `deviance()` and `-2*logLik()` should differ by at
+most a parameter-independent constant — but the observed gap varied by
+over 1000 across fits of the *same* data, which isn't possible if that were
+true. Traced to ground: **`deviance(fit)` for these Gamma GLMM fits is
+exactly the raw, phi-free unit-deviance sum**, `sum(Gamma()$dev.resids(y,
+mu, wt))` — verified identical to machine precision — with no `1/phi`
+scaling and no phi-dependent normalizing constant, and no contribution from
+the random-effects integration term (`‖u‖² + log|L|`) that `-2*logLik()`
+correctly includes. Since phi is *estimated* and differs across fits (each
+local optimum has its own fitted dispersion), the two quantities aren't
+simply offset — `deviance()` just isn't a comparable likelihood-based
+quantity across different fits of a dispersion-estimated GLMM.
 
-**Both lme4 versions show genuine, severe multimodality** — multiple
-clearly separated plateaus (tens to hundreds of deviance units apart, not
-numerical noise), visible as a multi-step staircase in the ECDF plot.
-**glmmTMB shows essentially none** — 190/200 starts (95%) converge to
-the same value, with the ECDF rising in one dominant jump; the small
-1326/1328/1330 spread is consistent with ordinary numerical tolerance, not
-separated modes.
+Independently confirmed this is the conventional, expected role of the
+`dev.resids()`/`wt` argument (not something specific to lme4): surveyed
+every call to `dev.resids(...)` with a Gamma or gaussian family across all
+R packages under `~/R/pkgs` (44 files). `wt` is *always* ordinary prior/case
+weights, matching base R's `glm.fit()` convention — never used to carry
+dispersion. `mgcv/R/efam.r:22` is the clearest confirmation: it computes
+`sum(family$dev.resids(y, mu, wt, theta))/scale`, applying the dispersion
+scaling as an explicit separate step after the raw call — exactly the
+`/phi` scaling `deviance()` is missing here. This isn't a bug introduced by
+the fix; both lme4 2.0-6 and current show the same `deviance()`/`-2*logLik()`
+divergence, so it looks like a longstanding property of how `merMod`
+defines `deviance()` for GLMMs with an estimated dispersion generally.
 
-This changes the framing from §10 in an important way: **old (unmodified)
-lme4 is already just as multimodal as the fixed version** — the multistart
-diagnostic finds 2-3+ real plateaus for *both*. What changed under the fix
-isn't "multimodality was introduced" — it's *which* plateau is most often
-found (old lme4's most common plateau, 2221, has higher deviance than the
-fixed version's most common plateau, 2196 — the fix's most-common mode is
-actually a *better* fit) and how often each is found. Since `glmmTMB` — a
-genuinely different implementation (joint ML via full automatic
-differentiation, not lme4's profile/PIRLS approach) also using a Laplace
-approximation for the random-effect integral — does *not* show this
-pathology on the identical dataset, this points toward the multimodality
-being **specific to lme4's Laplace/PIRLS machinery** (present in both old
-and new versions) rather than an inherent feature of the correctly-specified
-model's likelihood that the fix merely reveals. That said, this hasn't been
-tested on a case where lme4 is *not* multimodal as a baseline comparison, so
-"lme4-specific" vs. "specific to this design regardless of implementation,
-and glmmTMB is just better at it" aren't yet fully distinguished.
+All results below use the corrected quantity, `-2*logLik(fit)` for lme4
+(field `neg2ll` in the updated scripts) and `2*fit$obj$fn(fit$fit$par)` for
+glmmTMB (already correct — matches `-2*logLik` exactly whenever the Hessian
+is PD, and per glmmTMB's troubleshooting vignette still gives a usable NLL
+when it isn't).
 
-**Also notable:** the single *lowest*-deviance fit found across all 200
-starts for the current/fixed lme4 (deviance 2064.4, found by only 1/200
-starts) has `theta ≈ (0.05, 0.64, 0.52, 1.37, 0.05, 1.80)` — neither the
-true structure (group1 ≈ 0) nor the commonly-found "wrong" plateau's
-solution, but a *third*, more extreme pattern. If this is close to the true
-global optimum, it's being found by only 0.5% of random starts — i.e. even
-setting aside which plateau is "correct," the (likely) global optimum here
-is itself hard to reach reliably, independent of the collapse-to-boundary
-question from §9-§10.
+### Also found while rerunning: a small silent-degenerate-fit issue in the fix
 
-**Scope/caveats:** glmmTMB's deviance is not on a numerically comparable
-scale to lme4's `deviance()` (different additive constants in each
-implementation's likelihood bookkeeping — confirmed separately that
-`2*fit$obj$fn(fit$fit$par)` matches `-2*logLik(fit)` for glmmTMB specifically,
-used here to get an NLL value even when `logLik()` returns `NA` for a
-non-positive-definite Hessian, per glmmTMB's troubleshooting vignette; but
-this still isn't on lme4's scale). The *qualitative* comparison (one
-dominant plateau vs. several clearly separated ones) doesn't depend on
-matching scales and is the load-bearing part of this result. Only one
-dataset has been tested this deeply; worth checking whether the degree of
-multimodality tracks how close the true structure is to the singular
-boundary, or is present more generally for Gamma GLMMs with multiple
-random-effect terms regardless of singularity.
+2 of 200 lme4-current fits hit the C++ fix's flat `1e10` sentinel (§9 —
+returned when even the safe phi=1 retry inside `glmerLaplace()` fails) but
+did *not* trigger an R-level error, only an ordinary convergence warning
+indistinguishable in kind from the other 37 warned-but-fine fits. Both are
+recoded as "degenerate" and excluded from the analysis below; this is a
+loose end in the §9 fallback (a fit that internally gave up should probably
+be more clearly flagged than a generic convergence warning) worth tightening
+separately, not folded into the multimodality question here.
+
+### Results (corrected)
+
+| | clean | warning | degenerate | error | dominant -2logLik plateau (count) |
+|---|---|---|---|---|---|
+| lme4 2.0-6 | 156 | 15 | — | 29 | **1393 (118)**, 1396 (32), 1385 (16), + small tail to ~1500 |
+| lme4 current (fix) | 161 | 37 | 2 | 0 | **1360 (131)**, 1393 (18), 1396 (17), + longer tail to ~1500 |
+| glmmTMB | 0 | 200 | — | 0 | **1326 (190)**, 1328 (5), 1330 (2) |
+
+The picture is much less dramatic than the `deviance()`-based first pass,
+but a real, qualitative difference survives: **all three still show more
+than one plateau**, but the plateaus for both lme4 versions are now only
+tens of units apart (not hundreds) — still likely-meaningful separation on
+a -2logLik scale (roughly matching a chi-square-type threshold, not just
+optimizer tolerance noise), but nowhere near as severe as first reported.
+glmmTMB's spread (1326/1328/1330, ~4 units total) is small enough to be
+ordinary numerical tolerance around one optimum, not a second mode.
+
+Visually (`misc/GH643_multistart_ecdf.png`): lme4-old rises in one fairly
+sharp jump near its own dominant plateau with a short tail. **lme4-current
+also jumps early to its (better/lower) dominant plateau, but then has a
+visibly longer, more gradual staircase tail out to ~1500** — i.e. the fix's
+dominant mode is objectively a better fit than old lme4's dominant mode,
+but the fix's optimization landscape has *more* reachable alternative local
+optima than old lme4's, not fewer. That's a genuine, previously-unstated
+cost of the fix worth being aware of, distinct from the boundary-collapse
+question in §9-§10.
+
+### Dispersion (phi = sigma²), true value 4
+
+`misc/GH643_multistart_dispersion_hist.png`:
+
+| | median phi | range | shape |
+|---|---|---|---|
+| lme4 2.0-6 | 3.510 | 2.90–5.65 | dominant cluster ~3.5 (below truth), small secondary cluster ~5.6 |
+| lme4 current (fix) | 3.315 | 2.82–5.65 | dominant cluster ~3.3-3.4 (below truth), longer spread-out secondary cluster ~4.5-5.0 |
+| glmmTMB | 4.009 | 4.01–4.08 | essentially a single spike at the true value |
+
+glmmTMB recovers the true dispersion almost exactly regardless of starting
+point. Both lme4 versions underestimate phi somewhat at their dominant
+mode (~3.3-3.5 vs true 4), with the fix's secondary cluster more spread
+out than old lme4's — consistent with the longer ECDF tail above. This is
+a different, more complex scenario (two random-effect terms, one singular)
+than the single-RE cases validated as unbiased earlier in this document
+(§3, §9), so it doesn't contradict that validation, but it's a reminder
+the earlier validation doesn't automatically extend to this mixed-term
+design.
+
+### Scope/caveats
+
+Only one dataset has been tested this deeply. Worth checking whether the
+degree of multimodality tracks how close the true structure is to the
+singular boundary, or is present more generally for Gamma GLMMs with
+multiple random-effect terms regardless of singularity. Also worth
+checking whether glmmTMB's much tighter clustering (in both -2logLik and
+dispersion) holds up on other datasets, or is specific to this one.
 
 ## Practical takeaway (regardless of whether/when this gets fixed upstream)
 

@@ -1,10 +1,13 @@
 ## Raue et al. (2013) multistart diagnostic: fit the SAME dataset from
 ## B=200 random starting points drawn from an appropriate hypercube, and
-## record the achieved deviance (-2logLik) at each. Plotting the ECDF of
-## these values reveals distinct plateaus if there are multiple genuinely
-## separated local optima (multimodality), vs. a single dominant plateau
-## if the optimizer reliably finds one (likely global) optimum regardless
-## of starting point.
+## record -2*logLik() at each (the actually-comparable objective value --
+## deviance(fit) is NOT the same quantity for these fits and is recorded
+## separately only for reference/diagnostic purposes; see
+## misc/README_Gamma_GLMMs.md #11 update). Plotting the ECDF of -2*logLik
+## reveals distinct plateaus if there are multiple genuinely separated
+## local optima (multimodality), vs. a single dominant plateau if the
+## optimizer reliably finds one (likely global) optimum regardless of
+## starting point.
 ##
 ## Same target dataset used throughout this investigation: rep=14 from the
 ## B=100 reliability comparison (seed = master_seed(9000) + 14 = 9014),
@@ -73,12 +76,13 @@ fitOne <- function(i) {
   )
   if (inherits(fit, "error")) {
     return(list(i = i, status = "error", msg = conditionMessage(fit),
-                deviance = NA_real_, logLik = NA_real_,
+                neg2ll = NA_real_, deviance_fn = NA_real_,
                 theta = rep(NA_real_, 6), beta = NA_real_, sigma = NA_real_))
   }
   status <- if (length(warn_msgs) > 0) "warning" else "clean"
+  ll <- as.numeric(logLik(fit))
   list(i = i, status = status, msg = paste(warn_msgs, collapse = "; "),
-       deviance = deviance(fit), logLik = as.numeric(logLik(fit)),
+       neg2ll = -2 * ll, deviance_fn = deviance(fit),
        theta = getME(fit, "theta"), beta = unname(fixef(fit)[1]), sigma = sigma(fit))
 }
 
@@ -88,8 +92,8 @@ cat("total time:", as.numeric(Sys.time() - t0, units = "mins"), "min\n")
 
 status <- vapply(results, function(x) x$status, character(1))
 msg <- vapply(results, function(x) x$msg, character(1))
-deviance_vec <- vapply(results, function(x) x$deviance, numeric(1))
-logLik_vec <- vapply(results, function(x) x$logLik, numeric(1))
+neg2ll_vec <- vapply(results, function(x) x$neg2ll, numeric(1))
+deviance_fn_vec <- vapply(results, function(x) x$deviance_fn, numeric(1))
 theta_est <- do.call(rbind, lapply(results, function(x) x$theta))
 beta_est <- vapply(results, function(x) x$beta, numeric(1))
 sigma_est <- vapply(results, function(x) x$sigma, numeric(1))
@@ -98,13 +102,18 @@ start_beta <- vapply(starts, function(s) s$beta, numeric(1))
 
 cat("\n=== status counts ===\n")
 print(table(status))
-cat("\ndeviance summary (excluding NA):\n")
-print(summary(deviance_vec))
+cat("\n-2*logLik() summary (excluding NA) -- the comparable quantity:\n")
+print(summary(neg2ll_vec))
+cat("\ndeviance(fit) summary (excluding NA) -- NOT the same quantity, reference only:\n")
+print(summary(deviance_fn_vec))
+cat("\nmax|deviance(fit) - (-2*logLik(fit))| across all fits:",
+    max(abs(deviance_fn_vec - neg2ll_vec), na.rm = TRUE),
+    " (if this varies across fits rather than being ~constant, the two are not just a fixed additive offset apart)\n")
 
 outfile <- sprintf(
   "/tmp/claude-1000/-home-bolker-Documents-R-pkgs-lme4/6bffb877-f2f1-42e7-974f-8b4550ca1ead/scratchpad/report4bb/multistart_%s.rds",
   if (USE_OLD) "lme4old" else "lme4current")
-saveRDS(list(status = status, msg = msg, deviance = deviance_vec, logLik = logLik_vec,
+saveRDS(list(status = status, msg = msg, neg2ll = neg2ll_vec, deviance_fn = deviance_fn_vec,
              theta_est = theta_est, beta_est = beta_est, sigma_est = sigma_est,
              start_theta = start_theta, start_beta = start_beta,
              version = as.character(packageVersion("lme4")), use_old = USE_OLD, B = B,
