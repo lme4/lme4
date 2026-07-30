@@ -575,15 +575,62 @@ it connects to the same phi-fallback/optimizer-state mechanism diagnosed
 above, or is a separate phenomenon, before deciding whether/how it should
 change the fix.
 
-**Still open:** dig into *why* the "clean but wrong" rate increased (same
-mechanism as the NaN-cascade diagnosis above, or something distinct?);
-decide how to adjust `test-isSingular.R`'s expectation given all of the
-above — the user does not consider this test "adversarial"/contrived (it
-illustrates genuine singularity), so any adjustment should be a real
+## 10. "Clean but wrong" is genuine multimodality, not an optimizer miss
+
+Follow-up to §9's finding above (`misc/GH643_multimodal_check.R`): is the
+elevated "clean but wrong" rate under the fix (group1's truly-zero
+variance silently converging to a substantial non-zero estimate) an
+optimizer-convergence problem — `bobyqa` starting somewhere unlucky and
+failing to find the true-adjacent optimum — or a genuine second mode in
+the fixed objective? Tested on three of the affected datasets (reps 14,
+26, 48 from the B=100 comparison in §9) two ways:
+
+1. **Refit starting exactly at the true generating parameters**
+   (`start = list(theta = c(0,0,0,1,0.5,0.3), fixef = 2)`) instead of
+   lme4's default starting values. Result: converges back to essentially
+   the *same* non-singular solution every time — bit-for-bit identical
+   theta for reps 26 and 48, and within noise for rep 14. So this is not
+   "the optimizer wandered away from a good start" — even starting
+   exactly at the truth, it moves away from it.
+
+2. **Directly evaluate the (unoptimized) Laplace deviance** at the
+   default-converged point vs. at the true parameters exactly, via
+   `updateGlmerDevfun(..., nAGQ=1)`. The non-singular point has **lower**
+   deviance (better fit) in all three cases (e.g. rep 14: 1359.9 vs
+   1363.5; rep 26: 1447.2 vs 1450.5; rep 48: 1540.2 vs 1545.9).
+
+**Conclusion: this is genuine multimodality, not an optimizer failure.**
+Under the fix's phi-reweighted objective, the non-singular solution
+really is the better (likely global) optimum for these datasets — the fix
+has shifted where the mode of the approximate likelihood sits, and not in
+a way that only affects hard-to-reach corners of parameter space.
+
+**Working hypothesis for the mechanism:** phi is estimated once, globally,
+per model (`dev/n`, pooling residual information across *all*
+random-effect terms), then that single phi reweights the curvature used
+to evaluate every term jointly (§7, §9). That's exactly right for a model
+with one random effect (all the earlier validation), but for a model
+mixing a truly-zero term (group1) with a genuinely-nonzero term (group2),
+a phi calibrated mostly by group2's scale may no longer correctly balance
+the zero-variance boundary case for group1 — pulling it away from zero.
+This is a distinct effect from the NaN-cascade/optimizer-robustness issue
+in §9; it doesn't involve any failed `pwrssUpdate` call or fallback path
+at all, it's a property of the successfully-converged objective itself.
+Not yet tested: whether a per-random-effect-term phi (rather than one
+pooled phi for the whole model) would remove this effect, or whether it's
+intrinsic to using a single dispersion parameter with mixed-scale random
+effects regardless of how phi is estimated.
+
+**Still open:** test the per-term-phi hypothesis above; decide how to
+adjust `test-isSingular.R`'s expectation given both §9 and §10 — the user
+does not consider that test "adversarial"/contrived (it illustrates
+genuine singularity), so any adjustment should be a real
 accepted-limitation note, not a brushed-off tolerance loosening; and
-finalize/commit the C++ changes (`src/respModule.h`, `src/respModule.cpp`,
-`src/external.cpp`, all currently uncommitted on `Gamma_GLMM`) alongside
-whatever comes out of the above.
+consider whether §10's finding changes the recommended scope of the fix
+itself (e.g. whether it should be restricted to single-random-effect-term
+models until the mixed-term case is better understood). The C++ changes
+(`src/respModule.h`, `src/respModule.cpp`, `src/external.cpp`) are
+committed and pushed to `Gamma_GLMM` (commit `99e015f2`).
 
 ## Practical takeaway (regardless of whether/when this gets fixed upstream)
 
