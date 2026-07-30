@@ -657,7 +657,7 @@ if (testLevel>1) {
     dd$y2 <- s2[[1]]
     g2 <- glmer(y2~x+(1|f), family=Gamma(link="log"),dd)
     expect_equal(fixef(g2), tolerance = 4e-7, # 32-bit windows showed 1.34e-7
-                 c(`(Intercept)` = 2.90871404438183, x = 0.988265230798941))
+                 c(`(Intercept)` = 2.93829454576482, x = 0.999491776043614))
 ##                 c("(Intercept)" = 2.81887136759369, x= 1.06543222163626))
 
     ## simulate with re.form = NULL and derived/offset components in formula

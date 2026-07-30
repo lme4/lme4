@@ -155,7 +155,12 @@ namespace lme4 {
                        muEta().minCoeff() <<
                        " min weights: " << d_weights.array().minCoeff() <<
                        std::endl;
-        return muEta() * (d_weights.array() / variance()).sqrt();
+                                // d_phi reweights the deviance/data-fit
+                                // curvature only (d_phi==1 reproduces the
+                                // original formula exactly); the
+                                // random-effects prior penalty is untouched
+                                // -- see misc/README_Gamma_GLMMs.md
+        return muEta() * (d_weights.array() / (d_phi * variance())).sqrt();
     }
 
     double glmResp::Laplace(double ldL2, double ldRX2, double sqrL) const {

@@ -424,6 +424,167 @@ spec for that edit once/if the code fix (§7) is actually implemented and
 merged, so the vignette and the code change together rather than the
 vignette silently going stale again.
 
+## 9. Implemented in the compiled path (branch `Gamma_GLMM`), 2026-07-29
+
+Per user request, the "moment" approach (only — no digamma, no opt-out) is
+now implemented directly in lme4's compiled fitting path, unconditionally
+for the Gamma family:
+
+- `src/respModule.h`/`.cpp`: `glmResp` gets a `d_phi` member (default 1.0,
+  reproduces original behavior when unused), `phi()`/`setPhi()` accessors,
+  and `sqrtWrkWt()` divides the deviance/curvature term by `d_phi`.
+- `src/external.cpp`: `internal_glmerWrkIter`'s PWRSS convergence criterion
+  divides `resDev()` by `phi()` (keeps step-halving consistent with the
+  reweighted objective; `sqrL`/`||u||^2` stays unscaled, per §7).
+  `glmerLaplace()` — the entry point used for nAGQ=0/1 fits, i.e. nearly
+  all real GLMM fits (`glmerAGQ`, the separate nAGQ>1 single-scalar-RE
+  path, was deliberately left untouched) — wraps the single `pwrssUpdate()`
+  call in an outer fixed-point loop over phi, gated on
+  `rp->family() == "Gamma"` only.
+
+**Validated working**, matching the lme4pureR R-level `"moment"` prototype
+closely on real `glmer()` calls (single-RE, B=30 batches):
+
+| | shape=20 (disp=0.05, inflation) | shape=0.5 (disp=2, collapse) |
+|---|---|---|
+| before | +117.0% bias | -94.5% bias, 97% singular |
+| after | -0.1% bias | +4.4% bias, 0% singular |
+
+Full test suite (`devtools::test()`, `LME4_TEST_LEVEL=2` — note
+`testthat::test_dir()` after a plain `library(lme4)`/`load_all()` gives
+false-positive "object not found" errors for internal/non-exported
+objects like `glmFamily`; `devtools::test()` is the correct invocation)
+passes cleanly except three now-mechanical hardcoded-reference-value
+updates (`test-glmFamily.R:155`, `test-methods.R:659`,
+`test-gamma_glmm_bias.R` — the latter rewritten from "characterize the
+known bug" to "verify the fix stays working," since it's now unconditional)
+and one open item, below.
+
+### Robustness investigation: `test-isSingular.R`'s "checking singular fit for merMod"
+
+This test (a genuine illustration of singularity detection, two crossed
+random-slope terms, one deliberately singular in truth, Gamma shape=0.25)
+started throwing `"(maxstephalfit) PIRLS step-halvings failed..."` under
+the fix — previously it converged (to a biased-but-valid fit). Tried,
+in order: 50/50 and then gentler (90/10, log-space) damping of the phi
+update; a try/catch fallback resetting `delu`/`delb` to zero and retrying
+at phi=1; retrying at `lastGoodPhi` instead of phi=1; returning the
+partial (non-converged) Laplace value instead of a flat sentinel on
+double failure (this one made things *worse* — a misleadingly low partial
+value pulled the optimizer toward a degenerate boundary rather than away).
+None of these change the final outcome — confirmed by explicit tracing,
+not just the end result: **245 of 246 internal failures occur at
+`outer=0`, `phi=1`** — i.e. at the exact computation the original,
+unmodified code always did. So this isn't new fragility introduced by the
+phi fix.
+
+Two further diagnostics (reprex scripts `misc/GH643_reprex_pirls_fragility.R`
+and `misc/GH643_reliability_comparison.R`, run against lme4 2.0-6 installed
+into an isolated library via `remotes::install_version` alongside the
+current dev build, so both can be compared without clobbering either):
+
+1. **Near the true parameters, both versions are equally robust.** 200
+   evaluations of the joint (theta,beta) Laplace deviance at points
+   perturbed ±10% around the true (deliberately singular) structure: 0
+   errors for *either* version, nearly identical deviance values.
+2. **The actual failing candidates are not near the truth.** Tracing the
+   real fit showed candidates like `theta=(1,0,1,1,0,1)` (literal starting
+   values) recurring for nearly the whole optimization, and — critically —
+   `beta` itself was `NaN` in many failing evaluations. Directly
+   re-evaluating one such (valid, non-NaN) point fresh against lme4 2.0-6
+   **succeeds** (deviance 1813.0), which only makes sense if the failures
+   in the live fit are driven by *warm-started internal state*, not the
+   candidate point itself.
+
+**Mechanism:** the fix's altered deviance surface routes `bobyqa` through
+a few early failing evaluations. Once several evaluations in a row return
+the same flat sentinel (`1e10`), `bobyqa`'s own trust-region/quadratic
+interpolation model — a known failure mode for derivative-free optimizers
+fed a locally-flat objective — degrades and starts proposing **NaN
+candidates**. lme4's R-level optimizer wrapper commits whatever candidate
+it's given as `pp`'s new baseline (`beta0`) without checking finiteness
+first (every devfun call still "succeeds" from its point of view, since it
+gets back *some* finite number). Once `beta0` itself is NaN, every
+subsequent evaluation inherits a NaN-poisoned baseline and fails too,
+regardless of what `(theta,beta)` `bobyqa` asks for next — a
+self-reinforcing cascade, matching the near-total (245/246) failure rate.
+
+This is a **pre-existing gap in lme4's optimizer/devfun contract**
+(candidates are never validated for finiteness before being committed as
+the persistent baseline) that the original, unfixed code never had to
+confront, because it had no try/catch at all — a single PIRLS failure
+propagated immediately as an R error and aborted the fit, rather than
+continuing and accumulating corruption. The Gamma dispersion fix is simply
+the first thing to route the optimizer somewhere this latent gap gets
+triggered. Fixing *that* gap (e.g. validating/rejecting non-finite
+candidates before they're committed) is a separate, pre-existing lme4
+robustness issue, out of scope for this fix.
+
+**Reliability comparison, completed** (`misc/GH643_reliability_comparison_params.R`,
+run overnight 2026-07-29→30, parallelized with `parallel::mclapply` at
+`mc.cores=14` — machine has 32 cores, not 4 as first assumed; verified via
+`/proc/cpuinfo` and `parallel::detectCores()`): B=100 *resimulated*
+datasets (same generative process as `test-isSingular.R`'s near-singular
+scenario — 20×20 balanced design, two crossed random-slope terms, group1
+truly singular (`theta=0,0,0`), group2 not (`theta=1.0,0.5,0.3`),
+Gamma(link=log), shape=0.25 — fresh random draws each time, shared seed
+sequence so both lme4 versions see identical datasets), with the actual
+fitted `theta`/`beta`/`sigma` captured for every non-error replicate (not
+just pass/fail), so "clean convergence" can be checked for whether it's
+actually *correct*, not just unflagged:
+
+| | clean | warnings | **error** | runtime (100 fits, 14 cores) |
+|---|---|---|---|---|
+| lme4 2.0-6 (unmodified) | 85/100 | 3/100 | **12/100 (12%)** | 0.21 min |
+| current (Gamma_GLMM fix) | 28/100 | **71/100** | **1/100 (1%)** | 4.0 min |
+
+The fix essentially eliminates outright crashes (12%→1%) but converts most
+of that into flagged convergence warnings (3%→71%) rather than clean fits
+— consistent with the mechanism traced above (the nested phi loop hitting
+real optimizer difficulty far more often, but now surfacing it via
+warnings instead of an R error).
+
+The more consequential finding is what happens *inside* "clean
+convergence" — fits that report no problem at all. Group1's diagonal theta
+(should be ~0, true singular structure) among clean fits:
+
+| | old, clean (n=85) | current, clean (n=28) |
+|---|---|---|
+| group1 θ mean / median | 0.109 / 0.000 | **0.466 / 0.495** |
+| clean fits with group1 θ>0.5 (silently wrong) | 12/85 (14%) | **13/28 (46%)** |
+
+So among fits the *current* version reports as fully clean (no warning at
+all), nearly half have silently converged to a clearly non-singular
+estimate for the block that is truly singular by construction — a
+materially higher silent-failure rate than old lme4's 14% (95% CIs
+roughly 8–23% vs 28–65% — not just small-sample noise given n=28 vs 85).
+Fixed effects (`beta`, `sigma`) are comparable between versions and
+reasonably close to truth in both (medians ~1.8-2.0 and ~1.8, true 2 and
+2, for old and current respectively).
+
+**Net read:** the fix trades crashes for warnings (good — a warned,
+inspectable fit beats an aborted one) but appears to somewhat *increase*
+the rate of confidently-wrong, unflagged fits specifically for detecting
+a truly-zero random-slope variance in one block while another block in
+the same model is genuinely non-zero. This wasn't visible in the
+single-random-effect bias-correction validation earlier in this document
+(§3, §9) because that used a single, non-singular random effect throughout
+— this is a distinct effect specific to mixed singular/non-singular
+multi-term structures, not yet root-caused. Worth a closer look at whether
+it connects to the same phi-fallback/optimizer-state mechanism diagnosed
+above, or is a separate phenomenon, before deciding whether/how it should
+change the fix.
+
+**Still open:** dig into *why* the "clean but wrong" rate increased (same
+mechanism as the NaN-cascade diagnosis above, or something distinct?);
+decide how to adjust `test-isSingular.R`'s expectation given all of the
+above — the user does not consider this test "adversarial"/contrived (it
+illustrates genuine singularity), so any adjustment should be a real
+accepted-limitation note, not a brushed-off tolerance loosening; and
+finalize/commit the C++ changes (`src/respModule.h`, `src/respModule.cpp`,
+`src/external.cpp`, all currently uncommitted on `Gamma_GLMM`) alongside
+whatever comes out of the above.
+
 ## Practical takeaway (regardless of whether/when this gets fixed upstream)
 
 When advising on Gamma GLMMs (or other estimated-dispersion families) in

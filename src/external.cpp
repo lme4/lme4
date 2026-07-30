@@ -289,9 +289,14 @@ extern "C" {
         }
         rp->updateMu(pp->linPred(1.));
 	// FIXME: warn/error/clamp/penalize here if value is out of bounds
-        if (debug) Rcpp::Rcout << "(igWI) mu: min: " << rp->mu().minCoeff() << 
+        if (debug) Rcpp::Rcout << "(igWI) mu: min: " << rp->mu().minCoeff() <<
                        " max: " << rp->mu().maxCoeff() << std::endl;
-        return rp->resDev() + pp->sqrL(1.);
+                                // deviance/data-fit term reweighted by
+                                // 1/phi (phi==1 reproduces the original
+                                // formula exactly); the ||u||^2 penalty
+                                // (sqrL) is untouched -- see
+                                // misc/README_Gamma_GLMMs.md
+        return rp->resDev() / rp->phi() + pp->sqrL(1.);
     }
 
     // FIXME: improve verbose output (remove code, even commented,
@@ -383,8 +388,80 @@ extern "C" {
             Rcpp::Rcout << "\nglmerLaplace resDev:  " << rp->resDev() << std::endl;
             Rcpp::Rcout << "\ndelb 1:  " << pp->delb() << std::endl;
         }
-        pwrssUpdate(rp, pp, ::Rf_asInteger(nAGQ_), ::Rf_asReal(tol_), 
-                    ::Rf_asInteger(maxit_), ::Rf_asInteger(verbose_));
+        bool    uOnly(::Rf_asInteger(nAGQ_));
+        double     tol(::Rf_asReal(tol_));
+        int      maxit(::Rf_asInteger(maxit_));
+        int       verb(::Rf_asInteger(verbose_));
+
+        if (rp->family() == "Gamma") {
+            // Families with an estimated dispersion (currently just Gamma): profile phi
+            // via a nested fixed point around PIRLS, using the moment estimator
+            // phi = deviance/n at each outer iteration -- this corrects a systematic
+            // bias in the random-effects variance estimate that the original (phi==1,
+            // disp-blind) working weights produced. See misc/README_Gamma_GLMMs.md in
+            // the Gamma_GLMM branch for the derivation and validation.
+            double phi = 1.;
+            double lastGoodPhi = 1.;
+            double n = rp->weights().sum();
+            int maxPhiIter = 100;
+            double phiTol = 1e-8;
+            for (int outer = 0; outer < maxPhiIter; ++outer) {
+                rp->setPhi(phi);
+                try {
+                    pwrssUpdate(rp, pp, uOnly, tol, maxit, verb);
+                } catch (std::runtime_error&) {
+                    // A candidate phi destabilized this PIRLS call enough to trip its
+                    // own step-halving safeguard (can happen transiently for extreme/
+                    // near-singular candidate theta/beta during the outer optimizer's
+                    // search). delu/delb (this call's in-progress Newton-step
+                    // refinement) reflect the bad attempt; u0/beta0 (the committed
+                    // baseline) are *usually* untouched by a failed pwrssUpdate, but
+                    // can themselves become non-finite if the R-level optimizer wrapper
+                    // ever commits a non-finite candidate as the new baseline between
+                    // devfun calls (observed: bobyqa's own trust-region model can start
+                    // proposing NaN candidates after enough uninformative/sentinel
+                    // evaluations in a row -- a pre-existing gap in how lme4 handles
+                    // that, not something this fix can safely paper over here). Recover
+                    // by discarding delu/delb (back to the u0/beta0 baseline) and
+                    // retrying once at the last phi that did succeed in this loop (a
+                    // gentler restart than jumping all the way back to phi=1, which can
+                    // itself be a large change from where the damped sequence currently
+                    // is).
+                    pp->setDelu(Vec::Zero(pp->u0().size()));
+                    pp->setDelb(Vec::Zero(pp->beta0().size()));
+                    rp->updateMu(pp->linPred(1.));
+                    phi = lastGoodPhi;
+                    rp->setPhi(phi);
+                    try {
+                        pwrssUpdate(rp, pp, uOnly, tol, maxit, verb);
+                    } catch (std::runtime_error&) {
+                        // Even that safe fallback failed for this exact candidate
+                        // theta/beta. Report a large but finite deviance instead of
+                        // propagating, so the outer optimizer treats this candidate
+                        // as bad and moves elsewhere rather than aborting the whole
+                        // glmer() fit. (Tried returning the Laplace value from the
+                        // non-converged state instead of this flat constant -- that
+                        // was worse: it can be misleadingly low near a degenerate
+                        // boundary and pulls the optimizer toward it rather than
+                        // away.)
+                        return ::Rf_ScalarReal(1e10);
+                    }
+                    break;
+                }
+                double phiNew = rp->resDev() / n;
+                bool cvgd = std::abs(phiNew - phi) / phi < phiTol;
+                lastGoodPhi = phi;
+                // Damp the update: take only a small step (in log space) toward
+                // phiNew each outer iteration, rather than jumping straight to it --
+                // reduces (but, per the fallback above, doesn't have to eliminate)
+                // how often the safeguard above is needed.
+                phi = std::exp(0.9 * std::log(phi) + 0.1 * std::log(phiNew));
+                if (cvgd) break;
+            }
+            rp->setPhi(phi);
+        } else {
+            pwrssUpdate(rp, pp, uOnly, tol, maxit, verb);
+        }
         return ::Rf_ScalarReal(rp->Laplace(pp->ldL2(), pp->ldRX2(), pp->sqrL(1.)));
         END_RCPP;
     }

@@ -88,6 +88,16 @@ namespace lme4 {
     protected:
         glmFamily  d_fam;
         MVec       d_eta, d_n;
+        double     d_phi = 1.0;
+                                /**< dispersion multiplier for the working
+                                 * weights/precision (deviance term only,
+                                 * not the random-effects prior penalty);
+                                 * 1.0 reproduces the original disp-blind
+                                 * behaviour. Profiled via a nested
+                                 * fixed-point loop in glmerLaplace() for
+                                 * families with an estimated dispersion
+                                 * (currently just Gamma); see
+                                 * misc/README_Gamma_GLMMs.md */
     public:
         glmResp(Rcpp::List,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP);
 
@@ -110,10 +120,12 @@ namespace lme4 {
         double             resDev() const;
         double              theta() const {return d_fam.theta();}
                                 //< negative binomial distribution only
+        double                phi() const {return d_phi;}
         double           updateMu(const Eigen::VectorXd&);
         double          updateWts();
 
         void                 setN(const Eigen::VectorXd&);
+        void               setPhi(const double& nphi) {d_phi = nphi;}
         void             setTheta(const double& ntheta) {d_fam.setTheta(ntheta);}
                                 // negative binomial distribution only
     };
