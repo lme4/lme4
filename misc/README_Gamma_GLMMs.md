@@ -671,18 +671,20 @@ one (presumably global) optimum regardless of starting point; multiple
 separated plateaus mean multiple genuinely distinct local optima exist —
 real multimodality, not an artifact of any one starting-value choice.
 
-Run for **lme4 2.0-6**, **current (dev, fix)**, and **glmmTMB**, all on the
-identical dataset, same random seed (20260730) generating the starting-point
-ensemble in each script (not numerically identical starting values across
-lme4 vs glmmTMB, which have different native theta parameterizations).
-Hypercubes: lme4 theta diagonal ~U(0,2), off-diagonal ~U(-1,1) (its native
-raw-Cholesky units); glmmTMB theta ~U(-2,2) (its native log-SD/unconstrained-
-corr units, default-initialized at 0); intercept `beta` ~U(0,4) for both
-(directly comparable — same units, the log-link intercept). Parallelized
-with `parallel::mclapply`, 10 cores each, all three run simultaneously (30
-of 32 cores). Scripts: `misc/GH643_multistart_lme4.R`,
-`misc/GH643_multistart_glmmTMB.R`, `misc/GH643_multistart_analysis.R`;
-plots: `misc/GH643_multistart_ecdf.png`, `misc/GH643_multistart_dispersion_hist.png`.
+Run for **lme4 2.0-6**, **current (dev, fix)**, **glmmTMB**, and (added
+below) **lme4 joint-phi**, all on the identical dataset, same random seed
+(20260730) generating the starting-point ensemble in each script (not
+numerically identical starting values across engines, which have different
+native theta parameterizations). Hypercubes: lme4 theta diagonal ~U(0,2),
+off-diagonal ~U(-1,1) (its native raw-Cholesky units); glmmTMB theta ~U(-2,2)
+(its native log-SD/unconstrained-corr units, default-initialized at 0);
+intercept `beta` ~U(0,4) for all (directly comparable — same units, the
+log-link intercept). Parallelized with `parallel::mclapply`, 10 cores each
+for the first three (30 of 32 cores simultaneously), 28 cores for the
+joint-phi arm (run afterward, alone). Scripts: `misc/GH643_multistart_lme4.R`,
+`misc/GH643_multistart_glmmTMB.R`, `misc/GH643_multistart_jointphi.R`,
+`misc/GH643_multistart_analysis.R`; plots: `misc/GH643_multistart_ecdf.png`,
+`misc/GH643_multistart_dispersion_hist.png`.
 
 ### Correction: `deviance()` is not `-2*logLik()` for these fits
 
@@ -738,7 +740,12 @@ separately, not folded into the multimodality question here.
 |---|---|---|---|---|---|
 | lme4 2.0-6 | 156 | 15 | — | 29 | **1393 (118)**, 1396 (32), 1385 (16), + small tail to ~1500 |
 | lme4 current (fix) | 161 | 37 | 2 | 0 | **1360 (131)**, 1393 (18), 1396 (17), + longer tail to ~1500 |
+| lme4 joint-phi | 200 | 0 | — | 0 | **1329 (158)**, 1332 (24), 1330 (2), + short tail to ~2745 |
 | glmmTMB | 0 | 200 | — | 0 | **1326 (190)**, 1328 (5), 1330 (2) |
+
+(lme4 joint-phi is discussed separately below — see "Fourth arm" — since it
+uses a different devfun/optimizer setup than the other two lme4 rows, not
+just a different profiling rule.)
 
 The picture is much less dramatic than the `deviance()`-based first pass,
 but a real, qualitative difference survives: **all three still show more
@@ -817,6 +824,63 @@ while both lme4 versions genuinely land on distinct, non-singular
 alternative solutions with fixed effects and dispersion shifting together
 with them.
 
+### Fourth arm: phi as a first-class optimized parameter, not a nested fixed point
+
+The working fix (§7-§9) profiles phi via a fixed-point iteration nested
+*inside* PIRLS, at each trial value of theta/beta the outer optimizer
+proposes. An alternative, tried earlier in this investigation as a
+prototype (`misc/GH643_pirls_joint_phi.R`, §7) before the C++ fix existed:
+put `log(phi)` directly in the parameter vector the *outer* nonlinear
+optimizer sees, alongside theta and beta, and let it get optimized jointly
+rather than profiled out at each outer step. The hypothesis: fixed-point
+profiling adds an extra layer of (possibly imperfectly converged, possibly
+locally-nonsmooth) nested optimization that the outer optimizer has to see
+through, and removing that nesting might make the overall likelihood
+surface better-behaved and more reliably optimized — matching, or getting
+closer to, glmmTMB's TMB-style joint optimization over all parameters
+(including dispersion) at once.
+
+Reran that prototype on the *same* target dataset and starting-point
+hypercube as the three arms above, switching its optimizer from
+`optim(method="Nelder-Mead")` to `minqa::bobyqa` (lme4's own default
+optimizer, for a fairer comparison), with explicit finite bounds
+(`log(phi)` bounded to `[log(1e-4), log(1e4)]`). Its devfun computes
+`-2*logLik` directly for a *given* phi (`aic_term(phi) + ‖u‖² + log|L|`,
+no internal phi re-estimation at all) — so unlike the real lme4 fits above,
+there's no `deviance()`-vs-`-2*logLik()` ambiguity to correct for here; the
+objective value returned by `bobyqa` *is* the comparable quantity by
+construction. Script: `misc/GH643_multistart_jointphi.R`.
+
+**Results: this comparison confirms the hypothesis.** All 200/200 starts
+converged "clean" (no errors, warnings, or sentinel hits — contrast both
+lme4 fixed-point variants above, which had 15-37 warnings and, for 2.0-6,
+29 outright errors). The dominant plateau is at **-2logLik ≈ 1329
+(158/200 = 79%)** — much closer to glmmTMB's dominant plateau (1326,
+190/200) than either fixed-point lme4 variant's dominant plateau (2.0-6:
+1393, 118/200; current fix: 1360, 131/200). Dispersion recovery
+(`misc/GH643_multistart_dispersion_hist.png`) is essentially unbiased at
+the mode — median phi = 4.014 against a true value of 4, matching
+glmmTMB's 4.009 — versus both fixed-point variants' persistent downward
+bias (2.0-6 median 3.51, current-fix median 3.32). The pairs plot
+(`misc/GH643_multistart_pairs_jointphi.png`) shows a tight dominant cluster
+(theta1 ≈ 0.5-0.6, theta4 ≈ 0.4, beta ≈ 1.9, sigma ≈ 2.0) with only a
+modest scatter of alternative-mode strays — visibly tighter than either
+fixed-point lme4 pairs plot, though not as uniformly tight as glmmTMB's.
+
+Caveat on scope: this is a standalone ~180-line R prototype validating the
+*idea*, not a drop-in replacement for the C++ fix. It reimplements PIRLS
+from scratch around a `phi`-parameterized weight matrix and calls
+`bobyqa` directly; it isn't wired into `mkGlmerDevfun`/`optimizeGlmer` or
+lme4's actual control-flow/optimizer-selection machinery, doesn't handle
+multiple families or non-Gamma links, and its convergence/bounds choices
+were hand-tuned for this one benchmark. Moving phi into the real outer
+parameter vector for `glmer()` would be a materially larger change (widens
+the parameter block the C++ optimizer interface exposes, changes what
+`theta` means to callers, touches `refitML`, profiling, and starting-value
+logic) than the nested-fixed-point fix already implemented — worth
+pursuing given how much better it performs here, but a separate,
+larger-scope follow-up, not a same-session swap-in.
+
 ### Scope/caveats
 
 Only one dataset has been tested this deeply. Worth checking whether the
@@ -824,7 +888,9 @@ degree of multimodality tracks how close the true structure is to the
 singular boundary, or is present more generally for Gamma GLMMs with
 multiple random-effect terms regardless of singularity. Also worth
 checking whether glmmTMB's much tighter clustering (in both -2logLik and
-dispersion) holds up on other datasets, or is specific to this one.
+dispersion) holds up on other datasets, or is specific to this one, and
+whether the joint-phi parameterization's advantage over the nested
+fixed-point fix persists there too.
 
 ## Practical takeaway (regardless of whether/when this gets fixed upstream)
 
