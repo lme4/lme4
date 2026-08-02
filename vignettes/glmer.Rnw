@@ -963,9 +963,8 @@ grad(dd1B,tmpf(gm1B)[-1])
 It is also worth considering
 adding an observation-level random effect to the model \citep{harrisonComparisonObservationlevelRandom2015},
 which we can do by creating a new factor based on observation
-number and using \code{update()} on the previous model (we switch the optimizer to BOBYQA for both phases
-for one of the updates):
-<<cbppModelII, warning=FALSE, message=FALSE>>=
+number and using \code{update()} on the previous model (we switch the optimizer to BOBYQA for both phases for one of the updates):
+<<cbppModelII, message=FALSE>>=
 cbpp2 <- transform(cbpp2,obs=factor(seq(nrow(cbpp2))))
 bob_opt <- glmerControl(optimizer = "bobyqa")
 ## herd and observation-level REs
@@ -974,7 +973,7 @@ gm2 <- update(gm1,.~.+(1|obs), control = bob_opt)
 gm3 <- update(gm1,.~.-(1|herd)+(1|obs))  
 @
 
-<<diagnose, echo=FALSE, warning=FALSE, message=FALSE, results='hide'>>=
+<<diagnose, echo=FALSE, message=FALSE, results='hide'>>=
 aa <- allFit(gm2, verbose=FALSE)
 ok <- summary(aa)[["which.OK"]]
 lapply(aa[ok], \(x) x@optinfo$conv$lme4$messages)
@@ -1059,7 +1058,7 @@ plot(gm1,period~resid(.))
 qqmath(gm1)
 @    
 
-<<glmerDiag,fig.cap="Graphical diagnostics (using package built-in functions)",warning=FALSE,echo=FALSE>>=
+<<glmerDiag,fig.cap="Graphical diagnostics (using package built-in functions)",echo=FALSE>>=
 p1 <- plot(gm1,type=c("p","smooth"),
     main="Default (Pearson resid vs. fitted)")
 p2 <- plot(gm1,sqrt(abs(resid(.)))~fitted(.),type=c("p","smooth"),
@@ -1103,6 +1102,7 @@ generalized linear (mixed) models and uses them for graphical
 and statistical tests of model assumptions (Figure~\ref{fig:dharma_mod_cbpp}).
 
 <<dharma_mod_cbpp,fig.cap="Model assumption checks using the DHARMa package. \\code{n.s.} denotes ``not significant''.",echo=FALSE,warning=FALSE>>=
+## suppressing spurious warnings from DHARMa
 ## FIXME: versions of DHARMa before 0.5.0 gave a significant nonlinearity test, so the caption
 ## included: 'Other exploration (such as \\code{plot(simulationOutput, form = cbpp2\\$period)}) does not reveal any obvious problems such as nonlinear responses, so we proceed with the analysis despite the significant adjusted quantile test.'
 ## Post 0.5.0, there are no test rejections; instead we get the warning 'In getSimulations.merMod(fittedModel, nsim = n, simulateREs = simulateREs,  :
@@ -1199,6 +1199,7 @@ combCI <- transform(combCI,
 @
 
 <<cbppcompplot,fig.cap="CBPP example: comparison of point and confidence interval estimation for different methods. Wald CIs are missing for random-effects parameters when the fitted model is singular.",fig.scap="CBPP comparison",echo=FALSE,fig.width=7,fig.height=5,warning=FALSE>>=
+## warning=FALSE for ggplot2 'Removed 2 rows' warning
 mnames <- cbpp_df_name$mnames
 pd <- position_dodge(width=0.6)
 ggplot(combCI, aes(var, est, colour=type, shape=model)) +
@@ -1231,9 +1232,11 @@ results are obtained from \code{summary(allFit())}; the components below
 
 We will show the summary results for \code{\$sdcor}; the other components are similar.
 
-<<allfit_cbpp1,message=FALSE,warning=FALSE>>=
+<<allfit_cbpp1,message=FALSE>>=
 gm_all <- allFit(gm1)
 @
+
+(We discuss this warning in Section~\ref{sec:troubleshooting} below.)
 
 <<allfit_cbpp2>>=
 ss <- summary(gm_all)
@@ -1424,10 +1427,14 @@ agevec <- seq(-15, 20)
 pframe <- with(Contraception, expand.grid(age = agevec, urban = levels(urban), ch = levels(ch)))
 pframe <- transform(pframe, age_s = age/(2*sd(Contraception$age)),
                     facet_urban = ifelse(urban=="Y","Urban","Rural"))
-pred  <- predict(cm5, newdata = pframe, se.fit = TRUE, re.form = NA)
-pframe$use <- plogis(pred$fit)
-pframe$lwr <- plogis(pred$fit-1.96*pred$se.fit)
-pframe$upr <- plogis(pred$fit+1.96*pred$se.fit)
+pred  <- suppressWarnings(
+  predict(cm5, newdata = pframe, se.fit = TRUE, re.form = NA)
+)
+pframe <- within(pframe, {
+  use <- plogis(pred$fit)
+  lwr <- plogis(pred$fit-1.96*pred$se.fit)
+  upr <- plogis(pred$fit+1.96*pred$se.fit)
+})
 pframe2 <- with(Contraception, expand.grid(age = agevec, urban = levels(urban), ch = levels(ch),
                  district = levels(district)))
 pframe2 <- transform(pframe2, age_s = age/(2*sd(Contraception$age)),
@@ -1455,7 +1462,6 @@ ggplot(pframe, aes(age)) +
   scale_fill_brewer("Living\nchildren", palette="Dark2",
                     guide = guide_legend(reverse = TRUE)) +
   geom_line(data = pframe2, aes(group = interaction(dist_urb, ch), colour = ch, y = use), alpha = 0.2)
-
 @
 
 As with the CBPP data set, we can also compute
@@ -1470,7 +1476,7 @@ combCI <- transform(contr_combCI,
     )
 @
 
-<<contracompplot,fig.cap="Contraception example: comparison of point and confidence interval estimation for different methods. (Note that the Wald CI for variation in the intercept across districts, in the \\code{(1|district/urban)} model, includes negative values.)",fig.scap="Contraception comparison",echo=FALSE,fig.width=10,fig.height=10,warning=FALSE>>=
+<<contracompplot,fig.cap="Contraception example: comparison of point and confidence interval estimation for different methods. (Note that the Wald CI for variation in the intercept across districts, in the \\code{(1|district/urban)} model, includes negative values.)",fig.scap="Contraception comparison",echo=FALSE,fig.width=10,fig.height=10>>=
 ggplot(combCI, aes(var, est, colour=type, shape=model)) +
   geom_pointrange(aes(ymin=lwr, ymax=upr),
                   position=position_dodge(width=0.6)) +
@@ -1508,7 +1514,7 @@ cm.homcs <- glmer(update(base_form, . ~ . + cs(1 + urban|district, hom = TRUE)),
 
 For example, the compound symmetric model is fitted as follows:
 
-<<cm_cs, message = FALSE, warning = FALSE>>=
+<<cm_cs, message = FALSE>>=
 cm.cs <- glmer(use ~ age*ch + I(age^2) + urban + cs(1 + urban | district),
                Contraception, binomial, control = cc)
 @
@@ -1519,9 +1525,20 @@ We can use \code{VarCorr} and other accessor methods as we would for models with
 print(VarCorr(cm.cs))
 @
 
+\section{Troubleshooting}
+\label{sec:troubleshooting}
+
+We close with a short discussion of some of the issues that can arise when fitting mixed models. These issues are not specific to GLMMs, although they can be more common because GLMMs can often be more computationally challenging to fit than LMMs.
+
+\subsection{Singular fits}
+
+\emph{Singular fits} describe the case where one or more of the estimated variance-covariance matrices of a model are semi-positive-definite, i.e. some variance components (or variances of linear combinations of latent variables) are effectively zero.  (We say ``effectively zero'' because, due to the limitations of numerical optimization, the estimate is sometimes very small rather than exactly zero; the default tolerance for singularity checks is a value of $10^{-4}$ on the Cholesky-factor [standard deviation] scale.) For small covariance matrices ($1 \times 1$, for a scalar random effect, or $2 \times 2$, for a random-slope model) these cases are usually clear, i.e. one or both variances (diagonal elements of the covariance matrix) are nearly zero, or the correlation is near $\pm 1$. However, it is often impossible to see at a glance that larger covariance matrices are singular. The automatic singularity tests (which print a message if a singular covariance matrix is detected, and the \code{rePCA} function computes the eigenvalues and eigenvectors of the covariance matrices, to help in diagnosing which components are causing singularity \citep{batesParsimoniousMixedModels2015b}.
+
+While a singular fit suggests that a model is overparameterized, it does not represent a fitting error. There is no settled guidance 
+
 \section*{Acknowledgements}
 
-We would like to thank Steve Walker, for early work on \code{glmer}, and Alex Stringer, for helpful comments on the manuscript.
+We would like to thank Steve Walker, for early work on \code{glmer}, and Alex Stringer and Phillip Alday, for helpful comments on the manuscript.
 
 \bibliography{glmer}
 
