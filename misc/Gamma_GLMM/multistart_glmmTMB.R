@@ -17,7 +17,7 @@ library(glmmTMB)
 library(parallel)
 cat("Using glmmTMB", as.character(packageVersion("glmmTMB")), "-- mc.cores =", MC_CORES, "\n")
 
-## fixed target dataset (seed 9014, matching misc/GH643_multimodal_check.R rep=14)
+## fixed target dataset (seed 9014, matching misc/Gamma_GLMM/multimodal_check.R rep=14)
 set.seed(9014)
 n_groups <- 20; n_per_group <- 20; n <- n_groups * n_per_group
 dat <- data.frame(

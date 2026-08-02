@@ -5,7 +5,7 @@ v2.1-0), and `glmmTMB`. Originating issue:
 <https://github.com/lme4/lme4/issues/643> ("Reliability of glmer to fit
 Gamma-distributed model - Strange Ranef Variance"), most recently revived by
 <https://github.com/TiagoAMarques/Report4BB>. Scratch scripts referenced below
-live in the session scratchpad (not committed); `misc/GH643.R` in this repo
+live in the session scratchpad (not committed); `misc/Gamma_GLMM/GH643.R` in this repo
 has the original exploratory session.
 
 ## tl;dr
@@ -478,8 +478,8 @@ not just the end result: **245 of 246 internal failures occur at
 unmodified code always did. So this isn't new fragility introduced by the
 phi fix.
 
-Two further diagnostics (reprex scripts `misc/GH643_reprex_pirls_fragility.R`
-and `misc/GH643_reliability_comparison.R`, run against lme4 2.0-6 installed
+Two further diagnostics (reprex scripts `misc/Gamma_GLMM/reprex_pirls_fragility.R`
+and `misc/Gamma_GLMM/reliability_comparison.R`, run against lme4 2.0-6 installed
 into an isolated library via `remotes::install_version` alongside the
 current dev build, so both can be compared without clobbering either):
 
@@ -520,7 +520,7 @@ triggered. Fixing *that* gap (e.g. validating/rejecting non-finite
 candidates before they're committed) is a separate, pre-existing lme4
 robustness issue, out of scope for this fix.
 
-**Reliability comparison, completed** (`misc/GH643_reliability_comparison_params.R`,
+**Reliability comparison, completed** (`misc/Gamma_GLMM/reliability_comparison_params.R`,
 run overnight 2026-07-29→30, parallelized with `parallel::mclapply` at
 `mc.cores=14` — machine has 32 cores, not 4 as first assumed; verified via
 `/proc/cpuinfo` and `parallel::detectCores()`): B=100 *resimulated*
@@ -577,7 +577,7 @@ change the fix.
 
 ## 10. "Clean but wrong" is genuine multimodality, not an optimizer miss
 
-Follow-up to §9's finding above (`misc/GH643_multimodal_check.R`): is the
+Follow-up to §9's finding above (`misc/Gamma_GLMM/multimodal_check.R`): is the
 elevated "clean but wrong" rate under the fix (group1's truly-zero
 variance silently converging to a substantial non-zero estimate) an
 optimizer-convergence problem — `bobyqa` starting somewhere unlucky and
@@ -681,10 +681,10 @@ off-diagonal ~U(-1,1) (its native raw-Cholesky units); glmmTMB theta ~U(-2,2)
 intercept `beta` ~U(0,4) for all (directly comparable — same units, the
 log-link intercept). Parallelized with `parallel::mclapply`, 10 cores each
 for the first three (30 of 32 cores simultaneously), 28 cores for the
-joint-phi arm (run afterward, alone). Scripts: `misc/GH643_multistart_lme4.R`,
-`misc/GH643_multistart_glmmTMB.R`, `misc/GH643_multistart_jointphi.R`,
-`misc/GH643_multistart_analysis.R`; plots: `misc/GH643_multistart_ecdf.png`,
-`misc/GH643_multistart_dispersion_hist.png`.
+joint-phi arm (run afterward, alone). Scripts: `misc/Gamma_GLMM/multistart_lme4.R`,
+`misc/Gamma_GLMM/multistart_glmmTMB.R`, `misc/Gamma_GLMM/multistart_jointphi.R`,
+`misc/Gamma_GLMM/multistart_analysis.R`; plots: `misc/Gamma_GLMM/multistart_ecdf.png`,
+`misc/Gamma_GLMM/multistart_dispersion_hist.png`.
 
 ### Correction: `deviance()` is not `-2*logLik()` for these fits
 
@@ -756,7 +756,7 @@ optimizer tolerance noise), but nowhere near as severe as first reported.
 glmmTMB's spread (1326/1328/1330, ~4 units total) is small enough to be
 ordinary numerical tolerance around one optimum, not a second mode.
 
-Visually (`misc/GH643_multistart_ecdf.png`): lme4-old rises in one fairly
+Visually (`misc/Gamma_GLMM/multistart_ecdf.png`): lme4-old rises in one fairly
 sharp jump near its own dominant plateau with a short tail. **lme4-current
 also jumps early to its (better/lower) dominant plateau, but then has a
 visibly longer, more gradual staircase tail out to ~1500** — i.e. the fix's
@@ -768,7 +768,7 @@ question in §9-§10.
 
 ### Dispersion (phi = sigma²), true value 4
 
-`misc/GH643_multistart_dispersion_hist.png`:
+`misc/Gamma_GLMM/multistart_dispersion_hist.png`:
 
 | | median phi | range | shape |
 |---|---|---|---|
@@ -791,8 +791,8 @@ design.
 Every fitted `theta` (full 6-component native parameterization), `beta`,
 and `sigma` was saved for all 200 starts × 3 methods, not just the
 objective value. Pairs plots (`gap=0`) of all 8 values jointly, one per
-method (`misc/GH643_multistart_pairs_lme4old.png`,
-`_lme4current.png`, `_glmmTMB.png`; script `misc/GH643_multistart_pairs.R`):
+method (`misc/Gamma_GLMM/multistart_pairs_lme4old.png`,
+`_lme4current.png`, `_glmmTMB.png`; script `misc/Gamma_GLMM/multistart_pairs.R`):
 
 - **Both lme4 versions** show visibly discrete clustering across theta
   *and* beta *and* sigma jointly — e.g. current lme4's `theta1` (group1's
@@ -829,7 +829,7 @@ with them.
 The working fix (§7-§9) profiles phi via a fixed-point iteration nested
 *inside* PIRLS, at each trial value of theta/beta the outer optimizer
 proposes. An alternative, tried earlier in this investigation as a
-prototype (`misc/GH643_pirls_joint_phi.R`, §7) before the C++ fix existed:
+prototype (`misc/Gamma_GLMM/pirls_joint_phi.R`, §7) before the C++ fix existed:
 put `log(phi)` directly in the parameter vector the *outer* nonlinear
 optimizer sees, alongside theta and beta, and let it get optimized jointly
 rather than profiled out at each outer step. The hypothesis: fixed-point
@@ -849,7 +849,7 @@ optimizer, for a fairer comparison), with explicit finite bounds
 no internal phi re-estimation at all) — so unlike the real lme4 fits above,
 there's no `deviance()`-vs-`-2*logLik()` ambiguity to correct for here; the
 objective value returned by `bobyqa` *is* the comparable quantity by
-construction. Script: `misc/GH643_multistart_jointphi.R`.
+construction. Script: `misc/Gamma_GLMM/multistart_jointphi.R`.
 
 **Results: this comparison confirms the hypothesis.** All 200/200 starts
 converged "clean" (no errors, warnings, or sentinel hits — contrast both
@@ -858,11 +858,11 @@ lme4 fixed-point variants above, which had 15-37 warnings and, for 2.0-6,
 (158/200 = 79%)** — much closer to glmmTMB's dominant plateau (1326,
 190/200) than either fixed-point lme4 variant's dominant plateau (2.0-6:
 1393, 118/200; current fix: 1360, 131/200). Dispersion recovery
-(`misc/GH643_multistart_dispersion_hist.png`) is essentially unbiased at
+(`misc/Gamma_GLMM/multistart_dispersion_hist.png`) is essentially unbiased at
 the mode — median phi = 4.014 against a true value of 4, matching
 glmmTMB's 4.009 — versus both fixed-point variants' persistent downward
 bias (2.0-6 median 3.51, current-fix median 3.32). The pairs plot
-(`misc/GH643_multistart_pairs_jointphi.png`) shows a tight dominant cluster
+(`misc/Gamma_GLMM/multistart_pairs_jointphi.png`) shows a tight dominant cluster
 (theta1 ≈ 0.5-0.6, theta4 ≈ 0.4, beta ≈ 1.9, sigma ≈ 2.0) with only a
 modest scatter of alternative-mode strays — visibly tighter than either
 fixed-point lme4 pairs plot, though not as uniformly tight as glmmTMB's.
@@ -891,6 +891,148 @@ checking whether glmmTMB's much tighter clustering (in both -2logLik and
 dispersion) holds up on other datasets, or is specific to this one, and
 whether the joint-phi parameterization's advantage over the nested
 fixed-point fix persists there too.
+
+## 12. Parameter-recovery survey: six methods, four real datasets
+
+Broader successor to the multistart diagnostic (§11): rather than
+starting-point sensitivity on one dataset, fit **six** methods to **B**
+resimulated datasets from **four** real designs, each simulated from
+"pretty" (rounded) parameters near a real reference fit, and compare
+parameter recovery, reliability (clean/warning/error/singular), timing,
+and -2*logLik. Toolkit and scripts: `misc/Gamma_GLMM/paramsurvey/`
+(`toolkit.R` plus `01_prep_*.R`, `02_fit_glmmTMB.R`, `03_fit_jointphi.R`,
+`04_fit_lme4current.R`, `05_fit_lme4old.R`, `07_fit_pirls_phi.R`,
+`06_analysis.R`, `08_summary_plots.R`). **Caveat**: these scripts still
+hardcode this session's scratch-directory paths (`wd <-
+"/tmp/claude-.../scratchpad/param_survey"` etc.) — update those before
+rerunning outside this session.
+
+### Six methods
+
+1. **glmmTMB** — reference/gold standard, full joint TMB optimization.
+2. **joint-phi** — R-level devfun (§7/§11's prototype, generalized), phi
+   as a first-class outer `bobyqa` parameter alongside theta/beta.
+3. **PIRLS/digamma** — R-level nested fixed-point (like the C++ fix, but
+   phi re-estimated via the true Gamma conditional MLE each outer
+   iteration, not the moment plug-in); resurrects §6's "ALSO FALSIFIED"
+   idea to check whether that single-RE-scenario null result generalizes.
+4. **PIRLS/moment** — same nested fixed-point architecture, moment
+   estimator (`phi = dev/n`) — the *same algorithm* as the C++ fix, in R;
+   comparing timing against method 5 isolates pure R-vs-C++ overhead.
+5. **lme4 current** — the compiled C++ fix (`glmer()`, main env install).
+6. **lme4 2.0-6** — unmodified, isolated install (§9's baseline).
+
+### Four example datasets
+
+- **epil2 (simple)**: `y ~ trt + (1|subject)`, Gamma(log), the reduced
+  form from §1-§2 (58 subjects, 213 obs after dropping y=0). Non-singular
+  without a prior.
+- **epil2 (complex)**: the full model from `?glmmTMB::epil2` (`y ~
+  Base*trt + Age + Visit + (Visit|subject)`) — 2-term correlated random
+  slope. Needed a regularizing prior (`normal(0,3)` on ranef) for the
+  *reference* fit only (to pin down non-degenerate true parameters);
+  per-replicate fits use no prior and are frequently singular by design.
+- **Report4BB**: the real dataset/model that started this whole
+  investigation (§1), `crate ~ (1|location) + (1|fyear)`, n=103, 7/10
+  levels — two independent single-term REs, no correlation. Reconstructed
+  from a fresh clone of github.com/TiagoAMarques/Report4BB (data-prep
+  code in `01_prep_report4bb.R` mirrors `testing_lme4/Testing_lme4.R`
+  there). Frequently singular (few levels per factor) even at
+  non-degenerate true parameters — expected, matches the well-known
+  small-number-of-groups instability noted since project memory.
+- **schizophrenia**: bundled directly in lme4 (`data(schizophrenia)`,
+  `man/schizophrenia.Rd`'s own example model, `imps79 ~ TxDrug*Week +
+  (1|id)`), 1603 obs, 437 subjects — much larger/higher-powered than the
+  other three, single random intercept, non-singular without a prior.
+
+### Finding: a second, independent bug in `sigma()`'s dispersion reporting
+
+While comparing PIRLS/moment (R) against lme4-current (C++) — supposedly
+the *same* algorithm — on identical simulated data, their reported phi
+values diverged by up to ~2.5x even though parameter estimates (sd, beta)
+looked similar. Diagnosed by evaluating the R-level devfun at the exact
+`(theta,beta)` lme4-current converged to: `-2*logLik` matched to 5
+significant figures (confirming the fit/curvature itself is correct) but
+`sigma(fit)^2` did not match the internally-converged phi at all.
+
+Root cause: `sigma(fit)^2` for GLMMs is computed via a generic,
+family-agnostic formula, `sigmaML <- (wrss + ||u||^2)/n` (`R/utilities.R`),
+where `wrss = resp$wrss()` is the sum of squared *working* residuals —
+computed using the same `1/phi`-reweighted working weights the Gamma_GLMM
+fix (§9) introduced. Once phi moves away from 1, this formula becomes
+self-referentially confounded with the very quantity it's meant to
+report; it was only ever correct because old lme4 held phi fixed at 1.
+
+Fixed (commit `1b7bfcd8`, pushed to `Gamma_GLMM`): exposed the internally-
+converged phi to R directly (`glm_phi` in `src/external.cpp`, mirroring
+the existing `glm_theta` accessor; `phi()` method on the `glmResp`
+RefClass in `R/AllClass.R`) and use it directly in `R/utilities.R`'s
+`sigmaML` computation whenever `isGLMM && !hasNoScale(resp$family)`,
+instead of the generic `pwrss/n` path.
+
+**At the same time, generalized the whole phi-profiling fix beyond
+Gamma**, per explicit request: it was gated on `family()=="Gamma"` only,
+but the underlying math (`resDev()`, `Laplace()`/`aic()`) already
+dispatches generically per-family via `glmFamily`, so nothing else needed
+to change. Added `glmDist::hasFreeDispersion()` (`src/glmFamily.h`),
+overridden per subclass — `true` for Gamma/gaussian/inverse.gaussian,
+`false` for poisson/binomial/negative.binomial, mirroring `hasNoScale()`
+in `R/utilities.R` — delegated through `glmFamily`/`glmResp`, and used to
+gate `glmerLaplace()`'s fixed-point loop instead of the old hardcoded
+string check. This is a real, if rare, expansion of scope: gaussian
+fit via `glmer()` with a non-identity link (e.g. `gaussian(link="log")`)
+now also gets phi-profiled, which it never did before. The base
+`glmDist::hasFreeDispersion()` **throws an informative error** for
+unrecognized/user-supplied custom families rather than silently guessing
+— **TODO, flagged for later**: reconsider this (a warning + a documented
+default assumption, rather than a hard error, was suggested).
+
+Confirmed a real, independent finding once the reporting bug was fixed:
+even with `sigma()` reporting the true converged phi correctly, the
+**moment/digamma estimators themselves carry a genuine ~15-25% bias**
+in a shape≈0.5-1 regime, previously masked by the reporting bug
+coincidentally landing closer to the true value by chance for some seeds.
+Confirmed via `test-glmFamily.R`'s existing shape-recovery tests (2
+tolerances loosened, with comments explaining why — not a regression).
+Not yet root-caused.
+
+Full GLMM-relevant test suite (`LME4_TEST_LEVEL=2`): 443 pass, 0 fail
+after refreshing 8 stale hardcoded references across `test-glmFamily.R`,
+`test-glmer.R`, `test-methods.R` (all either mechanical staleness from
+the above, or newly-in-scope non-canonical-link-gaussian fits).
+
+### Status as of this writing
+
+B=10 completed for all 4 datasets × 6 methods (24 cells); results,
+combined `.rds` files, and two summary plots
+(`misc/Gamma_GLMM/paramsurvey/summary_plot.png`,
+`summary_plot_time_negll.png` — Okabe-Ito palette, violin+boxplot+points
+per method, log-scaled timing row via `ggh4x::facetted_pos_scales()`)
+committed. Headline pattern across all four datasets: lme4-2.0-6 shows
+large, dataset-dependent bias (inflation in most regimes, e.g. epil2-
+complex sd2 ~14x true, Report4BB sd1/sd2 ~2x); all five "modern" methods
+(glmmTMB, joint-phi, PIRLS/digamma, PIRLS/moment, lme4-current) track
+each other closely on parameter recovery, with PIRLS/moment and
+lme4-current essentially identical (as expected, same algorithm) and
+consistently ~15-25% low on phi relative to glmmTMB/joint-phi (the
+newly-found estimator bias above). Timing is highly structure-dependent,
+not sample-size-dependent: schizophrenia (n=1603, single RE) is *cheap*
+for every method (glmmTMB and joint-phi both ~2.5s), while epil2-complex
+(n=213, one correlated 2-term RE) is the expensive outlier
+(PIRLS/digamma, PIRLS/moment ~100s/fit) — the correlated-RE structure
+drives cost, not n.
+
+B=250 scaling infrastructure is built (prep scripts take `B` as a
+command-line arg; fit scripts take an `MC_CORES` arg and use `mclapply`
+when >1) but **not yet launched**. Estimated cost: ~21.5 total CPU-hours
+across all 24 cells (epil2-complex's PIRLS/digamma+moment alone account
+for ~68%), ~1 hour wall-clock with 30 cores allowing for load imbalance.
+
+**Not yet done**: launch the B=250 run; root-cause the moment/digamma
+~15-25% phi bias; decide on the custom-family error-vs-warning question
+above; extend the summary plots to include the schizophrenia example (all
+four dataset's raw `_results_*.rds` exist, just needs a 4th `make_plot()`
+panel).
 
 ## Practical takeaway (regardless of whether/when this gets fixed upstream)
 

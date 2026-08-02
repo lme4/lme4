@@ -282,7 +282,7 @@ if (testLevel>1) {
     ## parametric bootstrap:
     ## reference refreshed: gaussian fit via glmer() with a non-identity
     ## link now also gets the free-dispersion phi-profiling fix
-    ## (previously Gamma-only) -- see misc/README_Gamma_GLMMs.md,
+    ## (previously Gamma-only) -- see misc/Gamma_GLMM/README_Gamma_GLMMs.md,
     ## Gamma_GLMM branch
     boot_res <- matrix(
       c(
@@ -662,7 +662,7 @@ if (testLevel>1) {
     ## reference refreshed: getME(g1, "sigma") now reports the correct
     ## dispersion (fixing a bug where sigma() for Gamma GLMMs used a
     ## generic pwrss/n formula inconsistent with the phi actually
-    ## converged to internally -- see misc/README_Gamma_GLMMs.md,
+    ## converged to internally -- see misc/Gamma_GLMM/README_Gamma_GLMMs.md,
     ## Gamma_GLMM branch), so the simulated y2 (and hence g2) shifts too
     expect_equal(fixef(g2), tolerance = 4e-7, # 32-bit windows showed 1.34e-7
                  c(`(Intercept)` = 2.92761131238582, x = 1.02672772289035))

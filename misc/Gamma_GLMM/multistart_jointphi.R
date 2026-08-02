@@ -2,11 +2,11 @@
 ## of the parameter vector for the outer nonlinear optimizer (bobyqa),
 ## rather than profiled via a nested fixed point inside PIRLS (the
 ## current/fixed lme4 approach) or ignored/fixed at an implicit phi=1
-## (old lme4). Adapted from the original prototype misc/GH643_pirls_joint_phi.R
+## (old lme4). Adapted from the original prototype misc/Gamma_GLMM/pirls_joint_phi.R
 ## (which validated this approach for the single-RE bias-correction
 ## question before the C++ fix existed) onto the same near-singular
 ## two-random-slope target dataset and B=200 random-start hypercube used
-## in misc/GH643_multistart_lme4.R / misc/GH643_multistart_glmmTMB.R, so
+## in misc/Gamma_GLMM/multistart_lme4.R / misc/Gamma_GLMM/multistart_glmmTMB.R, so
 ## all four methods are directly comparable.
 ##
 ## The devfun here directly computes the Laplace deviance
@@ -105,7 +105,7 @@ make_devfun_joint <- function(form, data, family) {
 devfun <- make_devfun_joint(form2, dat, Gamma(link = "log"))
 nth <- 6L; p <- 1L
 
-## hypercube: same theta/beta ranges as misc/GH643_multistart_lme4.R, plus
+## hypercube: same theta/beta ranges as misc/Gamma_GLMM/multistart_lme4.R, plus
 ## logphi covering a generous dispersion range around the true phi=4
 sampleStart <- function() {
   theta <- numeric(6)

@@ -338,7 +338,7 @@ if(FALSE) { ## Hadley broke this
     ## reference values refreshed after fixing sigma()'s dispersion
     ## reporting for GLMMs with a free dispersion parameter (previously
     ## Gamma-only; now also applies to gaussian fit via glmer(), as here)
-    ## -- see misc/README_Gamma_GLMMs.md, Gamma_GLMM branch
+    ## -- see misc/Gamma_GLMM/README_Gamma_GLMMs.md, Gamma_GLMM branch
     expect_equal(msum,
                  c(`(Intercept)` = 0.23512994, x = 1.0017413, f = 0.31648764, -158.73048),
                  tolerance=1e-5)

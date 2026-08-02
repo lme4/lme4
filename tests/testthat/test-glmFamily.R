@@ -153,7 +153,7 @@ test_that("estimated Gamma shape is correct", {
   shape_val <- 1/sigma(m1)^2
   ## tolerance loosened from 0.05 and reference refreshed: fixing sigma()'s
   ## dispersion reporting for GLMMs with a free dispersion parameter (see
-  ## misc/README_Gamma_GLMMs.md, Gamma_GLMM branch) exposed a genuine bias
+  ## misc/Gamma_GLMM/README_Gamma_GLMMs.md, Gamma_GLMM branch) exposed a genuine bias
   ## in the moment-based phi estimator for this seed, previously masked by
   ## coincidence by the old buggy sigma() computation -- see the similar
   ## comment on the shape_vec loop test below.
@@ -179,7 +179,7 @@ test_that("glmer works for Gamma with small shape parameter", {
     expect_s4_class(fit, "merMod")
     ## testing for the shape parameter. tolerance loosened from 0.1: fixing
     ## sigma()'s dispersion reporting for GLMMs with a free dispersion
-    ## parameter (see misc/README_Gamma_GLMMs.md, Gamma_GLMM branch)
+    ## parameter (see misc/Gamma_GLMM/README_Gamma_GLMMs.md, Gamma_GLMM branch)
     ## exposed a genuine ~15-25% bias in the moment-based phi estimator
     ## concentrated around shape~0.5-1 (max abs error 0.124 here); the old,
     ## buggy sigma() computation happened to mask it by coincidence for
@@ -227,6 +227,6 @@ test_that("estimated Inverse Gaussian shape is correct", {
   expect_equal(shape_val, 1, tolerance = 0.05)
   ## reference refreshed: inverse.gaussian now also gets the free-dispersion
   ## phi-profiling fix (previously Gamma-only) -- see
-  ## misc/README_Gamma_GLMMs.md, Gamma_GLMM branch
+  ## misc/Gamma_GLMM/README_Gamma_GLMMs.md, Gamma_GLMM branch
   expect_equal(shape_val, 1.0138812929888, tolerance = 1e-6)
 })

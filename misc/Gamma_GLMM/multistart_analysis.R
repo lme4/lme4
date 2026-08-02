@@ -32,7 +32,7 @@ neg2ll_joint <- r_joint$neg2ll
 ## glmerLaplace()) without the outer optimizer raising an R-level error --
 ## they get an lme4 "warning" status but a nonsensical neg2ll (~1e10).
 ## Recode these as "degenerate" and exclude from the plots below; they are
-## a distinct, already-diagnosed failure mode (misc/README_Gamma_GLMMs.md
+## a distinct, already-diagnosed failure mode (misc/Gamma_GLMM/README_Gamma_GLMMs.md
 ## #9), not part of the multimodality question this script addresses.
 sentinel_idx <- which(neg2ll_cur > 1e6)
 cat("lme4-current: recoding", length(sentinel_idx), "sentinel-hit fit(s) as 'degenerate' (excluded below)\n")

@@ -3,7 +3,7 @@
 ## record -2*logLik() at each (the actually-comparable objective value --
 ## deviance(fit) is NOT the same quantity for these fits and is recorded
 ## separately only for reference/diagnostic purposes; see
-## misc/README_Gamma_GLMMs.md #11 update). Plotting the ECDF of -2*logLik
+## misc/Gamma_GLMM/README_Gamma_GLMMs.md #11 update). Plotting the ECDF of -2*logLik
 ## reveals distinct plateaus if there are multiple genuinely separated
 ## local optima (multimodality), vs. a single dominant plateau if the
 ## optimizer reliably finds one (likely global) optimum regardless of
@@ -30,7 +30,7 @@ cat("Using lme4", as.character(packageVersion("lme4")),
     if (USE_OLD) "(unmodified, from isolated lib)" else "(current dev install)",
     "-- mc.cores =", MC_CORES, "\n")
 
-## fixed target dataset (seed 9014, matching misc/GH643_multimodal_check.R rep=14)
+## fixed target dataset (seed 9014, matching misc/Gamma_GLMM/multimodal_check.R rep=14)
 set.seed(9014)
 n_groups <- 20; n_per_group <- 20; n <- n_groups * n_per_group
 dat <- data.frame(

@@ -1,5 +1,5 @@
 ## Regression tests for the Gamma GLMM random-effect variance bias fix
-## (GH#643). See misc/README_Gamma_GLMMs.md (branch Gamma_GLMM) for the full
+## (GH#643). See misc/Gamma_GLMM/README_Gamma_GLMMs.md (branch Gamma_GLMM) for the full
 ## writeup and root-cause analysis: glmer's PIRLS/Laplace working weights
 ## used to be computed disp-free (as if the Gamma dispersion phi were always
 ## 1), which biased random-effect variance estimates -- upward when the true
@@ -44,7 +44,7 @@ if (testLevel > 1) {
   }
 
   test_that("Gamma GLMM RE variance is not inflated when shape > 1 (disp < 1)", {
-    ## shape = 1/disp = 20 -- matches misc/GH643_disp_scan.R's disp=0.05 case;
+    ## shape = 1/disp = 20 -- matches misc/Gamma_GLMM/disp_scan.R's disp=0.05 case;
     ## pre-fix bias here was roughly +100-120%. Observed post-fix bias is
     ## around -2%; use a loose bound to avoid a flaky test.
     r <- gammaBiasSim(disp = 0.05)
