@@ -399,6 +399,10 @@ glmResp <-
                          'returns the Laplace approximation to the profiled deviance'
                          .Call(glm_Laplace, ptr(), ldL2, ldRX2, sqrL)
                      },
+                     phi       = function() {
+                         'returns the current value of the dispersion parameter phi (GLMMs with non-fixed dispersion only; 1.0 for other families)'
+                         .Call(glm_phi, ptr())
+                     },
                      link      = function() {
                          'returns the name of the glm link'
                          .Call(glm_link, ptr())

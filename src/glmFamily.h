@@ -31,6 +31,25 @@ namespace glm {
          *   the value of aic is the deviance */
         virtual double           theta() const;
         virtual void          setTheta(const double&);
+        /**< whether this family has a free/estimated dispersion parameter
+         *   (Gamma, gaussian, inverse.gaussian) vs. a fixed one (poisson,
+         *   binomial, negative binomial) -- mirrors hasNoScale() in
+         *   R/utilities.R. The base implementation is reached only for
+         *   families glmFamily's constructor didn't recognize (i.e.
+         *   user-supplied custom family objects, dispatched via the R
+         *   function fall-backs above): rather than silently guessing,
+         *   this throws, since we don't yet have a policy for
+         *   unrecognized families (see misc/README_Gamma_GLMMs.md,
+         *   Gamma_GLMM branch). */
+        virtual bool  hasFreeDispersion() const {
+            throw std::runtime_error(
+                "hasFreeDispersion() is not implemented for this family "
+                "(only Gamma, gaussian, inverse.gaussian [free dispersion] "
+                "and poisson, binomial, negative.binomial [fixed dispersion] "
+                "are currently recognized); this is likely a user-supplied "
+                "custom family, which the dispersion-profiling fix for "
+                "GLMMs with a free dispersion parameter does not yet support");
+        }
     };
 
     class binomialDist : public glmDist {
@@ -40,6 +59,7 @@ namespace glm {
         const ArrayXd devResid(const ArrayXd&, const ArrayXd&, const ArrayXd&) const;
         double             aic(const ArrayXd&, const ArrayXd&, const ArrayXd&,
                                const ArrayXd&, double) const;
+        bool  hasFreeDispersion() const {return false;}
     };
 
     class gammaDist : public glmDist {
@@ -49,6 +69,7 @@ namespace glm {
         const ArrayXd devResid(const ArrayXd&, const ArrayXd&, const ArrayXd&) const;
         double             aic(const ArrayXd&, const ArrayXd&, const ArrayXd&,
                                const ArrayXd&, double) const;
+        bool  hasFreeDispersion() const {return true;}
     };
 
     class GaussianDist : public glmDist {
@@ -58,6 +79,7 @@ namespace glm {
         const ArrayXd devResid(const ArrayXd&, const ArrayXd&, const ArrayXd&) const;
         double             aic(const ArrayXd&, const ArrayXd&, const ArrayXd&,
                                const ArrayXd&, double) const;
+        bool  hasFreeDispersion() const {return true;}
     };
 
     class inverseGaussianDist : public glmDist {
@@ -67,6 +89,7 @@ namespace glm {
         const ArrayXd devResid(const ArrayXd&, const ArrayXd&, const ArrayXd&) const;
         double             aic(const ArrayXd&, const ArrayXd&, const ArrayXd&,
                                const ArrayXd&, double) const;
+        bool  hasFreeDispersion() const {return true;}
     };
 
     class negativeBinomialDist : public glmDist {
@@ -80,6 +103,7 @@ namespace glm {
                                const ArrayXd&, double) const;
         double           theta() const {return d_theta;}
         void          setTheta(const double& ntheta) {d_theta = ntheta;}
+        bool  hasFreeDispersion() const {return false;}
     };
 
     class PoissonDist : public glmDist {
@@ -89,6 +113,7 @@ namespace glm {
         const ArrayXd devResid(const ArrayXd&, const ArrayXd&, const ArrayXd&) const;
         double             aic(const ArrayXd&, const ArrayXd&, const ArrayXd&,
                                const ArrayXd&, double) const;
+        bool  hasFreeDispersion() const {return false;}
     };
 
     class glmLink {
@@ -190,6 +215,7 @@ namespace glm {
                                const ArrayXd&, double) const;
         double           theta() const {return d_dist->theta();}
         void          setTheta(const double& theta) {d_dist->setTheta(theta);}
+        bool  hasFreeDispersion() const {return d_dist->hasFreeDispersion();}
         //@}
     };
 

@@ -513,7 +513,19 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc, lme4conv=NULL) {
     }
     ## weights <- resp$weights
     beta    <- pp$beta(fac)
-    sigmaML <- pwrss/n
+    ## For GLMMs with a free/estimated dispersion parameter (Gamma,
+    ## gaussian, inverse.gaussian -- glmResp::hasFreeDispersion() on the
+    ## C++ side), report the dispersion actually converged to by
+    ## glmerLaplace()'s internal phi fixed-point loop (resp$phi()),
+    ## rather than the generic pwrss/n formula below: pwrss/n is a
+    ## Pearson-residual-based quantity computed via resp$wrss(), which
+    ## (for these families) is itself computed at the *reweighted* PIRLS
+    ## working weights (reweighted by 1/phi), so pwrss/n no longer
+    ## estimates phi once phi != 1 -- it's confounded with phi through
+    ## that reweighting. See misc/README_Gamma_GLMMs.md, Gamma_GLMM branch.
+    ## Fixed-dispersion GLMMs and LMMs are unaffected.
+    hasFreeDisp <- isGLMM && !hasNoScale(resp$family)
+    sigmaML <- if (hasFreeDisp && !trivial.y) resp$phi() else pwrss/n
     if (rcl != "lmerResp") {
         pars <- opt$par
         ## making the assertion that length(pars) > npar iff nAGQ > 0;

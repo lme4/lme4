@@ -114,6 +114,7 @@ namespace lme4 {
 
         const std::string& family() const {return d_fam.fam();}
         const std::string&   link() const {return d_fam.lnk();}
+        bool     hasFreeDispersion() const {return d_fam.hasFreeDispersion();}
 
         double                aic() const;
         double            Laplace(double,double,double) const;

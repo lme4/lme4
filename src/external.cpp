@@ -154,6 +154,12 @@ extern "C" {
         END_RCPP;
     }
 
+    SEXP glm_phi(SEXP ptr) {
+        BEGIN_RCPP;
+        return ::Rf_ScalarReal(XPtr<glmResp>(ptr)->phi());
+        END_RCPP;
+    }
+
     SEXP glm_updateWts(SEXP ptr_) {
         BEGIN_RCPP;
         return ::Rf_ScalarReal(XPtr<glmResp>(ptr_)->updateWts());
@@ -393,13 +399,24 @@ extern "C" {
         int      maxit(::Rf_asInteger(maxit_));
         int       verb(::Rf_asInteger(verbose_));
 
-        if (rp->family() == "Gamma") {
-            // Families with an estimated dispersion (currently just Gamma): profile phi
-            // via a nested fixed point around PIRLS, using the moment estimator
-            // phi = deviance/n at each outer iteration -- this corrects a systematic
-            // bias in the random-effects variance estimate that the original (phi==1,
-            // disp-blind) working weights produced. See misc/README_Gamma_GLMMs.md in
-            // the Gamma_GLMM branch for the derivation and validation.
+        if (rp->hasFreeDispersion()) {
+            // Families with a free/estimated dispersion parameter (Gamma,
+            // gaussian, inverse.gaussian -- glmDist::hasFreeDispersion(),
+            // mirroring hasNoScale() in R/utilities.R, which fixes
+            // dispersion at 1 only for poisson/binomial/negative
+            // binomial; throws for unrecognized/user-supplied custom
+            // families rather than silently guessing, since we don't yet
+            // have a policy for those): profile phi via a nested fixed
+            // point around PIRLS, using the moment estimator phi =
+            // deviance/n at each outer iteration -- this corrects a
+            // systematic bias in the random-effects variance estimate
+            // that the original (phi==1, disp-blind) working weights
+            // produced. The math here is already family-generic
+            // (resDev(), Laplace()/aic() all dispatch per-family via
+            // glmFamily); only the digamma-MLE alternative estimator
+            // (R-level prototype only, not implemented here in C++) is
+            // Gamma-specific. See misc/README_Gamma_GLMMs.md in the
+            // Gamma_GLMM branch for the derivation and validation.
             double phi = 1.;
             double lastGoodPhi = 1.;
             double n = rp->weights().sum();
@@ -1104,6 +1121,7 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(glm_family,         1),
     CALLDEF(glm_link,           1),
     CALLDEF(glm_muEta,          1),
+    CALLDEF(glm_phi,            1),
     CALLDEF(glm_resDev,         1),
     CALLDEF(glm_sqrtWrkWt,      1),
     CALLDEF(glm_theta,          1),

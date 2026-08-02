@@ -280,12 +280,15 @@ if (testLevel>1) {
                         data=df2, family=gaussian(link="logit"))
 
     ## parametric bootstrap:
-    ##  terrible, but not a computational bug I think?
+    ## reference refreshed: gaussian fit via glmer() with a non-identity
+    ## link now also gets the free-dispersion phi-profiling fix
+    ## (previously Gamma-only) -- see misc/README_Gamma_GLMMs.md,
+    ## Gamma_GLMM branch
     boot_res <- matrix(
       c(
-        0.7876999074589053, 0.03674961560266387, -4.210250900535643,
-        3.1483596407466985, 1.7682636983854518, 0.05647611260302035,
-        -1.0059308984192392, 4.706443226891899
+        0, 0.0196182959816876, -2.51956252971187, 3.96884044819014,
+        0.00107132308596243, 0.0338956680520825, -1.95888497897466,
+        4.90957932670704
       ), nrow = 4L, ncol = 2L,
       dimnames = list(c(".sig01", ".sigma", "(Intercept)", "prop1"),
                       c("2.5 %", "97.5 %"))
@@ -656,8 +659,13 @@ if (testLevel>1) {
     expect_equal(s1, s2)
     dd$y2 <- s2[[1]]
     g2 <- glmer(y2~x+(1|f), family=Gamma(link="log"),dd)
+    ## reference refreshed: getME(g1, "sigma") now reports the correct
+    ## dispersion (fixing a bug where sigma() for Gamma GLMMs used a
+    ## generic pwrss/n formula inconsistent with the phi actually
+    ## converged to internally -- see misc/README_Gamma_GLMMs.md,
+    ## Gamma_GLMM branch), so the simulated y2 (and hence g2) shifts too
     expect_equal(fixef(g2), tolerance = 4e-7, # 32-bit windows showed 1.34e-7
-                 c(`(Intercept)` = 2.93829454576482, x = 0.999491776043614))
+                 c(`(Intercept)` = 2.92761131238582, x = 1.02672772289035))
 ##                 c("(Intercept)" = 2.81887136759369, x= 1.06543222163626))
 
     ## simulate with re.form = NULL and derived/offset components in formula
