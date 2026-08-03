@@ -164,7 +164,19 @@ namespace lme4 {
     }
 
     double glmResp::Laplace(double ldL2, double ldRX2, double sqrL) const {
-        return ldL2 + sqrL + aic();
+        // aic() dispatches to the family's aic() method (glmFamily.cpp),
+        // a direct C++ port of the base R family$aic() convention (e.g.
+        // Gamma()$aic, gaussian()$aic, inverse.gaussian()$aic). For
+        // families with a freely-estimated dispersion parameter, that
+        // convention bakes in a "+2" bookkeeping constant for the
+        // dispersion parameter's own AIC penalty, meant to be cancelled
+        // by the "p - aic/2" trick in stats::logLik.glm() (p includes
+        // the dispersion parameter when useSc/hasFreeDispersion is TRUE).
+        // Fixed-dispersion families (Poisson, binomial) have no such
+        // constant in their aic() to begin with, so are unaffected.
+        double ans = ldL2 + sqrL + aic();
+        if (hasFreeDispersion()) ans -= 2.;
+        return ans;
     }
 
     double glmResp::resDev() const {

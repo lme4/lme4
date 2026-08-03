@@ -340,7 +340,7 @@ if(FALSE) { ## Hadley broke this
     ## Gamma-only; now also applies to gaussian fit via glmer(), as here)
     ## -- see misc/Gamma_GLMM/README_Gamma_GLMMs.md, Gamma_GLMM branch
     expect_equal(msum,
-                 c(`(Intercept)` = 0.23512994, x = 1.0017413, f = 0.31648764, -158.73048),
+                 c(`(Intercept)` = 0.23512994, x = 1.0017413, f = 0.31648764, -157.73048),
                  tolerance=1e-5)
 
     ## GH 415

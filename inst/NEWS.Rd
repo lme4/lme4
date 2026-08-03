@@ -31,6 +31,15 @@
       internally.
     } % itemize
   } % user-visible changes
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item fixed a long-standing bug for GLMMs with estimated dispersion
+      parameters (Gamma, inverse Gaussian, and Gaussian families fitted
+      via \code{glmer}); log-likelihood was too large by an additive
+      constant of 2.0. This would affect comparisons with LMMs or with
+      results from other packages.
+    } % itemize
+  } % bug fixes
 } % 2.1-0 (devel)
 
 \section{CHANGES IN VERSION 2.0-6 (2026-07-16)}{
