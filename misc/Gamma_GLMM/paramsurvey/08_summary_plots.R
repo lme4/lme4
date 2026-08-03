@@ -1,5 +1,5 @@
-## Rough summary plots: for each of the four examples (epil2_simple,
-## epil2_complex, report4bb, schizophrenia), one ggplot with parameter
+## Rough summary plots: for each of the five examples (epil2_simple,
+## epil2_complex, epil2_phigt1, report4bb, schizophrenia), one ggplot with parameter
 ## value on the y-axis, fitting method mapped to colour (dodged
 ## horizontally so the six methods' B=500 replicate estimates are visually
 ## separated), and one facet row per parameter (scales="free_y", since
@@ -50,7 +50,7 @@ build_truth <- function(sim) {
   data.frame(parameter = names(parts), true_value = unlist(parts))
 }
 
-make_plot <- function(sim, results_list, title) {
+make_plot <- function(sim, results_list, title, show_ylab = TRUE) {
   long <- build_long(sim, results_list)
   long <- long[!is.na(long$value), ]
   truth <- build_truth(sim)
@@ -67,7 +67,8 @@ make_plot <- function(sim, results_list, title) {
     facet_wrap(~parameter, ncol = 1, scales = "free_y", strip.position = "right") +
     scale_color_manual(values = okabe_ito6) +
     scale_fill_manual(values = okabe_ito6) +
-    labs(title = title, x = NULL, y = "estimate", color = "method", fill = "method") +
+    labs(title = title, x = NULL, y = if (show_ylab) "estimate" else NULL,
+         color = "method", fill = "method") +
     theme_bw(base_size = 10) +
     theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(),
           panel.grid.major.x = element_blank(), strip.text.y.right = element_text(angle = 0))
@@ -83,19 +84,21 @@ load_results <- function(example) {
 
 d_simple <- load_results("epil2_simple")
 d_complex <- load_results("epil2_complex")
+d_phigt1 <- load_results("epil2_phigt1")
 d_report4bb <- load_results("report4bb")
 d_schizo <- load_results("schizophrenia")
 
 p1 <- make_plot(d_simple$sim, d_simple$results, "epil2 (simple)")
-p2 <- make_plot(d_complex$sim, d_complex$results, "epil2 (complex)")
-p3 <- make_plot(d_report4bb$sim, d_report4bb$results, "Report4BB")
-p4 <- make_plot(d_schizo$sim, d_schizo$results, "schizophrenia")
+p2 <- make_plot(d_complex$sim, d_complex$results, "epil2 (complex)", show_ylab = FALSE)
+p5 <- make_plot(d_phigt1$sim, d_phigt1$results, "epil2 (phi>1)", show_ylab = FALSE)
+p3 <- make_plot(d_report4bb$sim, d_report4bb$results, "whale_crate", show_ylab = FALSE)
+p4 <- make_plot(d_schizo$sim, d_schizo$results, "schizophrenia", show_ylab = FALSE)
 
-combined <- (p1 | p2 | p3 | p4) + plot_layout(guides = "collect") &
+combined <- (p1 | p5 | p2 | p3 | p4) + plot_layout(guides = "collect") &
   theme(legend.position = "bottom")
 
 outfile <- file.path(wd, "param_summary_distrib.png")
-ggsave(outfile, combined, width = 17, height = 9, dpi = 130)
+ggsave(outfile, combined, width = 21, height = 9, dpi = 130)
 cat("saved to", outfile, "\n")
 
 ## ---- same parameter summary, but mean +/- 2 SE (geom_pointrange) ----
@@ -107,7 +110,7 @@ summarize_long <- function(long) {
              mean = agg$value[, "mean"], se = agg$value[, "se"])
 }
 
-make_plot_pointrange <- function(sim, results_list, title) {
+make_plot_pointrange <- function(sim, results_list, title, show_ylab = TRUE) {
   long <- build_long(sim, results_list)
   long <- long[!is.na(long$value), ]
   summ <- summarize_long(long)
@@ -122,22 +125,24 @@ make_plot_pointrange <- function(sim, results_list, title) {
                inherit.aes = FALSE) +
     facet_wrap(~parameter, ncol = 1, scales = "free_y", strip.position = "right") +
     scale_color_manual(values = okabe_ito6) +
-    labs(title = title, x = NULL, y = "estimate (mean ± 2 SE)", color = "method") +
+    labs(title = title, x = NULL, y = if (show_ylab) "estimate (mean ± 2 SE)" else NULL,
+         color = "method") +
     theme_bw(base_size = 10) +
     theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(),
           panel.grid.major.x = element_blank(), strip.text.y.right = element_text(angle = 0))
 }
 
 p1b <- make_plot_pointrange(d_simple$sim, d_simple$results, "epil2 (simple)")
-p2b <- make_plot_pointrange(d_complex$sim, d_complex$results, "epil2 (complex)")
-p3b <- make_plot_pointrange(d_report4bb$sim, d_report4bb$results, "Report4BB")
-p4b <- make_plot_pointrange(d_schizo$sim, d_schizo$results, "schizophrenia")
+p2b <- make_plot_pointrange(d_complex$sim, d_complex$results, "epil2 (complex)", show_ylab = FALSE)
+p5b <- make_plot_pointrange(d_phigt1$sim, d_phigt1$results, "epil2 (phi>1)", show_ylab = FALSE)
+p3b <- make_plot_pointrange(d_report4bb$sim, d_report4bb$results, "whale_crate", show_ylab = FALSE)
+p4b <- make_plot_pointrange(d_schizo$sim, d_schizo$results, "schizophrenia", show_ylab = FALSE)
 
-combined_pr <- (p1b | p2b | p3b | p4b) + plot_layout(guides = "collect") &
+combined_pr <- (p1b | p5b | p2b | p3b | p4b) + plot_layout(guides = "collect") &
   theme(legend.position = "bottom")
 
 outfile_pr <- file.path(wd, "param_summary_stderr.png")
-ggsave(outfile_pr, combined_pr, width = 17, height = 9, dpi = 130)
+ggsave(outfile_pr, combined_pr, width = 16, height = 9, dpi = 130)
 cat("saved to", outfile_pr, "\n")
 
 ## ---- same again, excluding lme4 2.0-6 (the old/buggy method) ----
@@ -147,22 +152,23 @@ cat("saved to", outfile_pr, "\n")
 drop_old <- function(results_list) results_list[setdiff(names(results_list), "lme4old")]
 
 p1c <- make_plot_pointrange(d_simple$sim, drop_old(d_simple$results), "epil2 (simple)")
-p2c <- make_plot_pointrange(d_complex$sim, drop_old(d_complex$results), "epil2 (complex)")
-p3c <- make_plot_pointrange(d_report4bb$sim, drop_old(d_report4bb$results), "Report4BB")
-p4c <- make_plot_pointrange(d_schizo$sim, drop_old(d_schizo$results), "schizophrenia")
+p2c <- make_plot_pointrange(d_complex$sim, drop_old(d_complex$results), "epil2 (complex)", show_ylab = FALSE)
+p5c <- make_plot_pointrange(d_phigt1$sim, drop_old(d_phigt1$results), "epil2 (phi>1)", show_ylab = FALSE)
+p3c <- make_plot_pointrange(d_report4bb$sim, drop_old(d_report4bb$results), "whale_crate", show_ylab = FALSE)
+p4c <- make_plot_pointrange(d_schizo$sim, drop_old(d_schizo$results), "schizophrenia", show_ylab = FALSE)
 
-combined_pr_new <- (p1c | p2c | p3c | p4c) + plot_layout(guides = "collect") &
+combined_pr_new <- (p1c | p5c | p2c | p3c | p4c) + plot_layout(guides = "collect") &
   theme(legend.position = "bottom")
 
 outfile_pr_new <- file.path(wd, "param_summary_stderr_newonly.png")
-ggsave(outfile_pr_new, combined_pr_new, width = 17, height = 9, dpi = 130)
+ggsave(outfile_pr_new, combined_pr_new, width = 16, height = 9, dpi = 130)
 cat("saved to", outfile_pr_new, "\n")
 
 ## ---- second plot: elapsed time and -2*logLik, all datasets/methods ----
 ## Two separate plots (elapsed time, Δ(-2*logLik)) combined vertically
 ## with patchwork, each facet_wrap'd by dataset with its own free_y scale
 ## per panel.
-dataset_levels <- c("epil2 (simple)", "epil2 (complex)", "Report4BB", "schizophrenia")
+dataset_levels <- c("epil2 (simple)", "epil2 (phi>1)", "epil2 (complex)", "whale_crate", "schizophrenia")
 
 build_metric_long <- function(name, results_list, extract) {
   do.call(rbind, lapply(names(results_list), function(m) {
@@ -171,8 +177,9 @@ build_metric_long <- function(name, results_list, extract) {
   }))
 }
 
-datasets <- list("epil2 (simple)" = d_simple, "epil2 (complex)" = d_complex,
-                  "Report4BB" = d_report4bb, "schizophrenia" = d_schizo)
+datasets <- list("epil2 (simple)" = d_simple, "epil2 (phi>1)" = d_phigt1,
+                  "epil2 (complex)" = d_complex,
+                  "whale_crate" = d_report4bb, "schizophrenia" = d_schizo)
 
 long_time <- do.call(rbind, lapply(names(datasets), function(nm) {
   build_metric_long(nm, datasets[[nm]]$results, function(df) df$time_sec)
@@ -275,5 +282,5 @@ p_negll_diff <- p_negll_diff + theme(legend.position = "none")
 p_time_negll <- p_time / p_negll_diff
 
 outfile2 <- file.path(wd, "time-negll_summary.png")
-ggsave(outfile2, p_time_negll, width = 12, height = 9, dpi = 130)
+ggsave(outfile2, p_time_negll, width = 15, height = 9, dpi = 130)
 cat("saved to", outfile2, "\n")
