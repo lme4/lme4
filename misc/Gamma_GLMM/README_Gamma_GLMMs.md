@@ -901,8 +901,9 @@ resimulated datasets from **four** real designs, each simulated from
 parameter recovery, reliability (clean/warning/error/singular), timing,
 and -2*logLik. Toolkit and scripts: `misc/Gamma_GLMM/paramsurvey/`
 (`toolkit.R` plus `01_prep_*.R`, `02_fit_glmmTMB.R`, `03_fit_jointphi.R`,
-`04_fit_lme4current.R`, `05_fit_lme4old.R`, `07_fit_pirls_phi.R`,
-`06_analysis.R`, `08_summary_plots.R`). **Caveat**: these scripts still
+`04_fit_lme4current.R`, `05_fit_lme4old.R`, `06_fit_pirls_phi.R`,
+`07_analysis.R`, `08_summary_plots.R`; see that directory's own README
+for a per-script rundown). **Caveat**: these scripts still
 hardcode this session's scratch-directory paths (`wd <-
 "/tmp/claude-.../scratchpad/param_survey"` etc.) — update those before
 rerunning outside this session.
