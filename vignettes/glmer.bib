@@ -533,7 +533,7 @@ Approximation},
   abstract = {Background: Dermatophyte infections of the toenail have been difficult to treat, requiring long courses of therapy and having high recurrence rates. New oral antifungal agents with better outcomes and minimal adverse events are needed. Objective: The purpose of this study was to compare two newer antifungal compounds, terbinafine and itraconazole, for efficacy and safety in toenail onychomycosis caused by dermatophytes. Methods: The study was randomized and double-blind. It compared 12 weeks of continuous oral treatment with terbinafine 250 mg/day or itraconazole 200 mg/day for confirmed toenail dermatophyte onychomycosis. Clinical symptoms and mycologic outcome were assessed at weeks 4, 8, 12, 24, 36, and 48. A total of 372 patients (186 in each group) with dermatophyte infection confirmed by microscopy and culture were included in the intent-to-treat analysis. Results: At week 48, a statistically significantly greater percentage of the terbinafine group than itraconazole group showed negative mycology (73\% [119 of 163] vs 45.8\% [77 of 168]; p \&lt; 0.0001) (difference = 27.2\%; 95\% CI = [17.0\%, 37.3\%]). The difference was also confirmed clinically (p = 0.001) in the patients who were clinically cured or had only minimal symptoms at the end of the study (76.2\% [125 of 164] vs 58.1\% [100 of 172]) (difference = 18.1\%; 95\% CI = [8.24\%, 27.9\%]). The geometric mean length of healthy nail of the big toe was significantly greater in the terbinafine than itraconazole group (8.1 vs 6.4 mm; p = 0.026). Tolerability was good to very good in almost 90\% of patients in both groups, and all reported adverse events were known for these compounds. Conclusion: Terbinafine produced higher rates of clinical and mycologic cure at follow-up than did itraconazole. (J Am Acad Dermatol 1998;38:S57-63.)}
 }
 
-  @article{scandola2024,
+@article{scandola2024,
   title = {Reliability and Feasibility of Linear Mixed Models in Fully Crossed Experimental Designs},
   author = {Scandola, Michele and Tidoni, Emmanuele},
   year = 2024,
@@ -699,4 +699,20 @@ Approximation},
   abstract = {The analysis of experimental data with mixed-effects models requires decisions about the specification of the appropriate random-effects structure. Recently, Barr et al. (2013) recommended fitting 'maximal' models with all possible random effect components included. Estimation of maximal models, however, may not converge. We show that failure to converge typically is not due to a suboptimal estimation algorithm, but is a consequence of attempting to fit a model that is too complex to be properly supported by the data, irrespective of whether estimation is based on maximum likelihood or on Bayesian hierarchical modeling with uninformative or weakly informative priors. Importantly, even under convergence, overparameterization may lead to uninterpretable models. We provide diagnostic tools for detecting overparameterization and guiding model simplification. Finally, we clarify that the simulations on which Barr et al. base their recommendations are atypical for real data. A detailed example is provided of how subject-related attentional fluctuation across trials may further qualify statistical inferences about fixed effects, and of how such nonlinear effects can be accommodated within the mixed-effects modeling framework.},
   archiveprefix = {arXiv},
   keywords = {Statistics - Methodology}
+}
+
+@article{chungNondegeneratePenalizedLikelihood2013,
+  title = {A {{Nondegenerate Penalized Likelihood Estimator}} for {{Variance Parameters}} in {{Multilevel Models}}},
+  author = {Chung, Yeojin and {Rabe-Hesketh}, Sophia and Dorie, Vincent and Gelman, Andrew and Liu, Jingchen},
+  year = 2013,
+  month = oct,
+  journal = {Psychometrika},
+  volume = {78},
+  number = {4},
+  pages = {685--709},
+  issn = {0033-3123, 1860-0980},
+  doi = {10.1007/s11336-013-9328-2},
+  urldate = {2021-06-09},
+  abstract = {Group-level variance estimates of zero often arise when fitting multilevel or hierarchical linear models, especially when the number of groups is small. For situations where zero variances are implausible a priori, we propose a maximum penalized likelihood approach to avoid such boundary estimates. This approach is equivalent to estimating variance parameters by their posterior mode, given a weakly informative prior distribution. By choosing the penalty from the log-gamma family with shape parameter greater than 1, we ensure that the estimated variance will be positive. We suggest a default log-gamma(2, {$\lambda$}) penalty with {$\lambda$} {$\rightarrow$} 0, which ensures that the maximum penalized likelihood estimate is approximately one standard error from zero when the maximum likelihood estimate is zero, thus remaining consistent with the data while being nondegenerate. We also show that the maximum penalized likelihood estimator with this default penalty is a good approximation to the posterior median obtained under a noninformative prior. Our default method provides better estimates of model parameters and standard errors than the maximum likelihood or the restricted maximum likelihood estimators. The log-gamma family can also be used to convey substantive prior information. In either case---pure penalization or prior information---our recommended procedure gives nondegenerate estimates and in the limit coincides with maximum likelihood as the number of groups increases.},
+  langid = {english}
 }

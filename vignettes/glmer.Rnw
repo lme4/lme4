@@ -1534,8 +1534,22 @@ We close with a short discussion of some of the issues that can arise when fitti
 
 \emph{Singular fits} describe the case where one or more of the estimated variance-covariance matrices of a model are semi-positive-definite, i.e. some variance components (or variances of linear combinations of latent variables) are effectively zero.  (We say ``effectively zero'' because, due to the limitations of numerical optimization, the estimate is sometimes very small rather than exactly zero; the default tolerance for singularity checks is a value of $10^{-4}$ on the Cholesky-factor [standard deviation] scale.) For small covariance matrices ($1 \times 1$, for a scalar random effect, or $2 \times 2$, for a random-slope model) these cases are usually clear, i.e. one or both variances (diagonal elements of the covariance matrix) are nearly zero, or the correlation is near $\pm 1$. However, it is often impossible to see at a glance that larger covariance matrices are singular. The automatic singularity tests (which print a message if a singular covariance matrix is detected, and the \code{rePCA} function computes the eigenvalues and eigenvectors of the covariance matrices, to help in diagnosing which components are causing singularity \citep{batesParsimoniousMixedModels2015b}.
 
-While a singular fit suggests that a model is overparameterized, it does not represent a fitting error. There is no settled guidance 
+While a singular fit suggests that a model is overparameterized, it does not represent a fitting error --- the model is still theoretically sound, although some approaches that depend on the likelihood surface being locally log-quadratic at the MLE (such as computing Wald intervals) are no longer valid. There is no universally accepted strategy for handling singular fits:
+\begin{itemize}
+\item removing a scalar random effect whose variance is estimated as (near) zero has no effect on (RE)ML estimates (removing the term is equivalent to setting its variance to zero, which the model has already done). However, it will narrow confidence intervals based on likelihood profiling or parametric bootstrapping.
+\item one can attempt to simplify vector-valued random effects in several ways to try to make them non-singular, rather than removing them entirely (see \ref{sec:modelbuilding} below)
+\item a regularizing prior as in \cite{chungNondegeneratePenalizedLikelihood2013} (as implemented in the \pkg{blme} package) can move the estimates for variances of scalar random effects, or covariance matrices of vector-valued random effects, away from the singular point. However, the precise impacts on frequentist characteristics (e.g. bias, type I error) have not been explored.
+\end{itemize}
 
+\subsection{Convergence warnings}
+
+\subsection{Model-building strategies}
+\label{sec:modelbuilding}
+
+\cite{scandola2024,barrRandomEffectsStructure2013,matuschekBalancingTypeError2017,batesParsimoniousMixedModels2015b} (also Kliegl strategy)
+
+\pkg{cAIC4}, \pkg{buildmer}, \pkg{MuMIn}, \pkg{glmmsel}
+  
 \section*{Acknowledgements}
 
 We would like to thank Steve Walker, for early work on \code{glmer}, and Alex Stringer and Phillip Alday, for helpful comments on the manuscript.
