@@ -161,12 +161,7 @@ cat("saved to", outfile_pr_new, "\n")
 ## ---- second plot: elapsed time and -2*logLik, all datasets/methods ----
 ## Two separate plots (elapsed time, Δ(-2*logLik)) combined vertically
 ## with patchwork, each facet_wrap'd by dataset with its own free_y scale
-## per panel. A single facet_grid(metric ~ dataset) with a shared numeric
-## axis per row doesn't work here: even after log-scaling time and
-## recentring negll, the ranges differ too much across datasets (e.g.
-## report4bb fits take ~0.05-0.7s vs ~100s for epil2-complex PIRLS fits)
-## for one axis per row to stay readable -- splitting into two independent
-## plots, each free per dataset panel, avoids that.
+## per panel.
 dataset_levels <- c("epil2 (simple)", "epil2 (complex)", "Report4BB", "schizophrenia")
 
 build_metric_long <- function(name, results_list, extract) {
@@ -183,17 +178,6 @@ long_time <- do.call(rbind, lapply(names(datasets), function(nm) {
   build_metric_long(nm, datasets[[nm]]$results, function(df) df$time_sec)
 }))
 
-## -2*logLik values live on wildly different absolute scales across
-## datasets (epil2 ~O(1000), Report4BB ~O(10-50)). Recentre to "excess
-## over the best fit found for this dataset, across all methods/
-## replicates" -- 0 = as good as the best fit found -- so each dataset's
-## panel is comparably interpretable even before the free_y scale kicks in.
-long_negll <- do.call(rbind, lapply(names(datasets), function(nm) {
-  d <- build_metric_long(nm, datasets[[nm]]$results, function(df) df$negll)
-  d$value <- d$value - min(d$value, na.rm = TRUE)
-  d
-}))
-
 prep_long <- function(d) {
   d <- d[!is.na(d$value), ]
   d$dataset <- factor(d$dataset, levels = dataset_levels)
@@ -201,7 +185,6 @@ prep_long <- function(d) {
   d
 }
 long_time <- prep_long(long_time)
-long_negll <- prep_long(long_negll)
 
 ## Paired, per-replicate Δ(-2*logLik) vs glmmTMB (the reference method):
 ## for each simulated dataset i, method_negll[i] - glmmTMB_negll[i].
@@ -274,25 +257,23 @@ make_metric_plot <- function(d, xlab, logx = FALSE, vline0 = FALSE) {
 }
 
 p_time <- make_metric_plot(long_time, "elapsed time (s)", logx = TRUE)
-p_negll <- make_metric_plot(long_negll, "Δ (-2*logLik)")
 p_negll_diff <- make_metric_plot(long_negll_diff, "Δ (-2*logLik) vs glmmTMB (paired by replicate)",
                                   vline0 = TRUE) +
   geom_text(data = outlier_ann, aes(x = value, y = method, label = "*"),
             inherit.aes = FALSE, size = 6, fontface = "bold", color = "black", hjust = 0)
 
 ## p_negll_diff's data spans only 4 of the 6 methods (glmmTMB and lme4old
-## excluded); even with identical scale colours/labels across all three
+## excluded); even with identical scale colours/labels across both
 ## plots, patchwork's guides="collect" doesn't reliably merge a legend
-## built from 4 present levels with ones built from 6, so instead keep
+## built from 4 present levels with one built from 6, so instead keep
 ## exactly one legend (from the top panel, which has all 6 methods) and
-## suppress the other two explicitly. (Don't use patchwork's `&` to set
-## legend.position here -- it applies to, and would override, all three
+## suppress the other explicitly. (Don't use patchwork's `&` to set
+## legend.position here -- it applies to, and would override, both
 ## subplots' settings.)
 p_time <- p_time + theme(legend.position = "bottom")
-p_negll <- p_negll + theme(legend.position = "none")
 p_negll_diff <- p_negll_diff + theme(legend.position = "none")
-p_time_negll <- p_time / p_negll / p_negll_diff
+p_time_negll <- p_time / p_negll_diff
 
 outfile2 <- file.path(wd, "time-negll_summary.png")
-ggsave(outfile2, p_time_negll, width = 12, height = 13, dpi = 130)
+ggsave(outfile2, p_time_negll, width = 12, height = 9, dpi = 130)
 cat("saved to", outfile2, "\n")
