@@ -1002,38 +1002,66 @@ after refreshing 8 stale hardcoded references across `test-glmFamily.R`,
 `test-glmer.R`, `test-methods.R` (all either mechanical staleness from
 the above, or newly-in-scope non-canonical-link-gaussian fits).
 
+### Finding: a third, independent bug — "+2" AIC bookkeeping leaking into logLik/AIC/BIC
+
+Found while checking why PIRLS/moment (C++) and PIRLS/moment (R) — again
+supposedly the same algorithm — showed -2\*logLik values a suspiciously
+constant 2 units apart on Report4BB, more visible there than elsewhere
+because the differences are otherwise small. `glmResp::Laplace()`
+(`src/respModule.cpp`) computes the Laplace deviance as
+`ldL2 + sqrL + aic()`, where `aic()` dispatches to the family's C++
+`aic()` method (`src/glmFamily.cpp`), a direct port of base R's
+`family$aic()` (e.g. `Gamma()$aic`, `gaussian()$aic`,
+`inverse.gaussian()$aic`). Those base-R functions bake in an additive
+"+2" bookkeeping constant meant to be cancelled by the "p - aic/2" trick
+in `stats::logLik.glm()` (`p` includes the dispersion parameter when
+estimated) — a convention `glmResp::Laplace()` never applied, so it leaked
+straight into `logLik()`/`AIC()`/`BIC()` for any GLMM with a freely-
+estimated dispersion parameter (Gamma, inverse Gaussian, gaussian fit via
+`glmer()`). Confirmed present on `master` (predates this whole
+investigation by over a decade — `git blame` traces it to 2011), unrelated
+to the RE-variance-bias or `sigma()` bugs above.
+
+Fixed (commit `db6d172c`, pushed to `Gamma_GLMM`): subtract 2 in
+`Laplace()` when `hasFreeDispersion()` is true. Verified against an
+independent recomputation of `-2*logLik` straight from `dgamma()`/`dnorm()`
+(bypassing `aic()` entirely, using the fitted model's own converged
+conditional modes) — locked in as a regression test in
+`test-gamma_glmm_bias.R`. One existing hardcoded test reference
+(`test-glmer.R`, a `gaussian(link="log")` fit) needed refreshing; a full
+audit of the test suite found no other hardcoded logLik/AIC/deviance
+references for a free-dispersion-family GLMM. NEWS entry added under
+2.1-0 BUG FIXES.
+
 ### Status as of this writing
 
-B=10 completed for all 4 datasets × 6 methods (24 cells); results,
-combined `.rds` files, and two summary plots
-(`misc/Gamma_GLMM/paramsurvey/summary_plot.png`,
-`summary_plot_time_negll.png` — Okabe-Ito palette, violin+boxplot+points
-per method, log-scaled timing row via `ggh4x::facetted_pos_scales()`)
-committed. Headline pattern across all four datasets: lme4-2.0-6 shows
-large, dataset-dependent bias (inflation in most regimes, e.g. epil2-
-complex sd2 ~14x true, Report4BB sd1/sd2 ~2x); all five "modern" methods
-(glmmTMB, joint-phi, PIRLS/digamma, PIRLS/moment, lme4-current) track
-each other closely on parameter recovery, with PIRLS/moment and
-lme4-current essentially identical (as expected, same algorithm) and
-consistently ~15-25% low on phi relative to glmmTMB/joint-phi (the
-newly-found estimator bias above). Timing is highly structure-dependent,
-not sample-size-dependent: schizophrenia (n=1603, single RE) is *cheap*
-for every method (glmmTMB and joint-phi both ~2.5s), while epil2-complex
-(n=213, one correlated 2-term RE) is the expensive outlier
-(PIRLS/digamma, PIRLS/moment ~100s/fit) — the correlated-RE structure
-drives cost, not n.
+B=500 completed for all 4 datasets × 6 methods (24 cells, up from the
+original B=10); results, combined `.rds` files, and four summary plots
+in `misc/Gamma_GLMM/paramsurvey/` (`param_summary_distrib.png`,
+`param_summary_stderr.png`, `param_summary_stderr_newonly.png` —
+per-parameter recovery, full distribution and mean±2SE variants;
+`time-negll_summary.png` — elapsed time and paired per-replicate
+Δ(-2\*logLik) vs glmmTMB, two panels via patchwork) committed; see
+`paramsurvey/README.md` for a full script-by-script rundown. The
+`-2*logLik` values were post-processed after the "+2" bug fix above (dev-
+build/2.0-6 methods only; the R-level methods never went through `aic()`
+and were already correct).
 
-B=250 scaling infrastructure is built (prep scripts take `B` as a
-command-line arg; fit scripts take an `MC_CORES` arg and use `mclapply`
-when >1) but **not yet launched**. Estimated cost: ~21.5 total CPU-hours
-across all 24 cells (epil2-complex's PIRLS/digamma+moment alone account
-for ~68%), ~1 hour wall-clock with 30 cores allowing for load imbalance.
+Headline pattern across all four datasets: lme4-2.0-6 shows large,
+dataset-dependent bias (inflation in most regimes, e.g. epil2-complex sd2
+~14x true, Report4BB sd1/sd2 ~2x); all five "modern" methods (glmmTMB,
+joint-phi, PIRLS/digamma, PIRLS/moment, lme4-current) track each other
+closely on parameter recovery, with PIRLS/moment and lme4-current
+essentially identical (as expected, same algorithm) and consistently
+~15-25% low on phi relative to glmmTMB/joint-phi (the estimator bias
+found above). Timing is highly structure-dependent, not sample-size-
+dependent: schizophrenia (n=1603, single RE) is *cheap* for every method
+(glmmTMB and joint-phi both ~2.5s), while epil2-complex (n=213, one
+correlated 2-term RE) is the expensive outlier (PIRLS/digamma,
+PIRLS/moment ~100s/fit) — the correlated-RE structure drives cost, not n.
 
-**Not yet done**: launch the B=250 run; root-cause the moment/digamma
-~15-25% phi bias; decide on the custom-family error-vs-warning question
-above; extend the summary plots to include the schizophrenia example (all
-four dataset's raw `_results_*.rds` exist, just needs a 4th `make_plot()`
-panel).
+**Not yet done**: root-cause the moment/digamma ~15-25% phi bias; decide
+on the custom-family error-vs-warning question above.
 
 ## Practical takeaway (regardless of whether/when this gets fixed upstream)
 

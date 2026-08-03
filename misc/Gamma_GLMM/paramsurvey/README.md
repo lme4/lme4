@@ -70,10 +70,14 @@ Per-dataset, per-method fits are saved as
   `param_summary_stderr.png`, excluding PIRLS/fixed-phi (CRAN)/lme4
   2.0-6, so the five current methods' much smaller differences aren't
   swamped by that method's much larger bias.
-- **`time-negll_summary.png`** — elapsed time and Δ(-2\*logLik) (relative
-  to the best fit found per dataset), all datasets/methods, two panels
-  stacked vertically via patchwork (not `facet_grid`, since the value
-  ranges differ too much across datasets for one shared axis per row).
+- **`time-negll_summary.png`** — two panels stacked vertically via
+  patchwork (not `facet_grid`, since the value ranges differ too much
+  across datasets for one shared axis per row): elapsed time (all six
+  methods) on top, and paired per-replicate Δ(-2\*logLik) vs glmmTMB
+  (same simulated dataset, method minus glmmTMB) on the bottom, which
+  cancels between-replicate variation and isolates each method's
+  systematic gap from glmmTMB. The bottom panel excludes glmmTMB itself
+  and PIRLS/fixed-phi (CRAN)/lme4 2.0-6 (see script comments for why).
 
 ## Caveats
 
