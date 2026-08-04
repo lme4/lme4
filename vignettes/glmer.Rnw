@@ -1543,11 +1543,19 @@ While a singular fit suggests that a model is overparameterized, it does not rep
 
 \subsection{Convergence warnings}
 
-In parallel with testing for singularity, \pkg{lme4} incorporates two levels of testing for the reliability of the convergence of numerical optimization to a true minimum solution. The first is whatever convergence criteria the specified nonlinear optimizer uses, which might fail (return a non-zero convergence code) because of (e.g.) using the maximum allowed number of iterations, or because the Nelder-Mead simplex collapses to a lower dimension. The second is a set of tests implemented by \pkg{lme4} itself
+In parallel with testing for singularity, \pkg{lme4} incorporates two levels of testing for the reliability of the convergence of numerical optimization to a true minimum solution. The first is whatever convergence criteria the specified nonlinear optimizer uses, which might fail (return a non-zero convergence code) because of (e.g.) using the maximum allowed number of iterations, or because the Nelder-Mead simplex collapses to a lower dimension.
+
+The second set of convergence tests are implemented by \pkg{lme4} itself;
+after fitting a model, the package computes the gradient $\mathbf g$ and Hessian $\mathbf H$ of the negative log-likelihood at the (RE)ML estimates by finite differences, and then calculates a unitless, scaled gradient as $\mathbf g \mathbf H^{-1}$. If the scaled gradient is above a threshold (or if the Hessian is non-invertible, or has negative eigenvalues), the package warns of a possible problem.
+
+(False positives)
+
+(What to do about convergence warnings: center, scale, \code{allFit})
 
 \subsection{Model-building strategies}
 \label{sec:modelbuilding}
 
+Researchers have come up with 
 (Discuss model-building strategies: ``keep it maximal'', backwards selection, all-subsets selection/dredging? Dangers of data-based model selection. Kliegl method for simplifying vector-valued random effects: set to diagonal, eliminate any components with low variance, go back to unstructured with lower dimension)
 
 Model-counting: for a vector-valued (dimension $n$) random effect, we have almost $3 \cdot 2^{n-1}$ possible models (diagonal, compound symmetric, or unstructured for each possible subset (slightly fewer because there's only 1 model for scalar cases and 2 models for 2x2 cases).
@@ -1555,7 +1563,9 @@ Model-counting: for a vector-valued (dimension $n$) random effect, we have almos
 \cite{scandola2024,barrRandomEffectsStructure2013,matuschekBalancingTypeError2017,batesParsimoniousMixedModels2015b,moritzRoleFireTerrestrial2023} (also Kliegl pers. comm.)
 
 \pkg{cAIC4}, \pkg{buildmer}, \pkg{MuMIn}, \pkg{glmmsel}
-  
+
+\bmb{comment on use of finite-difference or RX-based Hessian for standard errors of parameters?}
+
 \section*{Acknowledgements}
 
 We would like to thank Steve Walker for early work on \code{glmer} and Alex Stringer and Phillip Alday for helpful comments on the manuscript.
