@@ -1532,7 +1532,7 @@ We close with a short discussion of some of the issues that can arise when fitti
 
 \subsection{Singular fits}
 
-\emph{Singular fits} describe the case where one or more of the estimated variance-covariance matrices of a model are semi-positive-definite, i.e. some variance components (or variances of linear combinations of latent variables) are effectively zero.  (We say ``effectively zero'' because, due to the limitations of numerical optimization, the estimate is sometimes very small rather than exactly zero; the default tolerance for singularity checks is a value of $10^{-4}$ on the Cholesky-factor [standard deviation] scale.) For small covariance matrices ($1 \times 1$, for a scalar random effect, or $2 \times 2$, for a random-slope model) these cases are usually clear, i.e. one or both variances (diagonal elements of the covariance matrix) are nearly zero, or the correlation is near $\pm 1$. However, it is often impossible to see at a glance that larger covariance matrices are singular. The automatic singularity tests (which print a message if a singular covariance matrix is detected, and the \code{rePCA} function computes the eigenvalues and eigenvectors of the covariance matrices, to help in diagnosing which components are causing singularity \citep{batesParsimoniousMixedModels2015b}.
+\emph{Singular fits} describe the case where one or more of the estimated variance-covariance matrices of a model are only semi-positive-definite, i.e. some variance components (or variances of linear combinations of latent variables) are effectively zero \bmb{better/less awkward/more correct way to say this?}.  (We say ``effectively zero'' because, due to the limitations of numerical optimization, the estimate is sometimes very small rather than exactly zero; the default tolerance for singularity checks is a value of $10^{-4}$ on the Cholesky-factor [standard deviation] scale.) For small covariance matrices ($1 \times 1$, for a scalar random effect, or $2 \times 2$, for a random-slope model) these cases are usually clear, i.e. one or both variances (diagonal elements of the covariance matrix) are nearly zero, or the correlation is near $\pm 1$. However, it is often impossible to see at a glance that larger covariance matrices are singular. \pkg{lme4}'s automatic singularity tests (which print a message if a singular covariance matrix is detected, and the \code{rePCA} function computes the eigenvalues and eigenvectors of the covariance matrices, to help in diagnosing which components are causing singularity \citep{batesParsimoniousMixedModels2015b}.
 
 While a singular fit suggests that a model is overparameterized, it does not represent a fitting error --- the model is still theoretically sound, although some approaches that depend on the likelihood surface being locally log-quadratic at the MLE (such as computing Wald intervals) are no longer valid. There is no universally accepted strategy for handling singular fits:
 \begin{itemize}
@@ -1543,8 +1543,14 @@ While a singular fit suggests that a model is overparameterized, it does not rep
 
 \subsection{Convergence warnings}
 
+In parallel with testing for singularity, \pkg{lme4} incorporates two levels of testing for the reliability of the convergence of numerical optimization to a true minimum solution. The first is whatever convergence criteria the specified nonlinear optimizer uses, which might fail (return a non-zero convergence code) because of (e.g.) using the maximum allowed number of iterations, or because the Nelder-Mead simplex collapses to a lower dimension. The second is a set of tests implemented by \pkg{lme4} itself
+
 \subsection{Model-building strategies}
 \label{sec:modelbuilding}
+
+(Discuss model-building strategies: ``keep it maximal'', backwards selection, all-subsets selection/dredging? Dangers of data-based model selection. Kliegl method for simplifying vector-valued random effects: set to diagonal, eliminate any components with low variance, go back to unstructured with lower dimension)
+
+Model-counting: for a vector-valued (dimension $n$) random effect, we have almost $3 \cdot 2^{n-1}$ possible models (diagonal, compound symmetric, or unstructured for each possible subset (slightly fewer because there's only 1 model for scalar cases and 2 models for 2x2 cases).
 
 \cite{scandola2024,barrRandomEffectsStructure2013,matuschekBalancingTypeError2017,batesParsimoniousMixedModels2015b,moritzRoleFireTerrestrial2023} (also Kliegl pers. comm.)
 
