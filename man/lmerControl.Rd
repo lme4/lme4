@@ -271,9 +271,9 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
   \item{mod.type}{model type (for internal use)}
   \item{standardize.X}{scale columns of X matrix? (not yet implemented)}
   \item{autoscale}{if \code{TRUE}, automatically applies scaling for
-    the continuous covariates, and then back-transforms the estimates 
+    the continuous covariates, and then back-transforms the estimates
     back to the original scale to prevent numeric stability without user
-    intervention. (NOTE: not compatiable with glmer yet!)}
+    intervention. Works for both \code{lmer} and \code{glmer}.}
   \item{\dots}{other elements to include in check specification}
 }
 \value{
