@@ -1582,19 +1582,15 @@ precision of estimates, recognizing the inherent dangers of data-driven model se
 \item Various R packages (\pkg{cAIC4}, \pkg{buildmer}, \pkg{glmmsel}) implement particular strategies \ldots
 \end{itemize}
 
-\footnote{Suppose we have a vector-valued (dimension $n$) random effect, and we consider the possibilities of a diagonal, compound symmetric, or unstructured covariance matrix for any subset of the elements. Diagonal, compound-symmetric, and unstructured matrices are equivalent if we choose a single element (i.e. a scalar random effect); compound-symmetric and unstructured are equivalent if we have two elements. Thus there are a total of $c(n) = n + n(n-1)/2 + 3 (2^n-((n^2+n)/2 + 1))$ possible models (e.g., $c(5)=63$, $c(6) = 147$).}
+\footnote{Suppose we have a vector-valued (dimension $n$) random effect, and we consider the possibilities of a diagonal, compound symmetric, or unstructured covariance matrix for any subset of the elements. Diagonal, compound-symmetric, and unstructured matrices are equivalent if we choose a single element (i.e. a scalar random effect); compound-symmetric and unstructured are equivalent if we have two elements. Thus there are a total of $c(n) = n + n(n-1)/2 + 3 (2^n-((n^2+n)/2 + 1))$ possible models (e.g., $c(5)=63$, $c(6) = 147$). If the model has multiple random effects terms with dimensions $n_i$, then there are $\prod_i c(n_i)$ possibilities.}
 
-<<>>=
+<<count-models,echo=FALSE>>=
 ## how many do we exclude from the 2^n total cases?
 ## 1 + n + n(n-1)/2 = (2 + 2n + n^2 -n)/2 = (n^2 +n + 2)/2 = (n^2+n)/2 + 1
 cfun <- function(n) {
   3*(2^n - ((n^2 + n)/2 + 1)) + n*(n-1)/2 + n
 }
 @
-
-
-we have almost $3 \cdot 2^{n-1}$ possible models (diagonal, compound symmetric, or unstructured for each possible subset (slightly fewer because there's only 1 model for scalar cases and 2 models for 2x2 cases).
-
 
 \bmb{comment on use of finite-difference or RX-based Hessian for standard errors of parameters?}
 
