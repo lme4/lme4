@@ -402,6 +402,8 @@ $\bm u^{(k+1)}$ from $\bm u^{(k)}$ it is easiest to use the working response bec
 is defined as $\|\bm u^{(k+1)}\|^2$ so the penalized weighted least squares calculation should be
 in terms of $\bm u$.
 
+\bmb{need to add the point about incorporating dispersion (from GH643/Gamma\_GLMM branch)}
+
 In more detail, the PIRLS algorithm has the form
 \begin{enumerate}
 \item Given parameter values, $\bm\beta$ and $\bm\theta$, incorporate the fixed-effects contribution
@@ -1543,26 +1545,56 @@ While a singular fit suggests that a model is overparameterized, it does not rep
 
 \subsection{Convergence warnings}
 
-In parallel with testing for singularity, \pkg{lme4} incorporates two levels of testing for the reliability of the convergence of numerical optimization to a true minimum solution. The first is whatever convergence criteria the specified nonlinear optimizer uses, which might fail (return a non-zero convergence code) because of (e.g.) using the maximum allowed number of iterations, or because the Nelder-Mead simplex collapses to a lower dimension.
+As well as testing for singularity, \pkg{lme4} incorporates two levels of testing for the reliability of the convergence of numerical optimization to a true minimum solution. The first is whatever convergence criteria the specified nonlinear optimizer uses, which might fail (return a non-zero convergence code) because of (e.g.) using the maximum allowed number of iterations, or because the Nelder-Mead simplex collapses to a lower dimension.
 
-The second set of convergence tests are implemented by \pkg{lme4} itself;
-after fitting a model, the package computes the gradient $\mathbf g$ and Hessian $\mathbf H$ of the negative log-likelihood at the (RE)ML estimates by finite differences, and then calculates a unitless, scaled gradient as $\mathbf g \mathbf H^{-1}$. If the scaled gradient is above a threshold (or if the Hessian is non-invertible, or has negative eigenvalues), the package warns of a possible problem.
+The second level of convergence testing is implemented by \pkg{lme4} itself;
+after fitting a model, the package computes the gradient $\mathbf g$ and Hessian $\mathbf H$ of the negative log-likelihood at the (RE)ML estimates by finite differences, and then calculates a unitless, scaled gradient as $\mathbf g \mathbf H^{-1}$. If the scaled gradient is above a threshold (or if the Hessian is non-invertible, or has negative eigenvalues), the package warns of a possible problem. Because of the numerical inaccuracy of finite-difference approximation, these tests can often give false-positive warnings,
+especially for large data sets or models with many parameters (recent releases of \pkg{lme4} disable these tests by default when
+the number of parameters is $>20$ or the number of observations is greater than $10^4$). However, since they can still be useful
+in detecting poorly posed or numerically unstable models, we have opted to keep them in the package for now.
 
-(False positives)
+There several strategies to further evaluate the seriousness of problems indicated by a convergence warning:
 
-(What to do about convergence warnings: center, scale, \code{allFit})
+\begin{itemize}
+\item centering and scaling continuous predictors (\code{[g]lmerControl(autoscale=TRUE)} will do this automatically, returning parameter estimates on the scale of the original predictors)
+\item running \code{allFit} to determine the variability among optimization methods. If some subset of optimization methods gives
+  results that are sensible and sufficiently similar to each other, for the purposes of a particular analysis (e.g. fixed effects
+  estimates are within 5\% of each other, if that is the focus of the current modeling exercise), then one can ignore the warning
+  (or use \code{[g]lmerControl} to loosen the tolerance for this check
+\end{itemize}
 
 \subsection{Model-building strategies}
 \label{sec:modelbuilding}
 
-Researchers have come up with 
-(Discuss model-building strategies: ``keep it maximal'', backwards selection, all-subsets selection/dredging? Dangers of data-based model selection. Kliegl method for simplifying vector-valued random effects: set to diagonal, eliminate any components with low variance, go back to unstructured with lower dimension)
+Either to resolve singularity and convergence issues, or to optimize the bias-variance tradeoff involved in fitting
+complex models, researchers often want to find a simpler model than the \emph{maximal model} (i.e., the model that contains
+all random effects that are identifiable for a given experimental or observational design: \cite{barrRandomEffectsStructure2013}).
+Such model selection may be desirable and is often necessary, but there is no consensus on the most appropriate strategy.
+A good strategy would identify a model that can feasibly fitted with the available data, and ideally maximize power and
+precision of estimates, recognizing the inherent dangers of data-driven model selection \citep{chatfieldModel1995}.
 
-Model-counting: for a vector-valued (dimension $n$) random effect, we have almost $3 \cdot 2^{n-1}$ possible models (diagonal, compound symmetric, or unstructured for each possible subset (slightly fewer because there's only 1 model for scalar cases and 2 models for 2x2 cases).
+\begin{itemize}
+\item \cite{barrRandomEffectsStructure2013}
+\item \cite{matuschekBalancingTypeError2017} and \cite{batesParsimoniousMixedModels2015b} \bmb{should we cite Bates et al. given that it's just a preprint? There's not 100\% overlap with Matuschek et al ...}
+\item \cite{scandola2024}
+\item \cite{moritzRoleFireTerrestrial2023} and other
+\item Kliegl (pers. comm.): set singular terms to diagonal, eliminate any components with low variance, go back to unstructured with lower dimension
+\item Various R packages (\pkg{cAIC4}, \pkg{buildmer}, \pkg{glmmsel}) implement particular strategies \ldots
+\end{itemize}
 
-\cite{scandola2024,barrRandomEffectsStructure2013,matuschekBalancingTypeError2017,batesParsimoniousMixedModels2015b,moritzRoleFireTerrestrial2023} (also Kliegl pers. comm.)
+\footnote{Suppose we have a vector-valued (dimension $n$) random effect, and we consider the possibilities of a diagonal, compound symmetric, or unstructured covariance matrix for any subset of the elements. Diagonal, compound-symmetric, and unstructured matrices are equivalent if we choose a single element (i.e. a scalar random effect); compound-symmetric and unstructured are equivalent if we have two elements. Thus there are a total of $c(n) = n + n(n-1)/2 + 3 (2^n-((n^2+n)/2 + 1))$ possible models (e.g., $c(5)=63$, $c(6) = 147$).}
 
-\pkg{cAIC4}, \pkg{buildmer}, \pkg{MuMIn}, \pkg{glmmsel}
+<<>>=
+## how many do we exclude from the 2^n total cases?
+## 1 + n + n(n-1)/2 = (2 + 2n + n^2 -n)/2 = (n^2 +n + 2)/2 = (n^2+n)/2 + 1
+cfun <- function(n) {
+  3*(2^n - ((n^2 + n)/2 + 1)) + n*(n-1)/2 + n
+}
+@
+
+
+we have almost $3 \cdot 2^{n-1}$ possible models (diagonal, compound symmetric, or unstructured for each possible subset (slightly fewer because there's only 1 model for scalar cases and 2 models for 2x2 cases).
+
 
 \bmb{comment on use of finite-difference or RX-based Hessian for standard errors of parameters?}
 
