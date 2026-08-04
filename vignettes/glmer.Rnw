@@ -1552,7 +1552,7 @@ While a singular fit suggests that a model is overparameterized, it does not rep
   
 \section*{Acknowledgements}
 
-We would like to thank Steve Walker, for early work on \code{glmer}, and Alex Stringer and Phillip Alday, for helpful comments on the manuscript.
+We would like to thank Steve Walker for early work on \code{glmer} and Alex Stringer and Phillip Alday for helpful comments on the manuscript.
 
 \bibliography{glmer}
 
