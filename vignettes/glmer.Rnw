@@ -1546,7 +1546,7 @@ While a singular fit suggests that a model is overparameterized, it does not rep
 \subsection{Model-building strategies}
 \label{sec:modelbuilding}
 
-\cite{scandola2024,barrRandomEffectsStructure2013,matuschekBalancingTypeError2017,batesParsimoniousMixedModels2015b} (also Kliegl strategy)
+\cite{scandola2024,barrRandomEffectsStructure2013,matuschekBalancingTypeError2017,batesParsimoniousMixedModels2015b,moritzRoleFireTerrestrial2023} (also Kliegl pers. comm.)
 
 \pkg{cAIC4}, \pkg{buildmer}, \pkg{MuMIn}, \pkg{glmmsel}
   
