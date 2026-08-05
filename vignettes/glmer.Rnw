@@ -21,8 +21,6 @@
 \DeclareUnicodeCharacter{0394}{$\Delta$}
 %
 \shortcites{lesnoff_within-herd_2004}
-%% BMB: what does JSS assume?
-%\bibliographystyle{chicago}
 \author{
   Anna Ly\\McMaster University \And
   Rune Haubo Bojesen Christensen\\Copenhagen Research Centre \\for Biological and Precision Psychiatry\AND
@@ -1530,22 +1528,22 @@ print(VarCorr(cm.cs))
 \section{Troubleshooting}
 \label{sec:troubleshooting}
 
-We close with a short discussion of some of the issues that can arise when fitting mixed models. These issues are not specific to GLMMs, although they can be more common because GLMMs can often be more computationally challenging to fit than LMMs.
+We close with a short discussion of some of the issues that can arise when fitting mixed models. These issues are not specific to GLMMs, although are more common because GLMMs are often more computationally challenging than similarly complex LMMs.
 
 \subsection{Singular fits}
 
-\emph{Singular fits} describe the case where one or more of the estimated variance-covariance matrices of a model are only semi-positive-definite, i.e. some variance components (or variances of linear combinations of latent variables) are effectively zero \bmb{better/less awkward/more correct way to say this?}.  (We say ``effectively zero'' because, due to the limitations of numerical optimization, the estimate is sometimes very small rather than exactly zero; the default tolerance for singularity checks is a value of $10^{-4}$ on the Cholesky-factor [standard deviation] scale.) For small covariance matrices ($1 \times 1$, for a scalar random effect, or $2 \times 2$, for a random-slope model) these cases are usually clear, i.e. one or both variances (diagonal elements of the covariance matrix) are nearly zero, or the correlation is near $\pm 1$. However, it is often impossible to see at a glance that larger covariance matrices are singular. \pkg{lme4}'s automatic singularity tests (which print a message if a singular covariance matrix is detected, and the \code{rePCA} function computes the eigenvalues and eigenvectors of the covariance matrices, to help in diagnosing which components are causing singularity \citep{batesParsimoniousMixedModels2015b}.
+\emph{Singular fits} describe the case where one or more of the estimated variance-covariance matrices of a model are only semi-positive-definite, i.e. some variance components (or variances of linear combinations of latent variables) are effectively zero \bmb{better/less awkward/more correct way to say this?}.  (We say ``effectively zero'' because, due to the limitations of numerical optimization, the estimate is sometimes very small rather than exactly zero; the default tolerance for singularity checks is a value of $10^{-4}$ on the Cholesky-factor [standard deviation] scale.) For small covariance matrices ($1 \times 1$, for a scalar random effect, or $2 \times 2$, for a random-slope model) singular fits are immediately clear, i.e. one or both variances (diagonal elements of the covariance matrix) are nearly zero, or the correlation is near $\pm 1$. However, it is often impossible to see at a glance that larger covariance matrices are singular. \pkg{lme4}'s automatic singularity tests (which print a message if they detect a singular covariance matrix), and the \code{rePCA} function (which computes the eigenvalues and eigenvectors of the covariance matrices) can both help in diagnosing which components are causing singularity \citep{batesParsimoniousMixedModels2015b}.
 
 While a singular fit suggests that a model is overparameterized, it does not represent a fitting error --- the model is still theoretically sound, although some approaches that depend on the likelihood surface being locally log-quadratic at the MLE (such as computing Wald intervals) are no longer valid. There is no universally accepted strategy for handling singular fits:
 \begin{itemize}
 \item removing a scalar random effect whose variance is estimated as (near) zero has no effect on (RE)ML estimates (removing the term is equivalent to setting its variance to zero, which the model has already done). However, it will narrow confidence intervals based on likelihood profiling or parametric bootstrapping.
 \item one can attempt to simplify vector-valued random effects in several ways to try to make them non-singular, rather than removing them entirely (see \ref{sec:modelbuilding} below)
-\item a regularizing prior as in \cite{chungNondegeneratePenalizedLikelihood2013} (as implemented in the \pkg{blme} package) can move the estimates for variances of scalar random effects, or covariance matrices of vector-valued random effects, away from the singular point. However, the precise impacts on frequentist characteristics (e.g. bias, type I error) have not been explored.
+\item a regularizing prior as in \cite{chungNondegeneratePenalizedLikelihood2013} (as implemented in the \pkg{blme} package) can move the estimates for variances of scalar random effects, or covariance matrices of vector-valued random effects, away from the singular point. However, the effects of this approach on frequentist characteristics (e.g. bias or type~I error) have not been explored.
 \end{itemize}
 
 \subsection{Convergence warnings}
 
-As well as testing for singularity, \pkg{lme4} incorporates two levels of testing for the reliability of the convergence of numerical optimization to a true minimum solution. The first is whatever convergence criteria the specified nonlinear optimizer uses, which might fail (return a non-zero convergence code) because of (e.g.) using the maximum allowed number of iterations, or because the Nelder-Mead simplex collapses to a lower dimension.
+As well as testing for singularity, \pkg{lme4} incorporates two levels of testing for the reliability of the convergence of numerical optimization to a true minimum solution. The first is whatever convergence criteria the specified nonlinear optimizer uses, which might fail (return a non-zero convergence code) because of (e.g.) exceeding the maximum allowed number of iterations, or because the Nelder-Mead simplex collapses to a lower dimension.
 
 The second level of convergence testing is implemented by \pkg{lme4} itself;
 after fitting a model, the package computes the gradient $\mathbf g$ and Hessian $\mathbf H$ of the negative log-likelihood at the (RE)ML estimates by finite differences, and then calculates a unitless, scaled gradient as $\mathbf g \mathbf H^{-1}$. If the scaled gradient is above a threshold (or if the Hessian is non-invertible, or has negative eigenvalues), the package warns of a possible problem. Because of the numerical inaccuracy of finite-difference approximation, these tests can often give false-positive warnings,
@@ -1553,14 +1551,15 @@ especially for large data sets or models with many parameters (recent releases o
 the number of parameters is $>20$ or the number of observations is greater than $10^4$). However, since they can still be useful
 in detecting poorly posed or numerically unstable models, we have opted to keep them in the package for now.
 
-There several strategies to further evaluate the seriousness of problems indicated by a convergence warning:
+Users can take several approaches to further evaluate the seriousness of problems indicated by a convergence warning:
 
 \begin{itemize}
-\item centering and scaling continuous predictors (\code{[g]lmerControl(autoscale=TRUE)} will do this automatically, returning parameter estimates on the scale of the original predictors)
-\item running \code{allFit} to determine the variability among optimization methods. If some subset of optimization methods gives
+\item Center and scale continuous predictors to improve numerical stability (\code{[g]lmerControl(autoscale=TRUE)} will do this automatically, returning parameter estimates on the scale of the original predictors).
+\item Run \code{allFit} to determine how results vary among optimization methods. If some subset of optimization methods gives
   results that are sensible and sufficiently similar to each other, for the purposes of a particular analysis (e.g. fixed effects
-  estimates are within 5\% of each other, if that is the focus of the current modeling exercise), then one can ignore the warning
-  (or use \code{[g]lmerControl} to loosen the tolerance for this check
+  estimates are within 5\% of each other, if that is the focus of the current modelling exercise), then one can ignore the warning
+  (or use \code{[g]lmerControl} to loosen the tolerance for this check).
+\item Vary starting parameters away from the default values, to see if the model converges (or warns about failing to converge) to approximately the same point.
 \end{itemize}
 
 \subsection{Model-building strategies}
@@ -1568,10 +1567,10 @@ There several strategies to further evaluate the seriousness of problems indicat
 
 Either to resolve singularity and convergence issues, or to optimize the bias-variance tradeoff involved in fitting
 complex models, researchers often want to find a simpler model than the \emph{maximal model} (i.e., the model that contains
-all random effects that are identifiable for a given experimental or observational design: \cite{barrRandomEffectsStructure2013}).
+all random effects that are identifiable under a given experimental or observational design: \cite{barrRandomEffectsStructure2013}).
 Such model selection may be desirable and is often necessary, but there is no consensus on the most appropriate strategy.
 A good strategy would identify a model that can feasibly fitted with the available data, and ideally maximize power and
-precision of estimates, recognizing the inherent dangers of data-driven model selection \citep{chatfieldModel1995}.
+precision of estimates, while respecting the inherent danger of data-driven model selection \citep{chatfieldModel1995}.
 
 %% http://talklab.psy.gla.ac.uk/simgen/simgen_1.54.tar.gz
 
@@ -1583,13 +1582,17 @@ precision of estimates, recognizing the inherent dangers of data-driven model se
   other simplifications such as dropping the intercept from an intercept+slope model, or setting correlations to zero.
 \item in contrast, \cite{matuschekBalancingTypeError2017} prefer to choose
   a smaller-than-maximal model based on backward stepwise selection of random effect terms via likelihood ratio test
-  (with $\alpha = 0.2$), using a sequence which first sets correlations to zero, then drops random slopes one at a time.  \cite{batesParsimoniousMixedModels2015b} suggest an approach that first drops correlations, then drops singular or non-significant variance terms (which are easier to identify in a model with a diagonal covariance matrix), then attempts to add correlations back to the resulting lower-dimensional covariance matrices.
-\item \cite{scandola2024} suggest \emph{complex random intercepts}, which are compound-symmetric models implemented by nesting terms; e.g. simplifying the unstructured covariance model \code{(f|g)} to \code{(1|g/f)}; this is equivalent to \code{cs(f|g, hom=TRUE)}, with correlation parameters constrained to be positive
-\item for a model with three grouping variables, \cite{moritzRoleFireTerrestrial2023} fitted \ldots
-\item The R packages (\pkg{cAIC4}, \pkg{buildmer}, \pkg{glmmsel}) implement various model selection strategies
+  (with $\alpha = 0.2$), using a sequence which first sets correlations to zero, then drops random slopes one at a time.  \cite{batesParsimoniousMixedModels2015b} suggest an approach that first drops correlations, then drops singular or non-significant variance terms (which are easier to identify in a model with a diagonal covariance matrix), then adds correlations back to the resulting lower-dimensional covariance matrices to check for model improvement.
+\item \cite{scandola2024} suggest \emph{complex random intercepts}, which are compound-symmetric models implemented by nesting terms; e.g. simplifying the unstructured covariance model \code{(1+f|g)} to \code{(1|g/f)}; this is equivalent to \code{cs(0+f|g, hom=TRUE)}, with the correlation parameter constrained to be positive.
+\item for a model with three grouping variables, \cite{moritzRoleFireTerrestrial2023} fitted three possibilities at each grouping level (intercept-only, diagonal, or unstructured); from the resulting $3^3=27$ models that were non-singular, they chose the minimum-AIC model.
+\item The R packages (\pkg{cAIC4}, \pkg{buildmer}, \pkg{glmmsel}) implement various model selection strategies.
 \end{itemize}
 
+While these approaches have been tested on simulated data and illustrated in case studies, there is little if any theory
+that suggests the best path to take through a potentially large%
 \footnote{Suppose we have a vector-valued (dimension $n$) random effect, and we consider the possibilities of a diagonal, compound symmetric, or unstructured covariance matrix for any subset of the elements. Diagonal, compound-symmetric, and unstructured matrices are equivalent if we choose a single element (i.e. a scalar random effect); compound-symmetric and unstructured are equivalent if we have two elements. Thus there are a total of $c(n) = n + 2 \cdot n(n-1)/2 + 3 \cdot (2^n-((n^2+n)/2 + 1))$ possible models (e.g., $c(5)=63$, $c(6) = 147$). If the model has multiple random effects terms with dimensions $n_i$, then there are $\prod_i c(n_i)$ possibilities.}
+set of candidate random-effects formulations, nor about the effects of random-effects model selection on post-selection inference
+(either on the covariance estimates themselves or on the fixed-effect estimates).
 
 <<count-models,echo=FALSE>>=
 ## how many do we exclude from the 2^n total cases?
@@ -1612,7 +1615,7 @@ We would like to thank Steve Walker for early work on \code{glmer} and Alex Stri
 <<pkgs, echo=FALSE>>=
 pkglist <- c("lme4", "performance", "DHARMa", "see")
 pp <- sapply(pkglist, function(x)
-  sprintf("%s: %s", x, format(packageVersion(x))))
+  sprintf("\\pkg{%s}: %s", x, format(packageVersion(x))))
 ppp <- paste(pp, collapse  = "; ")
 @ 
 
@@ -1721,14 +1724,14 @@ Again we apply the chain rule to take the Hessian,
   \frac{d \bm\mu}{d \bm\eta}
   \frac{d \bm\eta}{d \bm u} - \bm I_q
 \end{equation}
-which leads to,
+which leads to
 \begin{equation}
   \frac{d^2 L(\bm\beta, \bm\theta | \bm y, \bm u)}{d \bm u \, d \bm u} = 
   \frac{d^2 L'(\bm\beta, \bm\theta | \bm y, \bm u)}{d \bm u \, d \bm\mu}\bm
   M \bm Z \bm\Lambda_\theta 
-  - \bm I_q
+  - \bm I_q .
 \end{equation}
-The first derivative in this chain can be expressed as,
+The first derivative in this chain can be expressed as
 \begin{equation}
   \frac{d^2 L'(\bm\beta, \bm\theta | \bm y, \bm u)}{d \bm u \, d \bm\mu} =
   -\bm\Lambda_\theta^\top \bm Z^\top \bm M \bm V^{-1} \bm A  + 
@@ -1745,7 +1748,7 @@ The Hessian can therefore be expressed as,
   -\bm \Lambda_\theta^\top \bm Z^\top \bm M \bm A^{1/2}\bm V^{-1/2}\left( 
     \bm I_n - 
     \bm V \bm M^{-1}\left[ \frac{d \bm M \bm V^{-1}}{d \bm\mu} \right] \bm R
-  \right) \bm V^{-1/2}\bm A^{1/2} \bm M \bm Z \bm\Lambda_\theta - \bm I_q
+  \right) \bm V^{-1/2}\bm A^{1/2} \bm M \bm Z \bm\Lambda_\theta - \bm I_q .
 \label{eq:betaHessian}
 \end{equation}
 This result can be simplified by expressing it in terms of a weighted
@@ -1771,21 +1774,21 @@ which means that for canonical links,
   -\bm U^\top\left( 
     \bm I_n - 
     \bm I_n \left[ \frac{d \bm I_n}{d \bm\mu} \right] \bm R
-  \right) \bm U - \bm I_q = - \bm U^\top \bm U - \bm I_q
+  \right) \bm U - \bm I_q = - \bm U^\top \bm U - \bm I_q .
 \end{equation}
 The second way to simplify the Hessian is to take its expectation with
 respect to the distribution of the response, conditional on the
 current values of the spherical random effects coefficients, $\bm
 u$. The diagonal residual matrix, $\bm R$, has expectation
 0. Therefore, because the response only enters into the expression for
-the Hessian via $\bm R$, we have that,
+the Hessian via $\bm R$, we have that
 \begin{equation}
   E\left(\frac{d^2 L(\bm\beta, \bm\theta | \bm y, \bm u)}{d \bm u \, d \bm
       u} | \bm u \right) = 
   -\bm U^\top\left( 
     \bm I_n - 
     \bm U \bm M^{-1}\left[ \frac{d \bm V^{-1}\bm M}{d\mu} \right] E(\bm R)
-  \right) \bm U - \bm I_q = - \bm U^\top \bm U - \bm I_q
+  \right) \bm U - \bm I_q = - \bm U^\top \bm U - \bm I_q .
 \label{eq:simphesstwo}
 \end{equation}
 
