@@ -1073,3 +1073,58 @@ restricted to single-scalar-RE models). Cross-check with `glmmTMB` when the
 precision of variance components matters. The bias is worst when the true
 dispersion is small (shape large) — i.e. in the regime most real Gamma GLMM
 applications actually live in.
+
+## `nAGQ>1` (AGQ) is still unfixed, and it's not a simple port (2026-08-05)
+
+`glmerAGQ` (`external.cpp`, the `nAGQ>1` code path) calls `pwrssUpdate()`
+directly, bypassing `glmerLaplace()` entirely, and never touches
+`rp->setPhi()`/`disp_method`/`maxPhiIter`. `glmer()` now warns when
+`nAGQ>1` is combined with a free-dispersion family
+(`updateGlmerDevfun()`, `R/modular.R`).
+
+What's actually happening (verified empirically, not just "phi==1
+always"): phi gets profiled once during the `nAGQ=0` init stage (which
+does go through `glmerLaplace`), then stays *frozen* at that stale value
+for the entire `nAGQ>1` optimization -- it doesn't track theta as the
+AGQ-based Nelder-Mead search moves it. Confirmed: an `nAGQ=5` fit
+converged to a different theta than `nAGQ=1`, but reported essentially the
+same phi as the `nAGQ=1`/Laplace fit.
+
+This turns out to be a two-layer problem:
+
+1. **Mode-finding/weights (fixable by reuse)**: `pwrssUpdate()` and the
+   nested-phi-loop pattern from `glmerLaplace` are directly reusable for
+   the u-mode-finding step inside `glmerAGQ` (it already calls
+   `pwrssUpdate(rp, pp, true, tol, maxit, verb)` once before its
+   quadrature loop) -- factor the loop into a shared helper, thread
+   `dispProfile`/`maxPhiIter` through `glmerAGQ`'s signature and the
+   R-side `glmerPwrssUpdate` `nAGQ>=2` branch.
+
+2. **The returned marginal-likelihood formula itself (the actual
+   blocker)**: `glmerAGQ`'s final value is `devc0.sum() + ldL2 -
+   2*log(mult.prod())`, a McCullagh & Nelder deviance-based AGQ
+   approximation -- `devc0.sum()` is the raw, phi-independent unit
+   deviance, never passed through the family's actual density. This is
+   fine for binomial/Poisson (deviance-based and density-based -2logLik
+   coincide there) but wrong for Gamma: deviance is `2*phi*(l_sat -
+   l_fit)`, missing the phi-dependent normalizing terms (`log(mu*phi)/phi`,
+   `lgamma(1/phi)`) that a real `dgamma()`-based likelihood carries.
+   Contrast with `glmerLaplace`, whose fit term goes through `rp->aic()`
+   -> `gammaDist::aic()` (`glmFamily.cpp:239`), which *does* call
+   `Rf_dgamma()` directly (using a `dev/n`-recomputed disp that, at the
+   nested loop's fixed point, self-consistently equals the profiled phi --
+   a real trick, not a bug: at the fixed point `dev/n == phi` by
+   construction, so recomputing it fresh reproduces the correct phi and
+   feeds a genuine Gamma log-density into `aic()`). `glmerAGQ` has no
+   analogous mechanism.
+
+   So profiling phi for the mode-finding step alone would still leave the
+   reported AGQ deviance/logLik using the wrong *kind* of quantity for
+   Gamma, not just a stale one. A real fix needs the AGQ marginal-
+   likelihood formula itself re-derived to incorporate a genuine density
+   term (e.g. `dgamma()`) per quadrature node -- meaningfully bigger than
+   the mode-finding reuse, and needs its own empirical (paramsurvey-style,
+   single-scalar-RE) validation once implemented.
+
+Deliberately left unimplemented for now; scoped here so the next attempt
+doesn't have to re-derive this from scratch.

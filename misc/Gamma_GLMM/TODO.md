@@ -4,4 +4,5 @@
 * backporting to lme4pureR?
 * switch for back-compatibility (old/buggy fixed-phi PIRLS loop)
 * check against GH #936, GH #557
+* propagate dispersion fixes to AGQ (see README)
 

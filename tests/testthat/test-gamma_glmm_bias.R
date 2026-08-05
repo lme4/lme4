@@ -108,3 +108,42 @@ test_that("Laplace deviance for free-dispersion GLMMs has no aic() bookkeeping l
     sum(getME(ggfit, "u")^2) + ldL2(ggfit)
   expect_equal(recomputed, -2*as.numeric(logLik(ggfit)), tolerance = 1e-6)
 })
+
+## Regression test for the nAGQ>1 caveat noted in
+## misc/Gamma_GLMM/README_Gamma_GLMMs.md: glmerAGQ() (the nAGQ>1 code path)
+## never profiles phi at all (phi gets frozen at whatever the nAGQ=0 init
+## step left it, and the AGQ marginal-likelihood formula itself is a
+## deviance-based approximation that isn't even the right kind of quantity
+## for a free-dispersion family's density). Until that's fixed, glmer()
+## warns instead. This locks in that the warning fires exactly when it
+## should: nAGQ>1 + free dispersion (Gamma) yes; nAGQ<=1 no; nAGQ>1 with a
+## fixed-dispersion family (binomial) no.
+test_that("nAGQ>1 warns for free-dispersion families but not fixed-dispersion ones or nAGQ<=1", {
+  warns <- function(expr) {
+    w <- character(0)
+    withCallingHandlers(force(expr),
+                         warning = function(cnd) {
+                           w <<- c(w, conditionMessage(cnd))
+                           invokeRestart("muffleWarning")
+                         })
+    w
+  }
+
+  set.seed(303)
+  n <- 60
+  dd <- data.frame(f = factor(rep(1:15, each = 4)))
+  b_re <- rnorm(15, 0, 0.3)
+  dd$y <- rgamma(n, shape = 5, scale = exp(1 + b_re[dd$f]) / 5)
+  dd$s <- rbinom(n, size = 10, prob = 0.4)
+
+  msg <- "nAGQ>1 handles GLMMs with estimated dispersion parameters"
+
+  w1 <- warns(glmer(y ~ (1 | f), data = dd, family = Gamma(link = "log"), nAGQ = 5))
+  expect_true(any(grepl(msg, w1, fixed = TRUE)))
+
+  w2 <- warns(glmer(y ~ (1 | f), data = dd, family = Gamma(link = "log"), nAGQ = 1))
+  expect_false(any(grepl(msg, w2, fixed = TRUE)))
+
+  w3 <- warns(glmer(cbind(s, 10 - s) ~ (1 | f), data = dd, family = binomial, nAGQ = 5))
+  expect_false(any(grepl(msg, w3, fixed = TRUE)))
+})
