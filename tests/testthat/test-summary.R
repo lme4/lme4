@@ -144,9 +144,11 @@ test_that("glmer(): back transform matches similar model", {
   og1 <- fixef.merMod(gfit2)
   expect_equal(gres1, og1, tolerance = 1e-5)
   
-  gres2 <- vcov.merMod(gfit1)
-  og2 <- suppressWarnings(vcov.merMod(gfit2))
-  expect_true(all.equal(gres2, og2, check.attributes = FALSE, 
-                        tolerance = 0.04))
+  ## using use.hessian=FALSE for comparability because Hessian is
+  ## non-pos-def without autoscaling
+  gres2 <- suppressWarnings(vcov.merMod(gfit1, use.hessian = FALSE))
+  og2 <- suppressWarnings(vcov.merMod(gfit2, use.hessian = FALSE))
+  expect_true(all.equal(gres2, og2, check.attributes = FALSE,
+                        tolerance = 1e-4))
 })
 
