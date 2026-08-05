@@ -149,7 +149,8 @@ make_joint_phi_devfun <- function(form, data, family) {
   1 / uniroot(f, c(lo, hi), tol = 1e-12)$root
 }
 
-make_pirls_phi_devfun <- function(form, data, family, phiType = c("moment", "digamma")) {
+make_pirls_phi_devfun <- function(form, data, family, phiType = c("moment", "digamma"),
+                                   maxPhiIter = 30) {
   phiType <- match.arg(phiType)
   gm <- glFormula(form, data = data, family = family)
   X <- gm$X
@@ -211,7 +212,7 @@ make_pirls_phi_devfun <- function(form, data, family, phiType = c("moment", "dig
 
     phi <- 1
     ok <- TRUE
-    for (outer in 1:30) {
+    for (outer in 1:maxPhiIter) {
       ok <- runPIRLS(phi)
       if (!ok) break
       devSum <- sum(sqDevResid(y, mu, weights))
@@ -385,9 +386,10 @@ fit_jointphi_one <- function(i, spec, dat) {
               phi = phi, negll = val, singular = sc$singular)
 }
 
-fit_pirls_phi_one <- function(i, spec, dat, phiType = "digamma") {
+fit_pirls_phi_one <- function(i, spec, dat, phiType = "digamma", maxPhiIter = 30) {
   suppressMessages(library(minqa))
-  jp <- make_pirls_phi_devfun(spec$formula, dat, spec$family, phiType = phiType)
+  jp <- make_pirls_phi_devfun(spec$formula, dat, spec$family, phiType = phiType,
+                               maxPhiIter = maxPhiIter)
   t0 <- Sys.time()
   opt <- tryCatch(
     bobyqa(jp$start, jp$devfun, lower = jp$lower, upper = jp$upper,
