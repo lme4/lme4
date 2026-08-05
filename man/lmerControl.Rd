@@ -83,7 +83,9 @@ glmerControl(optimizer = c("bobyqa", "Nelder_Mead"),
     tolPwrss = 1e-7,
     compDev = TRUE,
     nAGQ0initStep = TRUE,
-    check.response.not.const = "stop"
+    check.response.not.const = "stop",
+    disp_method = c("moment", "old/buggy"),
+    maxPhiIter = 100L
  )
 
 nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
@@ -169,6 +171,18 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
     where the initial phase results in bad fixed-effect estimates
     (seen most often in binomial models with \code{link="cloglog"}
     and offsets).}
+  \item{disp_method}{(GLMMs only) character - how to handle the
+    dispersion parameter for families with a free/estimated
+    dispersion (e.g. \code{Gamma}) during PIRLS. \code{"moment"}
+    (the default) profiles it via a nested fixed-point loop, using the
+    method-of-moments estimate (deviance/n) at each outer iteration;
+    this corrects a bias in random-effects variance estimates present
+    in older versions of \code{lme4}. \code{"old/buggy"} reproduces
+    that older, biased behaviour (dispersion held fixed at 1
+    throughout fitting), kept only for backward compatibility.}
+  \item{maxPhiIter}{(GLMMs only) integer - maximum number of outer
+    iterations for the \code{disp_method="moment"} nested
+    fixed-point loop. Only used when \code{disp_method="moment"}.}
   \item{check.nlev.gtreq.5}{character - rules for
     checking whether all random effects have >= 5 levels.
     See \code{action}.}

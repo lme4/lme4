@@ -1074,7 +1074,44 @@ precision of variance components matters. The bias is worst when the true
 dispersion is small (shape large) — i.e. in the regime most real Gamma GLMM
 applications actually live in.
 
-## `nAGQ>1` (AGQ) is still unfixed, and it's not a simple port (2026-08-05)
+## Backward-compatibility switch, and `nAGQ>1` (AGQ) scoping (2026-08-05)
+
+### `glmerControl(disp_method=)`
+
+Added `glmerControl(disp_method = c("moment", "old/buggy"))` and
+`glmerControl(maxPhiIter = 100L)`. `"moment"` (default) is the existing
+nested-fixed-point fix described above; `"old/buggy"` reproduces the
+original, pre-fix behaviour exactly (phi held fixed at 1 throughout PIRLS,
+matching old CRAN `glmer` output bit-for-bit on a spot-checked example) for
+users who need it for back-compatibility. `maxPhiIter` caps the nested
+loop (was previously hardcoded to 100 in `external.cpp`).
+
+Implementation notes:
+- One PIRLS implementation (`pwrssUpdate()`) is shared by both code paths;
+  `disp_method="old/buggy"` just takes the same single-call branch
+  fixed-dispersion families (binomial/Poisson) already used, rather than
+  needing a second PIRLS chunk.
+- `sigma()`/`sigmaML` (`R/utilities.R`, `mkMerMod`) had to be made
+  conditional on `disp_method`: it reads `resp$phi()` directly when
+  `dispProfile=TRUE` (profiled value), but falls back to `pwrss/n` when
+  `dispProfile=FALSE` -- under `"old/buggy"`, `resp$phi()` is stuck at 1 and
+  meaningless, but `pwrss/n` is *not* confounded in that case (working
+  weights were never reweighted by 1/phi either), so it correctly
+  reproduces old CRAN's reported dispersion.
+- `disp_method`/`maxPhiIter` are stored in `devcomp$dims` so `refit()` can
+  recover the original fit's setting rather than silently reverting to
+  package defaults.
+- Build gotcha hit during development: after editing `external.cpp` and
+  running a normal (incremental) `R CMD INSTALL`, only the touched
+  translation units got recompiled, reusing stale `.o` files for the rest
+  -- this produced a real segfault (null vtable dispatch through
+  `hasFreeDispersion()`) from an ABI mismatch between the fresh and stale
+  object files, for *every* `glmer()` call, not just Gamma ones. Fixed by
+  a full clean rebuild (`rm src/*.o src/*.so && R CMD INSTALL --preclean`).
+  Worth remembering if a similarly inexplicable native crash shows up again
+  after a C++-only edit.
+
+### `nAGQ>1` (AGQ) is still unfixed, and it's not a simple port
 
 `glmerAGQ` (`external.cpp`, the `nAGQ>1` code path) calls `pwrssUpdate()`
 directly, bypassing `glmerLaplace()` entirely, and never touches

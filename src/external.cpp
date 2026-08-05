@@ -385,7 +385,8 @@ extern "C" {
             throw runtime_error("pwrssUpdate did not converge in (maxit) iterations");
     }
 
-    SEXP glmerLaplace(SEXP pp_, SEXP rp_, SEXP nAGQ_, SEXP tol_, SEXP maxit_, SEXP verbose_) {
+    SEXP glmerLaplace(SEXP pp_, SEXP rp_, SEXP nAGQ_, SEXP tol_, SEXP maxit_, SEXP verbose_,
+                       SEXP dispProfile_, SEXP maxPhiIter_) {
         BEGIN_RCPP;
         XPtr<glmResp>  rp(rp_);
         XPtr<merPredD> pp(pp_);
@@ -398,8 +399,13 @@ extern "C" {
         double     tol(::Rf_asReal(tol_));
         int      maxit(::Rf_asInteger(maxit_));
         int       verb(::Rf_asInteger(verbose_));
+        // dispProfile is R's glmerControl(disp_method=...) == "moment"
+        // (TRUE) vs "old/buggy" (FALSE); maxPhiIter is glmerControl's
+        // maxPhiIter, capping the nested loop below.
+        bool dispProfile(::Rf_asLogical(dispProfile_));
+        int  maxPhiIter(::Rf_asInteger(maxPhiIter_));
 
-        if (rp->hasFreeDispersion()) {
+        if (rp->hasFreeDispersion() && dispProfile) {
             // Families with a free/estimated dispersion parameter (Gamma,
             // gaussian, inverse.gaussian -- glmDist::hasFreeDispersion(),
             // mirroring hasNoScale() in R/utilities.R, which fixes
@@ -420,7 +426,6 @@ extern "C" {
             double phi = 1.;
             double lastGoodPhi = 1.;
             double n = rp->weights().sum();
-            int maxPhiIter = 100;
             double phiTol = 1e-8;
             for (int outer = 0; outer < maxPhiIter; ++outer) {
                 rp->setPhi(phi);
@@ -477,6 +482,14 @@ extern "C" {
             }
             rp->setPhi(phi);
         } else {
+            // Either a fixed-dispersion family (binomial/poisson: phi
+            // stays at its default 1.0, exactly as always), or
+            // disp_method="old/buggy" for a free-dispersion family:
+            // reproduces the original pre-fix behaviour, where the PIRLS
+            // working weights are computed disp-blind (phi==1) and only
+            // the final reported deviance (via aic()'s own internal dev/n
+            // plug-in) is dispersion-aware. Kept for backward
+            // compatibility -- see glmerControl(disp_method=).
             pwrssUpdate(rp, pp, uOnly, tol, maxit, verb);
         }
         return ::Rf_ScalarReal(rp->Laplace(pp->ldL2(), pp->ldRX2(), pp->sqrL(1.)));
@@ -1146,7 +1159,7 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(glmFamily_variance, 2),
 
     CALLDEF(glmerAGQ,           7),
-    CALLDEF(glmerLaplace,       6),
+    CALLDEF(glmerLaplace,       8),
 
     CALLDEF(golden_Create,      2),
     CALLDEF(golden_newf,        2),

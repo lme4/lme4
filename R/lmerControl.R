@@ -61,6 +61,7 @@ chk.cconv <- function(copt, callingFn) {
 
 ## work around code check since we adjust formals() later
 check.response.not.const <- compDev <- nAGQ0initStep <- tolPwrss <- NULL
+disp_method <- maxPhiIter <- NULL
 
 merControl <-
     function(optimizer="nloptwrap", # originally Nelder_Mead, then bobyqa ...
@@ -99,6 +100,8 @@ merControl <-
              ##        compDev = TRUE
              ##        nAGQ0initStep = TRUE
              ##        check.response.not.const="stop"
+             ##        disp_method="moment"
+             ##        maxPhiIter=100L
              ) {
         ## FIXME: is there a better idiom?  match.call() ?
         ## fill in values from options, but **only if not specified explicitly in arguments**
@@ -161,9 +164,15 @@ merControl <-
                                        check.conv.hess),
                          optCtrl=optCtrl)
         if (mod.type=="glmer") {
+            disp_method <- match.arg(disp_method, c("moment", "old/buggy"))
+            if (!is.numeric(maxPhiIter) || length(maxPhiIter) != 1 || maxPhiIter < 1)
+                stop("'maxPhiIter' must be a single positive integer")
+            maxPhiIter <- as.integer(maxPhiIter)
             ret <- c(ret, namedList(tolPwrss,
                                     compDev,
-                                    nAGQ0initStep))
+                                    nAGQ0initStep,
+                                    disp_method,
+                                    maxPhiIter))
             ret$checkControl <- c(ret$checkControl,
                                  namedList(check.response.not.const))
         }
@@ -181,7 +190,9 @@ formals(glmerControl) <- c(formals(glmerControl),
                            list(tolPwrss=1e-7,
                                 compDev = TRUE,
                                 nAGQ0initStep = TRUE,
-                                check.response.not.const="stop")
+                                check.response.not.const="stop",
+                                disp_method = "moment",
+                                maxPhiIter = 100L)
                            )
 
 ##' @rdname lmerControl

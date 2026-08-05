@@ -802,7 +802,9 @@ mkGlmerDevfun <- function(fr, X, reTrms, family,
     maxit   <- as.integer(maxit)
     rho <- list2env(list(verbose=verbose, maxit=maxit,
                          tolPwrss= control$tolPwrss,
-                         compDev = control$compDev),
+                         compDev = control$compDev,
+                         dispProfile = identical(control$disp_method %||% "moment", "moment"),
+                         maxPhiIter = as.integer(control$maxPhiIter %||% 100L)),
                     parent = parent.frame())
     rho$pp <- do.call(merPredD$new,
                       c(reTrms[c("Zt","theta","Lambdat","Lind")],
@@ -820,7 +822,8 @@ mkGlmerDevfun <- function(fr, X, reTrms, family,
 
         ## initialize (from mustart)
         .Call(glmerLaplace, rho$pp$ptr(), rho$resp$ptr(), nAGQ > 0L,
-              control$tolPwrss, maxit, verbose)
+              control$tolPwrss, maxit, verbose,
+              rho$dispProfile, rho$maxPhiIter)
         rho$lp0         <- rho$pp$linPred(1) # each pwrss opt begins at this eta
         rho$pwrssUpdate <- glmerPwrssUpdate
     }

@@ -492,6 +492,11 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc, lme4conv=NULL) {
               nth = length(pp$theta),
               nAGQ= rho$nAGQ,
               compDev=rho$compDev,
+              ## disp_method/maxPhiIter (glmerControl(); NA for lmer/nlmer)
+              ## stored so refit() can recover the original fit's setting
+              ## rather than silently falling back to package defaults.
+              dispProfile = rho$dispProfile %||% NA,
+              maxPhiIter = rho$maxPhiIter %||% NA,
               ## 'use scale' in the sense of whether dispersion parameter should
               ##  be reported/used (*not* whether theta should be scaled by sigma)
               useSc = !(isGLMM && hasNoScale(resp$family)),
@@ -525,7 +530,14 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc, lme4conv=NULL) {
     ## that reweighting. See misc/Gamma_GLMM/README_Gamma_GLMMs.md, Gamma_GLMM branch.
     ## Fixed-dispersion GLMMs and LMMs are unaffected.
     hasFreeDisp <- isGLMM && !hasNoScale(resp$family)
-    sigmaML <- if (hasFreeDisp && !trivial.y) resp$phi() else pwrss/n
+    ## resp$phi() is only meaningful when it was actually profiled
+    ## (disp_method="moment"); under disp_method="old/buggy" it's stuck at
+    ## its untouched default of 1, and the PIRLS working weights were never
+    ## reweighted by 1/phi either, so pwrss/n is *not* confounded in that
+    ## case -- it's the same (biased, but back-compatible) moment estimate
+    ## old CRAN reported.
+    dispProfile <- rho$dispProfile %||% TRUE
+    sigmaML <- if (hasFreeDisp && !trivial.y && dispProfile) resp$phi() else pwrss/n
     if (rcl != "lmerResp") {
         pars <- opt$par
         ## making the assertion that length(pars) > npar iff nAGQ > 0;
@@ -877,8 +889,10 @@ nlminbwrap <- function(par, fn, lower, upper, control=list(), ...) {
          conv = res$convergence, message = res$message)
 }
 
-glmerLaplaceHandle <- function(pp, resp, nAGQ, tol, maxit, verbose) {
-    .Call(glmerLaplace, pp, resp, nAGQ, tol, as.integer(maxit), verbose)
+glmerLaplaceHandle <- function(pp, resp, nAGQ, tol, maxit, verbose,
+                                dispProfile=TRUE, maxPhiIter=100L) {
+    .Call(glmerLaplace, pp, resp, nAGQ, tol, as.integer(maxit), verbose,
+          dispProfile, as.integer(maxPhiIter))
 }
 
 isFlexLambda <- function() FALSE

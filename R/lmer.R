@@ -315,7 +315,7 @@ mkdevfun <- function(rho, nAGQ=1L, maxit = if(extends(rho.cld, "nlsResp")) 300L 
     ## (clearly preferred to using globalVariables() !]
     fac <- pp <- resp <- lp0 <- compDev <- dpars <- baseOffset <- tolPwrss <-
         pwrssUpdate <- ## <-- even though it's a function below
-        GQmat <- nlmerAGQ <- mkTheta <- NULL
+        GQmat <- nlmerAGQ <- mkTheta <- dispProfile <- maxPhiIter <- NULL
 
     ## The deviance function (to be returned, with 'rho' as its environment):
     ff <-
@@ -328,12 +328,15 @@ mkdevfun <- function(rho, nAGQ=1L, maxit = if(extends(rho.cld, "nlsResp")) 300L 
         ## control values will override rho values *if present*
         if (!is.null(tp <- control$tolPwrss)) rho$tolPwrss <- tp
         if (!is.null(cd <- control$ compDev)) rho$compDev <- cd
+        if (!is.null(dp <- control$disp_method)) rho$dispProfile <- identical(dp, "moment")
+        if (!is.null(mpi <- control$maxPhiIter)) rho$maxPhiIter <- as.integer(mpi)
         if (nAGQ == 0L)
             function(par) {
                 resp$updateMu(lp0)
                 pp$setTheta(mkTheta(as.double(par)))
                 p <- pwrssUpdate(pp, resp, tol=tolPwrss, GQmat=GHrule(0L),
-                                 compDev=compDev, maxit=maxit, verbose=verbose)
+                                 compDev=compDev, maxit=maxit, verbose=verbose,
+                                 dispProfile=dispProfile, maxPhiIter=maxPhiIter)
                 resp$updateWts()
                 p
             }
@@ -347,7 +350,8 @@ mkdevfun <- function(rho, nAGQ=1L, maxit = if(extends(rho.cld, "nlsResp")) 300L 
                 offset <- if (length(spars)==0) baseOffset else baseOffset + pp$X %*% spars
                 resp$setOffset(offset)
                 p <- pwrssUpdate(pp, resp, tol=tolPwrss, GQmat=GQmat,
-                                 compDev=compDev, grpFac=fac, maxit=maxit, verbose=verbose)
+                                 compDev=compDev, grpFac=fac, maxit=maxit, verbose=verbose,
+                                 dispProfile=dispProfile, maxPhiIter=maxPhiIter)
                 resp$updateWts()
                 p
             }
@@ -430,13 +434,21 @@ RglmerWrkIter <- function(pp, resp, uOnly=FALSE) {
 ##' @param compDev compute in C++ (as opposed to doing as much as possible in R)
 ##' @param grpFac grouping factor (normally found in environment ..)
 ##' @param verbose verbosity, of course
-glmerPwrssUpdate <- function(pp, resp, tol, GQmat, compDev=TRUE, grpFac=NULL, maxit = 70L, verbose=0) {
+##' @param dispProfile for families with a free dispersion parameter (e.g.
+##'     Gamma), profile it via a nested fixed-point loop around PIRLS
+##'     (\code{glmerControl(disp_method="moment")}, the default) rather
+##'     than leaving it fixed at 1 (\code{disp_method="old/buggy"},
+##'     back-compatible with pre-fix behaviour)
+##' @param maxPhiIter cap on the nested dispersion fixed-point loop
+##'     (only used when \code{dispProfile=TRUE})
+glmerPwrssUpdate <- function(pp, resp, tol, GQmat, compDev=TRUE, grpFac=NULL, maxit = 70L, verbose=0,
+                              dispProfile=TRUE, maxPhiIter=100L) {
     nAGQ <- nrow(GQmat)
     if (compDev) {
         if (nAGQ < 2L)
             return(.Call(glmerLaplace, pp$ptr(), resp$ptr(),
                          nAGQ, tol, as.integer(maxit),
-                         verbose))
+                         verbose, dispProfile, as.integer(maxPhiIter)))
         return(.Call(glmerAGQ, pp$ptr(), resp$ptr(),
                      tol, as.integer(maxit),
                      GQmat, grpFac, verbose))
@@ -1486,11 +1498,15 @@ refit.merMod <- function(object,
     if (haveGLMM) {
         GQmat <- GHrule(nAGQ)
 
+        dispProfile <- identical(control$disp_method %||% "moment", "moment")
+        maxPhiIter  <- as.integer(control$maxPhiIter %||% 100L)
         if (nAGQ <= 1) {
-            glmerPwrssUpdate(pp,rr, control$tolPwrss, GQmat, maxit=maxit)
+            glmerPwrssUpdate(pp,rr, control$tolPwrss, GQmat, maxit=maxit,
+                             dispProfile=dispProfile, maxPhiIter=maxPhiIter)
         } else {
             glmerPwrssUpdate(pp,rr, control$tolPwrss, GQmat, maxit=maxit,
-                             grpFac = object@flist[[1]])
+                             grpFac = object@flist[[1]],
+                             dispProfile=dispProfile, maxPhiIter=maxPhiIter)
         }
     }
 
@@ -1505,6 +1521,11 @@ refit.merMod <- function(object,
 
             list(tolPwrss= dc$cmp [["tolPwrss"]],
                  compDev = dc$dims[["compDev"]],
+                 ## recover the original fit's disp_method/maxPhiIter from
+                 ## devcomp; fall back to package defaults for objects
+                 ## fitted before these were stored there
+                 dispProfile = as.logical(dc$dims[["dispProfile"]] %||% TRUE),
+                 maxPhiIter = as.integer(dc$dims[["maxPhiIter"]] %||% 100L),
                  nAGQ = nAGQ,
                  lp0 = pp$linPred(1), ## object@resp$eta - baseOffset,
                  baseOffset = baseOffset,

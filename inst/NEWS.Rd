@@ -29,6 +29,14 @@
       once-per-session deprecation warnings for formula-processing
       functions that moved to \pkg{reformulas} are now implemented
       internally.
+      \item \code{glmerControl} gains two new options for GLMMs with
+      estimated dispersion parameters: \code{disp_method} (default
+      \code{"moment"}) selects how the dispersion parameter is
+      incorporated into the PIRLS fit; \code{disp_method="old/buggy"}
+      reproduces the pre-fix behaviour described under BUG FIXES below,
+      for back-compatibility. \code{maxPhiIter} caps the number of
+      iterations of the nested fixed-point loop used by
+      \code{disp_method="moment"}.
     } % itemize
   } % user-visible changes
   \subsection{BUG FIXES}{
@@ -38,6 +46,16 @@
       via \code{glmer}); log-likelihood was too large by an additive
       constant of 2.0. This would affect comparisons with LMMs or with
       results from other packages.
+      \item fixed a long-standing bug (GH #643) for GLMMs with estimated
+      dispersion parameters (Gamma, inverse Gaussian, and Gaussian
+      families with non-identity links fitted via \code{glmer}): the
+      PIRLS working weights used to find the conditional modes were
+      computed with the dispersion parameter fixed to 1, which could
+      substantially bias estimates of random-effect variances and the
+      dispersion parameter. Fixed effects were largely unaffected.
+      \code{nAGQ>1} (adaptive Gauss-Hermite quadrature) does not yet
+      incorporate this fix and now emits a warning for free-dispersion
+      families instead.
     } % itemize
   } % bug fixes
 } % 2.1-0 (devel)
