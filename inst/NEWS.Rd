@@ -46,7 +46,7 @@
       via \code{glmer}); log-likelihood was too large by an additive
       constant of 2.0. This would affect comparisons with LMMs or with
       results from other packages.
-      \item fixed a long-standing bug (GH #643) for GLMMs with estimated
+      \item fixed a long-standing bug (GH #557, #643, partial #936) for GLMMs with estimated
       dispersion parameters (Gamma, inverse Gaussian, and Gaussian
       families with non-identity links fitted via \code{glmer}): the
       PIRLS working weights used to find the conditional modes were
