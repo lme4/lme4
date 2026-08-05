@@ -1573,13 +1573,20 @@ Such model selection may be desirable and is often necessary, but there is no co
 A good strategy would identify a model that can feasibly fitted with the available data, and ideally maximize power and
 precision of estimates, recognizing the inherent dangers of data-driven model selection \citep{chatfieldModel1995}.
 
+%% http://talklab.psy.gla.ac.uk/simgen/simgen_1.54.tar.gz
+
 \begin{itemize}
-\item \cite{barrRandomEffectsStructure2013}
-\item \cite{matuschekBalancingTypeError2017} and \cite{batesParsimoniousMixedModels2015b} \bmb{should we cite Bates et al. given that it's just a preprint? There's not 100\% overlap with Matuschek et al ...}
-\item \cite{scandola2024}
-\item \cite{moritzRoleFireTerrestrial2023} and other
-\item Kliegl (pers. comm.): set singular terms to diagonal, eliminate any components with low variance, go back to unstructured with lower dimension
-\item Various R packages (\pkg{cAIC4}, \pkg{buildmer}, \pkg{glmmsel}) implement particular strategies \ldots
+\item \cite{barrRandomEffectsStructure2013} recommend ``keeping it maximal'', i.e. fitting the most complex identifiable model that converges; they denote any warning message from \code{lmer} as a failure to converge, which could
+  happen either due to a non-zero convergence code from the numerical optimizer
+  or from failing to meet the finite-difference-based gradient and Hessian checks. In the case of non-convergence,
+  they suggest sequentially dropping the random slope term with the smallest variance from the model, although they discuss
+  other simplifications such as dropping the intercept from an intercept+slope model, or setting correlations to zero.
+\item in contrast, \cite{matuschekBalancingTypeError2017} prefer to choose
+  a smaller-than-maximal model based on backward stepwise selection of random effect terms via likelihood ratio test
+  (with $\alpha = 0.2$), using a sequence which first sets correlations to zero, then drops random slopes one at a time.  \cite{batesParsimoniousMixedModels2015b} suggest an approach that first drops correlations, then drops singular or non-significant variance terms (which are easier to identify in a model with a diagonal covariance matrix), then attempts to add correlations back to the resulting lower-dimensional covariance matrices.
+\item \cite{scandola2024} suggest \emph{complex random intercepts}, which are compound-symmetric models implemented by nesting terms; e.g. simplifying the unstructured covariance model \code{(f|g)} to \code{(1|g/f)}; this is equivalent to \code{cs(f|g, hom=TRUE)}, with correlation parameters constrained to be positive
+\item for a model with three grouping variables, \cite{moritzRoleFireTerrestrial2023} fitted \ldots
+\item The R packages (\pkg{cAIC4}, \pkg{buildmer}, \pkg{glmmsel}) implement various model selection strategies
 \end{itemize}
 
 \footnote{Suppose we have a vector-valued (dimension $n$) random effect, and we consider the possibilities of a diagonal, compound symmetric, or unstructured covariance matrix for any subset of the elements. Diagonal, compound-symmetric, and unstructured matrices are equivalent if we choose a single element (i.e. a scalar random effect); compound-symmetric and unstructured are equivalent if we have two elements. Thus there are a total of $c(n) = n + 2 \cdot n(n-1)/2 + 3 \cdot (2^n-((n^2+n)/2 + 1))$ possible models (e.g., $c(5)=63$, $c(6) = 147$). If the model has multiple random effects terms with dimensions $n_i$, then there are $\prod_i c(n_i)$ possibilities.}
