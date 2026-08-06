@@ -1329,4 +1329,48 @@ glmmTMB handles crossed REs natively while `mgcv`/`glmmPQL` (this
 sweep's other two commensurate-`sigma` methods) have much more limited
 or no support for them -- weakening the cross-method validation this
 finding relied on. **Not yet extended beyond the single-grouping-factor
-case** -- see `TODO.md`.
+case**.
+
+### Confirmed via a fifth method, joint-phi: same mechanism, isolated more cleanly (2026-08-06)
+
+The `n-q` diagnosis above was cross-implementation (glmer's C++/PIRLS
+stack vs. glmmTMB's independent TMB/AD stack) -- consistent with a real
+effect, but not a controlled comparison, since the two implementations
+differ in far more than just how phi is handled. Added a fifth method to
+`misc/Gamma_GLMM/paramsurvey_loggaussian/` to isolate the one variable
+that matters: **joint-phi**, an R-level devfun (adapted from
+`../paramsurvey/toolkit.R`'s Gamma version, §7/§11) that shares glmer's
+exact PIRLS mode-finding code and starting values, but promotes `phi` to
+a first-class parameter optimized jointly with theta/beta via `bobyqa`,
+rather than profiling it via glmer's nested `deviance/n` moment plug-in.
+Prediction: if the moment plug-in is really the culprit, joint-phi's
+`sigma` should match glmmTMB/mgcv/glmmPQL, not glmer, despite sharing
+glmer's own mode-finding machinery.
+
+**Confirmed, precisely, on the same B=100 replicates as the four-method
+sweep above** (all 100 converged cleanly, no singular fits, ~0.53s/fit):
+
+| method | sigma (4.00) | ratio to glmmTMB |
+|---|---|---|
+| glmmTMB | 3.758 | 1 (reference) |
+| **joint-phi** | 3.759 | **1.0013 (SD 0.0006)** |
+| mgcv | 3.757 | 0.9997 |
+| glmmPQL | 3.764 | 1.0016 |
+| glmer | 3.084 | 0.821 |
+
+joint-phi lands essentially exactly on glmmTMB/mgcv/glmmPQL. More
+tellingly, the per-replicate ratio `phi_glmer / phi_jointphi` is
+**0.6716 (SD 0.0044)**, matching the predicted `(n-q)/n = 12/18 =
+0.6667` even more tightly (~0.7% off) than the glmer-vs-glmmTMB
+comparison was (~1% off) -- because isolating the *one* difference
+between glmer and joint-phi (moment-plug-in phi vs. jointly-optimized
+phi, holding the mode-finding code itself fixed) removes the
+"different software stack" confound that the original glmmTMB
+comparison couldn't rule out. This is about as clean a confirmation of
+the mechanism as this kind of simulation study can give.
+
+Scripts: `misc/Gamma_GLMM/paramsurvey_loggaussian/toolkit.R`
+(`make_joint_phi_devfun_gaussian`/`fit_jointphi_one`),
+`03_fit_jointphi.R`. The crossed-RE caveat above still applies --
+joint-phi confirms the mechanism for the single-grouping-factor case
+specifically, not the general one.

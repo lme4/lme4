@@ -5,13 +5,20 @@ Much more limited sibling of `../paramsurvey/`: investigates
 gaussian(link="log") results across packages") specifically, rather than
 the broader Gamma GLMM bias question `../paramsurvey/` covers. One
 dataset (`nlme::Rail`, the exact example from the issue), one family
-(`gaussian(link="log")`), a single scalar random intercept, and four
-methods (not six -- no R-level joint-phi/PIRLS-phi devfun arms this time):
+(`gaussian(link="log")`), a single scalar random intercept, and five
+methods:
 
 1. **glmmTMB** -- reference/gold standard.
-2. **glmer** -- current dev build (this branch's fixes).
-3. **mgcv::gam** (`s(Rail, bs="re")`, `method="ML"`).
-4. **MASS::glmmPQL** -- penalized quasi-likelihood, not full ML; its
+2. **joint-phi** -- R-level devfun (see `../paramsurvey/toolkit.R`,
+   §7/§11 of `../README_Gamma_GLMMs.md`), phi as a first-class outer
+   `bobyqa` parameter alongside theta/beta, rather than glmer's nested
+   moment-plug-in profiling. Included specifically to test whether the
+   `sigma` gap (see below) is caused by that plug-in shortcut: prediction
+   is that joint-phi's `sigma` should match glmmTMB/mgcv/glmmPQL, not
+   glmer.
+3. **glmer** -- current dev build (this branch's fixes).
+4. **mgcv::gam** (`s(Rail, bs="re")`, `method="ML"`).
+5. **MASS::glmmPQL** -- penalized quasi-likelihood, not full ML; its
    `negll` is always `NA` (no comparable marginal likelihood).
 
 Per the (partial) resolution already recorded in
@@ -31,20 +38,22 @@ simulating repeatedly instead of relying on one dataset.
 | `toolkit.R` | shared library: per-method fit wrappers, result-row helpers. Sourced by everything below. |
 | `01_prep_rail.R` | fit a glmmTMB reference to the real `Rail` data, round to "pretty" true parameters (beta=4.1, sd=0.4, sigma=4.0), simulate `B` new datasets from those parameters (real Rail design, 6 rails x 3 obs) via `glmmTMB::simulate_new()`. Takes `B` as `commandArgs()[[1]]` (default 10). |
 | `02_fit_glmmTMB.R` | fit glmmTMB to each simulated dataset. |
-| `03_fit_glmer.R` | fit current lme4 dev build (`glmer()`) to each simulated dataset. |
-| `04_fit_mgcv.R` | fit `mgcv::gam()` to each simulated dataset. |
-| `05_fit_pql.R` | fit `MASS::glmmPQL()` to each simulated dataset. |
-| `06_analysis.R` | combine the four per-method result files, print status/singular counts, timing, and parameter-recovery summaries; save `rail_results_combined.rds`. |
+| `03_fit_jointphi.R` | fit the joint-phi devfun to each simulated dataset. |
+| `04_fit_glmer.R` | fit current lme4 dev build (`glmer()`) to each simulated dataset. |
+| `05_fit_mgcv.R` | fit `mgcv::gam()` to each simulated dataset. |
+| `06_fit_pql.R` | fit `MASS::glmmPQL()` to each simulated dataset. |
+| `07_analysis.R` | combine the five per-method result files, print status/singular counts, timing, and parameter-recovery summaries; save `rail_results_combined.rds`. |
 
 ## Outputs
 
 Per-method fits are saved as `rail_results_<method>.rds`;
-`06_analysis.R` combines them into `rail_results_combined.rds`. `.rds`
+`07_analysis.R` combines them into `rail_results_combined.rds`. `.rds`
 files are gitignored (see `../paramsurvey/`'s convention) -- only the
 scripts and this README are meant to be committed.
 
 ## Status
 
-Set up but not yet run at scale (B=10 to start, per this session's
-request) -- see the parent conversation for results once the sweep has
-been run.
+B=100 run (four methods: glmmTMB/glmer/mgcv/glmmPQL) complete -- see
+`../README_Gamma_GLMMs.md`'s GH #936 sections for results. joint-phi
+added afterward to test the degrees-of-freedom-correction hypothesis;
+see the parent conversation for its results once run.

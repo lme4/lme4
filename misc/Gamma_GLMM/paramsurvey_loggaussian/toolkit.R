@@ -8,9 +8,11 @@
 ## has. Formulas are hardcoded per-method below (mgcv needs its own
 ## s(Rail, bs="re") syntax anyway, so there's no real unification to be had).
 ##
-## Four methods (not six -- no joint-phi/PIRLS-phi R-level devfun arms this
-## time, per this session's request): glmmTMB (reference), glmer, mgcv::gam,
-## MASS::glmmPQL.
+## Five methods: glmmTMB (reference), joint-phi (R-level devfun, phi as a
+## first-class outer bobyqa parameter -- see ../paramsurvey/toolkit.R,
+## §7/§11 of ../README_Gamma_GLMMs.md for the general idea), glmer, mgcv::gam,
+## MASS::glmmPQL. No PIRLS/moment-phi R-level devfun arm (that's the same
+## algorithm as glmer itself, just reimplemented in R -- not useful here).
 
 suppressMessages({
   library(lme4)
@@ -18,6 +20,8 @@ suppressMessages({
   library(mgcv)
   library(MASS)
   library(nlme)
+  library(minqa)
+  library(reformulas)  # nobars()
 })
 
 ## ---- standardized per-fit result skeleton ----
@@ -77,6 +81,123 @@ fit_glmmTMB_one <- function(i, dat) {
   emptyResult(i, status, paste(r$warn_msgs, collapse = "; "), time_sec,
               beta = fixef(fit)$cond[["(Intercept)"]], sd = vc, sigma = sigma(fit),
               negll = negll, singular = singular)
+}
+
+## ---- joint-phi devfun, gaussian-specific ----
+## Adapted from ../paramsurvey/toolkit.R's make_joint_phi_devfun (Gamma):
+## the PIRLS mode-finding loop is already family-generic (dispatches via
+## fam$linkinv/variance/mu.eta/dev.resids), so the only Gamma-specific
+## part -- the final density-based fit term -- needs swapping from dgamma
+## to dnorm (phi = sigma^2 directly, no shape/scale reparameterization
+## needed for gaussian). Kept as its own self-contained copy here rather
+## than editing the shared ../paramsurvey/toolkit.R, so as not to disturb
+## that survey's own (already-run, already-reported) results.
+make_joint_phi_devfun_gaussian <- function(form, data, family = gaussian(link = "log")) {
+  gm <- glFormula(form, data = data, family = family)
+  X <- gm$X
+  y <- gm$fr[[1]]
+  Zt <- gm$reTrms$Zt
+  Lambdat <- gm$reTrms$Lambdat
+  Lind <- gm$reTrms$Lind
+  thfun <- function(theta) theta[Lind]
+  weights <- rep(1, nrow(X))
+  offset <- numeric(nrow(X))
+  n <- nrow(X); p <- ncol(X); q <- nrow(Zt)
+  nth <- length(gm$reTrms$theta)
+
+  fam <- if (is.function(family)) family() else family
+  linkinv <- fam$linkinv; variance <- fam$variance; muEta <- fam$mu.eta
+  sqDevResid <- fam$dev.resids
+
+  devfun <- function(params) {
+    theta <- params[1:nth]
+    logphi <- params[nth + 1]
+    beta <- params[(nth + 2):length(params)]
+    phi <- exp(logphi)
+
+    Lambdat@x[] <- thfun(theta)
+    LtZt <- Lambdat %*% Zt
+    offb <- offset + as.vector(X %*% beta)
+    eta <- numeric(n); mu <- numeric(n)
+    updatemu <- function(uu) {
+      eta[] <<- offb + as.vector(crossprod(LtZt, uu))
+      mu[] <<- linkinv(eta)
+      sum(sqDevResid(y, mu, weights)) / phi + sum(uu^2)
+    }
+    u <- numeric(q)
+    olducden <- updatemu(u)
+    L <- Matrix::Cholesky(Matrix::tcrossprod(LtZt), perm = FALSE, LDL = FALSE, Imult = 1)
+    cvgd <- FALSE
+    for (i in 1:60) {
+      Whalf <- Matrix::Diagonal(x = sqrt(weights / (phi * variance(mu))))
+      LtZtMWhalf <- LtZt %*% (Matrix::Diagonal(x = muEta(eta)) %*% Whalf)
+      L <- Matrix::update(L, LtZtMWhalf, 1)
+      wtres <- Whalf %*% (y - mu)
+      delu <- as.vector(Matrix::solve(L, LtZtMWhalf %*% wtres - u))
+      ucden <- updatemu(u + delu)
+      if (abs((olducden - ucden) / ucden) < 1e-8) { cvgd <- TRUE; break }
+      if (ucden > olducden) {
+        for (j in 1:10) {
+          ucden <- updatemu(u + (delu <- delu / 2))
+          if (ucden <= olducden) break
+        }
+        if (ucden > olducden) break
+      }
+      olducden <- ucden
+      u <- u + delu
+    }
+    if (!cvgd) return(1e10)
+
+    ldL2 <- 2 * determinant(L, logarithm = TRUE, sqrt = TRUE)$modulus
+    attributes(ldL2) <- NULL
+
+    ## gaussian: phi IS the variance (sigma^2), no shape/scale
+    ## reparameterization needed (unlike Gamma's dgamma(shape=1/phi,
+    ## scale=mu*phi) -- see ../paramsurvey/toolkit.R)
+    fit_term <- -2 * sum(weights * dnorm(y, mean = mu, sd = sqrt(phi), log = TRUE))
+    val <- fit_term + sum(u^2) + ldL2
+    if (!is.finite(val)) return(1e10)
+    val
+  }
+
+  glm0 <- glm(nobars(form), data = data, family = family)
+  beta_start <- unname(coef(glm0))
+  logphi_start <- log(summary(glm0)$dispersion)
+  theta_start <- gm$reTrms$theta
+
+  lower_theta <- ifelse(is.finite(gm$reTrms$lower), gm$reTrms$lower, -10)
+  upper_theta <- rep(10, nth)
+
+  list(devfun = devfun, nth = nth, p = p, cnms = gm$reTrms$cnms,
+       start = c(theta_start, logphi_start, beta_start),
+       lower = c(lower_theta, log(1e-4), rep(-20, p)),
+       upper = c(upper_theta, log(1e4), rep(20, p)),
+       beta_names = colnames(X))
+}
+
+fit_jointphi_one <- function(i, dat) {
+  t0 <- Sys.time()
+  jp <- make_joint_phi_devfun_gaussian(travel ~ 1 + (1 | Rail), dat)
+  r <- withWarnings(
+    bobyqa(jp$start, jp$devfun, lower = jp$lower, upper = jp$upper,
+           control = list(maxfun = 8000))
+  )
+  time_sec <- as.numeric(Sys.time() - t0, units = "secs")
+  if (inherits(r$val, "error")) return(emptyResult(i, "error", conditionMessage(r$val), time_sec))
+  opt <- r$val
+  if (!is.finite(opt$fval) || opt$fval >= 1e10) {
+    return(emptyResult(i, "degenerate", "hit sentinel / non-finite", time_sec))
+  }
+  status <- if (opt$ierr != 0) "warning" else if (length(r$warn_msgs) > 0) "warning" else "clean"
+  theta <- opt$par[1:jp$nth]
+  phi <- exp(opt$par[jp$nth + 1])
+  beta <- opt$par[(jp$nth + 2):length(opt$par)]
+  sd_re <- unname(theta[1])  # single scalar RE: theta IS the RE sd directly
+  singular <- sd_re < 1e-4
+  msg <- paste(c(if (opt$ierr != 0) paste("ierr =", opt$ierr), r$warn_msgs), collapse = "; ")
+  emptyResult(i, status, msg, time_sec,
+              beta = beta[1], sd = sd_re, sigma = sqrt(phi),
+              negll = opt$fval, singular = singular)
 }
 
 fit_glmer_one <- function(i, dat) {

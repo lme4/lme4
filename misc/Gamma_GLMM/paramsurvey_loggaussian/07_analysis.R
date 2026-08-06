@@ -1,4 +1,4 @@
-## Combine the four per-method result files and summarize: status/singular
+## Combine the five per-method result files and summarize: status/singular
 ## counts, timing, and parameter recovery (beta, RE sd, sigma, -2*logLik)
 ## against the "pretty" true values used to simulate the data. Note: PQL's
 ## negll is always NA (not a real ML method -- see toolkit.R).
@@ -6,7 +6,7 @@
 wd <- "/home/bolker/R/pkgs/lme4/misc/Gamma_GLMM/paramsurvey_loggaussian"
 sim <- readRDS(file.path(wd, "rail_simdata.rds"))
 
-methods <- c("glmmTMB", "glmer", "mgcv", "pql")
+methods <- c("glmmTMB", "jointphi", "glmer", "mgcv", "pql")
 res <- setNames(lapply(methods, function(m) {
   f <- file.path(wd, paste0("rail_results_", m, ".rds"))
   if (!file.exists(f)) return(NULL)
