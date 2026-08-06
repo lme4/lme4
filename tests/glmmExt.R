@@ -54,9 +54,14 @@ gm3B <- glmer(y ~ x + (1|block), d, Gamma)
 summary(gm3)
 summary(gm3B)# should be better
 ## Both have "correct" beta ~= (4, 3)  -- but *too* small  (sigma_B, sigma) !!
+## reference values updated for the dispersion-profiling fix (phi is now
+## profiled rather than fixed at 1 for free-dispersion families like
+## Gamma -- see misc/Gamma_GLMM/README_Gamma_GLMMs.md): fixed effects are
+## largely, but not exactly, unaffected by the fix (the phi-reweighting
+## does perturb the joint estimation slightly)
 stopifnot(exprs = {
-    all.equal(fixef(gm3 ), c(`(Intercept)` = 4.07253, x = 3.080585), tol = 1e-5) # 1.21e-7
-    all.equal(fixef(gm3B), c(`(Intercept)` = 4.159398, x = 3.058521),tol = 1e-5) # 1.13e-7
+    all.equal(fixef(gm3 ), c(`(Intercept)` = 4.09273562181177, x = 3.07325500796481), tol = 1e-5)
+    all.equal(fixef(gm3B), c(`(Intercept)` = 4.12582628888373, x = 3.05916037732051), tol = 1e-5)
 })
 VarCorr(gm3)  # both variances / std.dev. should be ~ 1  but are too small
 
@@ -71,10 +76,14 @@ VarCorr(gm3)  # both variances / std.dev. should be ~ 1  but are too small
 ggl1 <- glmer(y ~ 1 + (1|block), data=dgl, family=Gamma(link="log"))
 ggl2 <- glmer(y ~ x + (1|block), data=dgl, family=Gamma(link="log"))# true model
 (h.1.2 <- anova(ggl1, ggl2))
+## reference values updated for the dispersion-profiling fix (phi is now
+## profiled rather than fixed at 1 for free-dispersion families like
+## Gamma -- see misc/Gamma_GLMM/README_Gamma_GLMMs.md)
 stopifnot(
     all.equal(unlist(h.1.2[2,]),
-              c(npar = 4, AIC = 34216.014, BIC = 34239.467, logLik = -17104.007,
-                "-2*log(L)" = 34208.014, Chisq = 2458.5792, Df = 1, `Pr(>Chisq)` = 0))
+              c(npar = 4, AIC = 34230.3451056724, BIC = 34253.7981725685,
+                logLik = -17111.1725528362, "-2*log(L)" = 34222.3451056724,
+                Chisq = 2437.19710638838, Df = 1, `Pr(>Chisq)` = 0))
 )
 ## "true" model :
 summary(ggl2)

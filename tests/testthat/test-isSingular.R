@@ -93,7 +93,7 @@ test_that("checking singular fit for merMod", {
                      family = Gamma(link = "log"), 
                      newparams = list(theta = c(0, 0, 0, 1.0, 0.5, 0.3),
                                       beta = 2,
-                                      sigma = 2))[[1]]
+                                      sigma = 1))[[1]]  ## sigma=1 for numerical stability
   
   
   mod_pois <- suppressWarnings(

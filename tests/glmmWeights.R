@@ -12,8 +12,12 @@ mypresid <- function(x) {
     (getME(x,"y") - mu) * sqrt(weights(x)) / sqrt(x@resp$family$variance(mu))
 }
 
-## should be equal (up to numerical error) to weights(.,type="working")
-workingWeights <- function(mod) mod@resp$weights*(mod@resp$muEta()^2)/mod@resp$variance()
+## should be equal (up to numerical error) to weights(.,type="working").
+## Divide by phi (1.0 for fixed-dispersion families, so a no-op there):
+## for free-dispersion families (e.g. Gamma) lme4's actual working
+## weights are now reweighted by 1/phi -- see
+## misc/Gamma_GLMM/README_Gamma_GLMMs.md
+workingWeights <- function(mod) mod@resp$weights*(mod@resp$muEta()^2)/(mod@resp$variance()*mod@resp$phi())
 
 ##' Sum of weighted residuals, 4 ways; the last three are identical
 sumFun <- function(m) {
@@ -104,6 +108,9 @@ expect_equal(var(sumFun(g3)),0)
 
 ## check dispersion parameter
 ## (lowered tolerance to pass checks on my machine -- SCW)
-expect_equal(sigma(g0)^2, 0.4888248, tolerance=1e-4)
+## reference value updated for the dispersion-profiling fix (phi is now
+## profiled rather than fixed at 1 for free-dispersion families -- see
+## misc/Gamma_GLMM/README_Gamma_GLMMs.md)
+expect_equal(sigma(g0)^2, 0.521774624880968, tolerance=1e-4)
 
 } ## skip on windows (for speed)

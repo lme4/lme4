@@ -1521,9 +1521,23 @@ refit.merMod <- function(object,
                  compDev = dc$dims[["compDev"]],
                  ## recover the original fit's disp_method/maxPhiIter from
                  ## devcomp; fall back to package defaults for objects
-                 ## fitted before these were stored there
-                 dispProfile = as.logical(dc$dims[["dispProfile"]] %||% TRUE),
-                 maxPhiIter = as.integer(dc$dims[["maxPhiIter"]] %||% 100L),
+                 ## fitted before these were stored there. Single-bracket
+                 ## (not [[) lookup + explicit is.na(): dims is a named
+                 ## atomic vector, so [[ throws "subscript out of bounds"
+                 ## for a name that's genuinely absent (old-format dims,
+                 ## from before these fields existed) rather than
+                 ## returning NULL -- %||% never gets a chance to rescue
+                 ## it. [ instead returns NA in that case, which %||%
+                 ## *also* wouldn't rescue (it only treats NULL as
+                 ## missing), hence the explicit is.na() check.
+                 dispProfile = {
+                     v <- dc$dims["dispProfile"]
+                     if (is.na(v)) TRUE else as.logical(v)
+                 },
+                 maxPhiIter = {
+                     v <- dc$dims["maxPhiIter"]
+                     if (is.na(v)) 100L else as.integer(v)
+                 },
                  nAGQ = nAGQ,
                  lp0 = pp$linPred(1), ## object@resp$eta - baseOffset,
                  baseOffset = baseOffset,

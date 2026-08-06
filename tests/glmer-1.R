@@ -87,7 +87,15 @@ if (lme4:::testLevel() > 1 || .Platform$OS.type!="windows") withAutoprint({
                         ##  -1.1430128, -1.5922817),
                         tolerance = 5.e-4,
                         check.attributes=FALSE),
-              all.equal(c(-2*logLik(m2)), 100.010030538022, tolerance=1e-9),
+              ## reference value updated: the nAGQ>1 AGQ fix (see
+              ## misc/Gamma_GLMM/README_Gamma_GLMMs.md) changed
+              ## glmerAGQ()'s returned value from a raw-deviance-based
+              ## approximation to a proper density-based one, adding back
+              ## a previously-missing y-only normalizing constant -- a
+              ## fixed offset that affects logLik/AIC/BIC for every
+              ## family (not just Gamma/free-dispersion ones), but does
+              ## not affect deviance() (below) or where the fit converges
+              all.equal(c(-2*logLik(m2)), 183.966738078062, tolerance=1e-9),
               all.equal(deviance(m2), 73.373, tolerance=1e-5)
               ## with bobyqa first (AGQ=0), then
               ##all.equal(deviance(m2), 101.119749563, tolerance=1e-9)
