@@ -1111,57 +1111,75 @@ Implementation notes:
   Worth remembering if a similarly inexplicable native crash shows up again
   after a C++-only edit.
 
-### `nAGQ>1` (AGQ) is still unfixed, and it's not a simple port
+### `nAGQ>1` (AGQ) fixed (2026-08-06)
 
-`glmerAGQ` (`external.cpp`, the `nAGQ>1` code path) calls `pwrssUpdate()`
-directly, bypassing `glmerLaplace()` entirely, and never touches
-`rp->setPhi()`/`disp_method`/`maxPhiIter`. `glmer()` now warns when
-`nAGQ>1` is combined with a free-dispersion family
-(`updateGlmerDevfun()`, `R/modular.R`).
+Originally, `glmerAGQ` (`external.cpp`, the `nAGQ>1` code path) called
+`pwrssUpdate()` directly, bypassing `glmerLaplace()` entirely, and never
+touched `rp->setPhi()`/`disp_method`/`maxPhiIter`. What was actually
+happening (verified empirically, not just "phi==1 always"): phi got
+profiled once during the `nAGQ=0` init stage (which does go through
+`glmerLaplace`), then stayed *frozen* at that stale value for the entire
+`nAGQ>1` optimization -- it didn't track theta as the AGQ-based
+Nelder-Mead search moved it. This turned out to be a two-layer problem:
 
-What's actually happening (verified empirically, not just "phi==1
-always"): phi gets profiled once during the `nAGQ=0` init stage (which
-does go through `glmerLaplace`), then stays *frozen* at that stale value
-for the entire `nAGQ>1` optimization -- it doesn't track theta as the
-AGQ-based Nelder-Mead search moves it. Confirmed: an `nAGQ=5` fit
-converged to a different theta than `nAGQ=1`, but reported essentially the
-same phi as the `nAGQ=1`/Laplace fit.
+1. **Mode-finding/weights**: `pwrssUpdate()` and the nested-phi-loop
+   pattern from `glmerLaplace` needed to be reusable for the
+   u-mode-finding step inside `glmerAGQ` (which already calls
+   `pwrssUpdate()` once before its quadrature loop).
 
-This turns out to be a two-layer problem:
+2. **The returned marginal-likelihood formula itself**: `glmerAGQ`'s
+   final value was `devc0.sum() + ldL2 - 2*log(mult.prod())`, a
+   McCullagh & Nelder deviance-based AGQ approximation -- `devc0.sum()`
+   is the raw, phi-independent unit deviance, never passed through the
+   family's actual density. This is fine for binomial/Poisson
+   (deviance-based and density-based -2logLik coincide there) but wrong
+   for Gamma: deviance is `2*phi*(l_sat - l_fit)`, missing the
+   phi-dependent normalizing terms (`log(mu*phi)/phi`, `lgamma(1/phi)`)
+   that a real `dgamma()`-based likelihood carries.
 
-1. **Mode-finding/weights (fixable by reuse)**: `pwrssUpdate()` and the
-   nested-phi-loop pattern from `glmerLaplace` are directly reusable for
-   the u-mode-finding step inside `glmerAGQ` (it already calls
-   `pwrssUpdate(rp, pp, true, tol, maxit, verb)` once before its
-   quadrature loop) -- factor the loop into a shared helper, thread
-   `dispProfile`/`maxPhiIter` through `glmerAGQ`'s signature and the
-   R-side `glmerPwrssUpdate` `nAGQ>=2` branch.
+**The fix**: both layers turned out to reduce to reuse, not a from-scratch
+re-derivation. `external.cpp` gained a shared `profilePhi()` helper
+(factored out of `glmerLaplace()`'s existing nested fixed-point loop),
+called by both `glmerLaplace()` and `glmerAGQ()` before mode-finding.
+`devcCol()` (the per-grouping-level squared-mode-plus-deviance helper used
+by the AGQ quadrature loop) now divides its deviance-residual sum by the
+profiled `phi`, same split as everywhere else in this fix (the `u^2`
+penalty stays unscaled). And the key insight for layer 2: the missing
+phi-dependent normalizing constant is *constant with respect to u* (a
+function of `y` and `phi` only, standard exponential-dispersion-family
+decomposition), so it cancels automatically inside the AGQ ratio and only
+needs to be added once, to the final returned value -- which is exactly
+what `rp->Laplace(ldL2, 0., sqrL)` already computes (reusing the same
+`aic()`-based machinery `glmerLaplace()` uses, self-consistent with the
+profiled phi at the converged mode). So `glmerAGQ()`'s final line is now
+`rp->Laplace(pp->ldL2(), 0., pp->sqrL(1.)) - 2*log(mult.prod())` instead of
+`devc0.sum() + pp->ldL2() - 2*log(mult.prod())`.
 
-2. **The returned marginal-likelihood formula itself (the actual
-   blocker)**: `glmerAGQ`'s final value is `devc0.sum() + ldL2 -
-   2*log(mult.prod())`, a McCullagh & Nelder deviance-based AGQ
-   approximation -- `devc0.sum()` is the raw, phi-independent unit
-   deviance, never passed through the family's actual density. This is
-   fine for binomial/Poisson (deviance-based and density-based -2logLik
-   coincide there) but wrong for Gamma: deviance is `2*phi*(l_sat -
-   l_fit)`, missing the phi-dependent normalizing terms (`log(mu*phi)/phi`,
-   `lgamma(1/phi)`) that a real `dgamma()`-based likelihood carries.
-   Contrast with `glmerLaplace`, whose fit term goes through `rp->aic()`
-   -> `gammaDist::aic()` (`glmFamily.cpp:239`), which *does* call
-   `Rf_dgamma()` directly (using a `dev/n`-recomputed disp that, at the
-   nested loop's fixed point, self-consistently equals the profiled phi --
-   a real trick, not a bug: at the fixed point `dev/n == phi` by
-   construction, so recomputing it fresh reproduces the correct phi and
-   feeds a genuine Gamma log-density into `aic()`). `glmerAGQ` has no
-   analogous mechanism.
+This also fixes the same constant-offset bug for binomial/Poisson
+`nAGQ>1` fits, which was never Gamma-specific -- `devc0.sum()` omitted the
+same y-only density-normalizing constant for every family, just harmlessly
+so, since it doesn't affect where the optimizer converges (a fact that
+was already, if implicitly, acknowledged: `anova()` had a hardcoded guard
+refusing to compare an `nAGQ>1` glmer fit against a `glm()` object,
+`stop("...incommensurate with glm() objects")`, `R/lmer.R`, now removed
+since it's no longer true).
 
-   So profiling phi for the mode-finding step alone would still leave the
-   reported AGQ deviance/logLik using the wrong *kind* of quantity for
-   Gamma, not just a stale one. A real fix needs the AGQ marginal-
-   likelihood formula itself re-derived to incorporate a genuine density
-   term (e.g. `dgamma()`) per quadrature node -- meaningfully bigger than
-   the mode-finding reuse, and needs its own empirical (paramsurvey-style,
-   single-scalar-RE) validation once implemented.
+**Validated**: on a single-scalar-RE Gamma fit, `nAGQ=1` (Laplace) and
+`nAGQ=5` (AGQ) now agree closely on sigma/logLik/VarCorr, where they
+previously diverged sharply (frozen/stale phi). `nAGQ=2` agrees even more
+closely with `nAGQ=1` than `nAGQ=5` does (~10x tighter on logLik),
+consistent with AGQ genuinely converging toward the marginal likelihood as
+quadrature order increases, rather than the agreement being a coincidence
+at one particular order. The nAGQ>1 warning is removed
+(`updateGlmerDevfun()`, `R/modular.R`); the now-obsolete
+`test-gamma_glmm_bias.R` warning-existence test was rewritten into a real
+correctness check.
 
-Deliberately left unimplemented for now; scoped here so the next attempt
-doesn't have to re-derive this from scratch.
+One side effect surfaced by full-suite validation (unrelated to the AGQ
+fix itself, but only visible once `glmerAGQ()` started calling
+`hasFreeDispersion()`): fitting a GLMM with a deliberately malformed/
+custom `family` object now throws `glmer()`'s existing "not implemented
+for this family" hard error immediately at fit time for `nAGQ>1`, not just
+for free-dispersion families under the Laplace path -- see the open item
+in `TODO.md` (hard error vs. warning-with-default-assumption for
+unrecognized families, not yet decided).

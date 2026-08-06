@@ -451,7 +451,8 @@ glmerPwrssUpdate <- function(pp, resp, tol, GQmat, compDev=TRUE, grpFac=NULL, ma
                          verbose, dispProfile, as.integer(maxPhiIter)))
         return(.Call(glmerAGQ, pp$ptr(), resp$ptr(),
                      tol, as.integer(maxit),
-                     GQmat, grpFac, verbose))
+                     GQmat, grpFac, verbose,
+                     dispProfile, as.integer(maxPhiIter)))
     }
  ### does this show anywhere ??? [i.e. is it ever used in our checks/examples/scripts/vignettes ?
  ### message("glmerPwrssUpdate(*, compDev=FALSE)  --> using more R, no direct .Call() to C.") # [DBG] only
@@ -559,9 +560,6 @@ anovaLmer <- function(object, ..., refit = TRUE, model.names=NULL) {
             stop("model names vector and model list have different lengths")
         names(mods) <- sub("@env$", '', mNms) # <- hack
         models.reml <- vapply(mods, function(x) is(x,"merMod") && isREML(x), NA)
-        models.GHQ <- vapply(mods, function(x) is(x,"glmerMod") && getME(x,"devcomp")$dims[["nAGQ"]]>1 , NA)
-        if (any(models.GHQ) && any(vapply(mods, function(x) is(x,"glm"), NA)))
-            stop("GLMMs with nAGQ>1 have log-likelihoods incommensurate with glm() objects")
         if (refit) {
             ## message only if at least one models is REML:
             if (any(models.reml)) message("refitting model(s) with ML (instead of REML)")

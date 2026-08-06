@@ -923,9 +923,6 @@ updateGlmerDevfun <- function(devfun, reTrms, nAGQ = 1L){
             stop("nAGQ > 1 is only available for models with a single, scalar random-effects term")
     }
     rho <- environment(devfun)
-    if (nAGQ > 1L && !hasNoScale(rho$resp$family))
-        warning("nAGQ>1 handles GLMMs with estimated dispersion parameters ",
-                "(e.g. Gamma) buggily; please contact the maintainers if you need this fixed")
     rho$nAGQ       <- nAGQ
     rho$lower      <- c(reTrms$lower,
                         rep(-Inf, length(rho$pp$beta0)))

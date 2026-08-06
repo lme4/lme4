@@ -159,7 +159,10 @@ test_that("anova() of glmer+glm models", {
   gm2 <- glmer(y~(1|u), data=dat[1:4,], family=poisson,nAGQ=2, control = cs)
   aa <- anova(gm1,gm0)
   expect_equal(aa[2,"Chisq"],0)
-  expect_error(anova(gm2,gm0),"incommensurate")
+  ## nAGQ>1 logLik is now commensurate with glm() (see
+  ## misc/Gamma_GLMM/README_Gamma_GLMMs.md), so this should no longer error
+  aa2 <- anova(gm2,gm0)
+  expect_equal(aa2[2,"Chisq"],0)
 })
 
   test_that("anova() of lmer+glm models", {

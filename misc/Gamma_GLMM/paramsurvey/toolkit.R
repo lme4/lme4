@@ -331,11 +331,14 @@ fit_glmmTMB_one <- function(i, form, dat, family) {
               phi = sigma(fit)^2, negll = negll, singular = singular)
 }
 
-fit_glmer_one <- function(i, form, dat, family) {
+fit_glmer_one <- function(i, form, dat, family, control = NULL) {
   warn_msgs <- character(0)
   t0 <- Sys.time()
   fit <- withCallingHandlers(
-    tryCatch(glmer(form, data = dat, family = family), error = function(e) e),
+    tryCatch(
+      if (is.null(control)) glmer(form, data = dat, family = family)
+      else glmer(form, data = dat, family = family, control = control),
+      error = function(e) e),
     warning = function(w) { warn_msgs <<- c(warn_msgs, conditionMessage(w)); invokeRestart("muffleWarning") }
   )
   time_sec <- as.numeric(Sys.time() - t0, units = "secs")

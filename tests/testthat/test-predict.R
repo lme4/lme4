@@ -316,7 +316,10 @@ model_fit <- glmer(y ~ 1 + (1|id),
                    control=glmerControl(check.conv.singular="ignore"))
 
 test_that("simulation works for inverse gaussian", {
-    expect_equal(mean(simulate(model_fit)[[1]]), 1.02704392575914,
+    ## reference value updated for the dispersion-profiling fix (phi is now
+    ## profiled rather than fixed at 1 for free-dispersion families -- see
+    ## misc/Gamma_GLMM/README_Gamma_GLMMs.md)
+    expect_equal(mean(simulate(model_fit)[[1]]), 1.0192826593313,
                  tolerance=1e-5)
 })
 
@@ -381,11 +384,14 @@ if (requireNamespace("statmod")) {
                                 family=inverse.gaussian,
                                 data=dd))
     set.seed(101)
+    ## reference values updated for the dispersion-profiling fix (phi is now
+    ## profiled rather than fixed at 1 for free-dispersion families -- see
+    ## misc/Gamma_GLMM/README_Gamma_GLMMs.md)
     expect_equal(head(unlist(simulate(m))),
-                 c(sim_11 = 0.451329390087728, sim_12 = 0.629516371309772,
-                   sim_13 = 0.481236633500098,
-                   sim_14 = 0.170060386109077, sim_15 = 0.258742371516342,
-                   sim_16 = 0.949617440586848))
+                 c(sim_11 = 0.452104788638966, sim_12 = 0.634104757192598,
+                   sim_13 = 0.482587435336374,
+                   sim_14 = 0.167698932174518, sim_15 = 0.256780272206481,
+                   sim_16 = 0.96257793045354))
   })
 }
 

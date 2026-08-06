@@ -4,5 +4,10 @@
 * backporting to lme4pureR?
 * ~~switch for back-compatibility (old/buggy fixed-phi PIRLS loop)~~ done: `glmerControl(disp_method = c("moment", "old/buggy"))`, plus `maxPhiIter` to cap the nested loop
 * check against GH #936, GH #557
-* propagate dispersion fixes to AGQ (see README)
+* ~~propagate dispersion fixes to AGQ (see README)~~ done: `glmerAGQ()` now profiles phi via the same nested loop as `glmerLaplace()` and reports a density-based (not raw-deviance) fit term, so nAGQ>1 logLik/AIC/BIC is finally commensurate with nAGQ<=1 and `glm()`, for every family
+* robustness: phi-profiling fix causes PIRLS step-halving failures for near-singular multi-random-effects-term fits (`test-isSingular.R`), and a genuine "clean but wrong" multimodality (converges cleanly to a non-singular solution when the truth is singular) that isn't yet root-caused -- see README §9-10, still open
+* ~~stale hardcoded reference values in `test-predict.R` (inverse.gaussian `simulate()` tests, lines ~319, ~384) left over from the disp_method/phi-profiling fix~~ done: refreshed
+* `hasFreeDispersion()`'s hard error for unrecognized/custom families (README §"Finding: a second, independent bug...") now fires at `glmer()` fit time, not just when dispersion profiling is actually needed -- broke `test-predict.R:326`'s "simulation complains appropriately about bad family" test, which used to fail gracefully later, at `simulate()` time, with a more specific message. Decide: hard error vs. warning-with-default-assumption (already flagged as open in README), then either fix the behaviour or just update the test's expectation
+* pre-existing, apparently unrelated `confint(method="boot")` failure ("*all* bootstrap runs failed") for `fit_cbpp_2` (binomial, 2 RE terms, nAGQ=1) -- reproduces identically on the clean pre-AGQ-work commit (`5099a385`), so unrelated to any dispersion/AGQ fix; not yet investigated
+* add a regression test for commensurateness of logLik/sigma/VarCorr between nAGQ=1 (Laplace) and nAGQ=2 (AGQ) for a free-dispersion (Gamma) fit -- already spot-checked manually this session (nAGQ=1 vs 2 agree much more closely than nAGQ=1 vs 5, as expected), just needs to be locked in as an actual test
 

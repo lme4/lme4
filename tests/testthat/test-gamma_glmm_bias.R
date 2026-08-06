@@ -109,16 +109,14 @@ test_that("Laplace deviance for free-dispersion GLMMs has no aic() bookkeeping l
   expect_equal(recomputed, -2*as.numeric(logLik(ggfit)), tolerance = 1e-6)
 })
 
-## Regression test for the nAGQ>1 caveat noted in
+## Regression test for the nAGQ>1/dispersion fix noted in
 ## misc/Gamma_GLMM/README_Gamma_GLMMs.md: glmerAGQ() (the nAGQ>1 code path)
-## never profiles phi at all (phi gets frozen at whatever the nAGQ=0 init
-## step left it, and the AGQ marginal-likelihood formula itself is a
-## deviance-based approximation that isn't even the right kind of quantity
-## for a free-dispersion family's density). Until that's fixed, glmer()
-## warns instead. This locks in that the warning fires exactly when it
-## should: nAGQ>1 + free dispersion (Gamma) yes; nAGQ<=1 no; nAGQ>1 with a
-## fixed-dispersion family (binomial) no.
-test_that("nAGQ>1 warns for free-dispersion families but not fixed-dispersion ones or nAGQ<=1", {
+## now profiles phi via the same nested fixed-point loop glmerLaplace()
+## uses, and reports a density-based (not raw-deviance-based) fit term, so
+## nAGQ=1 (Laplace) and nAGQ>1 (AGQ) fits of the same free-dispersion model
+## should now agree closely on phi/logLik/VarCorr, and glmer() should no
+## longer warn about it.
+test_that("nAGQ>1 profiles dispersion correctly and no longer warns", {
   warns <- function(expr) {
     w <- character(0)
     withCallingHandlers(force(expr),
@@ -138,11 +136,15 @@ test_that("nAGQ>1 warns for free-dispersion families but not fixed-dispersion on
 
   msg <- "nAGQ>1 handles GLMMs with estimated dispersion parameters"
 
-  w1 <- warns(glmer(y ~ (1 | f), data = dd, family = Gamma(link = "log"), nAGQ = 5))
-  expect_true(any(grepl(msg, w1, fixed = TRUE)))
+  w1 <- warns(g5 <- glmer(y ~ (1 | f), data = dd, family = Gamma(link = "log"), nAGQ = 5))
+  expect_false(any(grepl(msg, w1, fixed = TRUE)))
+  g1 <- glmer(y ~ (1 | f), data = dd, family = Gamma(link = "log"), nAGQ = 1)
 
-  w2 <- warns(glmer(y ~ (1 | f), data = dd, family = Gamma(link = "log"), nAGQ = 1))
-  expect_false(any(grepl(msg, w2, fixed = TRUE)))
+  ## nAGQ=1 (Laplace) and nAGQ=5 (AGQ) should now be close, not wildly
+  ## different as they were when phi was frozen/stale under nAGQ>1.
+  expect_equal(sigma(g1), sigma(g5), tolerance = 0.05)
+  expect_equal(c(logLik(g1)), c(logLik(g5)), tolerance = 0.05)
+  expect_equal(c(VarCorr(g1)[["f"]]), c(VarCorr(g5)[["f"]]), tolerance = 0.05)
 
   w3 <- warns(glmer(cbind(s, 10 - s) ~ (1 | f), data = dd, family = binomial, nAGQ = 5))
   expect_false(any(grepl(msg, w3, fixed = TRUE)))
