@@ -1180,6 +1180,99 @@ fix itself, but only visible once `glmerAGQ()` started calling
 `hasFreeDispersion()`): fitting a GLMM with a deliberately malformed/
 custom `family` object now throws `glmer()`'s existing "not implemented
 for this family" hard error immediately at fit time for `nAGQ>1`, not just
-for free-dispersion families under the Laplace path -- see the open item
-in `TODO.md` (hard error vs. warning-with-default-assumption for
-unrecognized families, not yet decided).
+for free-dispersion families under the Laplace path -- resolved below
+(hard error vs. warning-with-default-assumption question).
+
+## `hasFreeDispersion()` resolved generically via `$dispersion`, not a hard error (2026-08-06)
+
+The open hard-error-vs-warning question above is resolved, and not by
+picking one of those two options: unrecognized-by-name families are now
+resolved generically via the family's own `$dispersion` component
+(`?stats::family`, R >= 4.3.0's "Value" section: `NA_real_` = free
+dispersion, a fixed numeric value = fixed dispersion) instead of
+unconditionally erroring. Only genuinely incomplete custom families
+(no `$dispersion` component either) still hard-error, now with a message
+that includes the offending family's name and points at `?stats::family`.
+`src/glmFamily.h`/`.cpp`: the base (unrecognized-name) `glmDist` class
+gains `d_hasDispersionField`/`d_dispersionField`, read from the family
+list's `dispersion` element in the constructor; `hasFreeDispersion()`
+uses `ISNA()` on that value instead of always throwing. The six
+name-dispatched subclasses (binomial/Gamma/gaussian/inverse.gaussian/
+negative.binomial/poisson) are untouched -- they never reach the base
+class -- so `MASS::negative.binomial()` (whose `$dispersion` field is
+`NULL`, an unrelated gap in that family constructor) is unaffected.
+
+Nicely, this also fixes `test-predict.R`'s "junk"-family test (a
+mangled-name `inverse.gaussian()` object, `ig$family <- "junk"`) with
+**no test-file edit needed**: `ig$dispersion` (inherited, untouched by
+the name mangling) is still `NA_real_`, so `glmer()` now succeeds
+(dispersion is unambiguously free) and only `simulate()` fails, on name
+dispatch, with its own original, more specific message -- exactly the
+pre-AGQ-fix behaviour the test always expected.
+
+## `refit()`/`bootMer()` crash on pre-branch saved fit objects (2026-08-06)
+
+Found via `confint(fit_cbpp_2, method="boot")` failing with "*all*
+bootstrap runs failed" (`fit_cbpp_2` is a pre-baked fit loaded from
+`inst/testdata/lme-tst-fits.rda`) -- initially assumed unrelated/
+pre-existing since it reproduced on a commit that looked "clean," but
+that commit (`5099a385`) postdates the `disp_method`/`maxPhiIter` dims
+addition (`a46c21e3`), so it wasn't actually clean of this branch's
+changes. `bootMer()` swallows the real per-replicate error; a direct
+`refit()` call surfaced it: `Error in dc$dims[["dispProfile"]] :
+subscript out of bounds`.
+
+`refit.merMod` (`R/lmer.R`, ~line 1520) tries to recover the original
+fit's `disp_method`/`maxPhiIter` settings from `devcomp$dims`, falling
+back to package defaults for fits from before those fields existed --
+intentional, per the code comment already there. But `dc$dims[["..."]]`
+(double-bracket) throws for a genuinely-absent name in a named atomic
+vector rather than returning `NULL`, so the fallback (`%||% TRUE`) never
+gets a chance to run; base R's `%||%` also only rescues `NULL`, not
+`NA`, so a single-bracket swap alone wouldn't have been enough either.
+Fixed with single-bracket lookup (`NA` instead of an error) plus an
+explicit `is.na()` fallback check, for both `dispProfile` and
+`maxPhiIter`. Pure R change; verified `refit()` and
+`confint(method="boot")` both now succeed on `fit_cbpp_2`.
+
+## GH #936: `gaussian(link="log")` sigma gap -- confirmed real and systematic (2026-08-06)
+
+[GH #936](https://github.com/lme4/lme4/issues/936) ("matching up
+gaussian(link = "log") results across packages") reports that on
+`nlme::Rail` (n=18, 6 groups), `glmer` and `glmmTMB` agree on fixed
+effects but disagree sharply on `sigma` (3.33 vs 4.0) and logLik (-73 vs
+-64.5); `mgcv::gam` and `MASS::glmmPQL` agree with `glmmTMB`. This
+branch's dispersion fix already closed most of the logLik gap on the
+real data (-72.3 to -65.1, per an earlier comment on the issue), but left
+`sigma` still visibly off, with the open question of whether that's a
+real remaining bug or just small-sample noise on one n=18 dataset.
+
+Resolved that question with a mini parameter-recovery survey
+(`misc/Gamma_GLMM/paramsurvey_loggaussian/`, modeled on `paramsurvey/`
+but much more limited: one dataset, one family, four methods -- glmmTMB,
+glmer, mgcv, glmmPQL, no R-level joint-phi/PIRLS-phi devfun arms).
+Reference parameters rounded from a real glmmTMB fit to the real Rail
+data (beta=4.1, RE sd=0.4, sigma=4.0), B=100 datasets resimulated from
+those parameters via `glmmTMB::simulate_new()` using Rail's real design,
+all four methods refit to each replicate (all 100 converged cleanly for
+every method, no singular fits, no warnings):
+
+| method | beta (4.10) | sd (0.40) | **sigma (4.00)** | negll |
+|---|---|---|---|---|
+| glmmTMB | 4.099 | 0.321 | **3.76** | 125.28 |
+| **glmer** | 4.100 | 0.320 | **3.08** | 126.37 |
+| mgcv | 4.101 | 0.321 | **3.76** | 125.28 |
+| glmmPQL | 4.101 | 0.319 | **3.76** | NA (not a real ML method) |
+
+**Confirmed real and systematic, not small-sample noise.** `beta` and RE
+`sd` are essentially unbiased and agree tightly across all four methods.
+glmmTMB/mgcv/glmmPQL agree with each other almost to 3 decimal places on
+`sigma` (a modest, expected ~6% downward ML bias with only 6 groups) --
+but `glmer`'s median `sigma` is 3.08, roughly 18% further off than the
+other three, about 23% below the true value. Since the logLik gap is
+already fixed (this branch's core contribution) and the remaining `sigma`
+gap is glmer-specific (not shared by glmmTMB, which also uses a Laplace
+approximation), this points at something in how `glmer` estimates or
+reports `sigma` specifically for `gaussian()` fit with a non-identity
+link, not the phi-profiling/AGQ mechanism this branch already fixed.
+**Not yet root-caused** -- see `TODO.md`.
