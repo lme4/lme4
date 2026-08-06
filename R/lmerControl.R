@@ -191,7 +191,7 @@ formals(glmerControl) <- c(formals(glmerControl),
                                 compDev = TRUE,
                                 nAGQ0initStep = TRUE,
                                 check.response.not.const="stop",
-                                disp_method = "moment",
+                                disp_method = c("moment", "old/buggy"),
                                 maxPhiIter = 100L)
                            )
 
