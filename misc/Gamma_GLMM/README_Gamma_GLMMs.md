@@ -1275,4 +1275,58 @@ gap is glmer-specific (not shared by glmmTMB, which also uses a Laplace
 approximation), this points at something in how `glmer` estimates or
 reports `sigma` specifically for `gaussian()` fit with a non-identity
 link, not the phi-profiling/AGQ mechanism this branch already fixed.
-**Not yet root-caused** -- see `TODO.md`.
+
+### Mechanism, precisely characterized: a missing degrees-of-freedom correction (2026-08-06)
+
+Prompted by the question of whether the gap is an `n` vs. `n-p` (number
+of fixed-effect parameters) denominator issue -- the intercept-only Rail
+model has `n=18`, `p=1`, so this predicts too small a correction to
+matter (`RSS/(n-p) = RSS/17` vs. `RSS/n = RSS/18`, barely different).
+Checked directly on the real Rail data: glmer's reported `phi`
+(`sigma^2`) *is* essentially exactly `RSS/n` at the conditional mode
+(10.829 vs. reported 10.828) -- confirming glmer's moment-based
+phi-profiling loop already uses the plain `n`, with no `p`-correction of
+any kind, so an `n` vs. `n-p` explanation is ruled out (and even if
+applied, points in far too small a direction to explain an 18%+ gap).
+
+But the *right* correction, empirically: not `n-p` (fixed-effect
+parameter count) but `n-q`, where `q` is the number of random-effect
+**levels/groups** (here, `q=6` Rail groups). glmmTMB's `phi` on the real
+data (16.146) is almost exactly `RSS/(n-q) = RSS/12 = 16.33`, vs.
+glmer's `RSS/n = RSS/18 = 10.83`. Checked this isn't a one-dataset
+coincidence: across all B=100 replicates in the sweep above, the
+per-replicate ratio `phi_glmmTMB / phi_glmer` is **1.487 (SD 0.0097)** --
+essentially constant -- matching the predicted `n/(n-q) = 18/12 = 1.5`
+to within ~1%. This is a strikingly tight match for a quantity derived
+from a completely different estimation procedure (glmmTMB's joint
+marginal MLE via Laplace-approximated integration over `u`, vs. glmer's
+PIRLS-conditional-mode moment plug-in), and precise enough to plausibly
+be *fixable*, not just diagnosable.
+
+**Interpretation**: glmer's phi-profiling loop estimates phi as
+`deviance/n` at the current PIRLS conditional mode of `u` -- i.e., it
+treats the `q` fitted random-effect levels as if they were fixed/known,
+the same way an ordinary GLM's `deviance/n` treats fixed effects. It
+never discounts for the degrees of freedom effectively consumed by
+*estimating* those `q` levels (with shrinkage) rather than knowing them
+outright. This is conceptually the same correction that separates REML
+from ML variance estimation in classical (L)MMs -- except this isn't a
+REML-vs-ML distinction (glmmTMB here is doing ML, not REML): it's that
+glmer's moment/plug-in shortcut for phi applies *no* correction at all
+(behaves as though `q=0`), while a proper joint marginal likelihood
+naturally bakes it in. This is very likely the same underlying mechanism
+as the still-unexplained "moment/digamma estimators carry a genuine
+~15-25% bias" finding for Gamma (README, "Finding: a second, independent
+bug in `sigma()`'s dispersion reporting") -- not previously connected to
+a concrete, quantifiable degrees-of-freedom formula until this check.
+
+**Caveat, scope not yet checked**: `q` was unambiguous here (one
+grouping factor, no crossing). For crossed or multiple random-effect
+terms, what the "right" `q` is is not obvious -- naively summing levels
+across terms is one guess, but crossed designs share information across
+factors in a way a simple level-count may not capture correctly, and
+glmmTMB handles crossed REs natively while `mgcv`/`glmmPQL` (this
+sweep's other two commensurate-`sigma` methods) have much more limited
+or no support for them -- weakening the cross-method validation this
+finding relied on. **Not yet extended beyond the single-grouping-factor
+case** -- see `TODO.md`.
