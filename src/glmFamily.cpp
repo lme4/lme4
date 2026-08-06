@@ -378,7 +378,11 @@ namespace glm {
         : d_devRes  (as<SEXP>(ll["dev.resids"])),
           d_variance(as<SEXP>(ll["variance"])),
           d_aic(     as<SEXP>(ll["aic"])),
-          d_rho(     d_aic.environment()) {
+          d_rho(     d_aic.environment()),
+          d_familyName(as<std::string>(as<SEXP>(ll["family"]))),
+          d_hasDispersionField(ll.containsElementNamed("dispersion")),
+          d_dispersionField(d_hasDispersionField ?
+                             as<double>(ll["dispersion"]) : NA_REAL) {
     }
 
     glmLink::glmLink(Rcpp::List& ll)

@@ -37,6 +37,9 @@
       for back-compatibility. \code{maxPhiIter} caps the number of
       iterations of the nested fixed-point loop used by
       \code{disp_method="moment"}.
+      \item user-specified families now need to have the
+      \code{dispersion} component set (see \dQuote{Value} under
+      \code{?stats::family}).
     } % itemize
   } % user-visible changes
   \subsection{BUG FIXES}{

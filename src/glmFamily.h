@@ -19,6 +19,11 @@ namespace glm {
         Rcpp::Function d_devRes, d_variance, d_aic;
                                 //@}
         Rcpp::Environment d_rho;
+        std::string d_familyName;    /**< $family, for error messages only */
+        bool   d_hasDispersionField; /**< does the R family list have a $dispersion
+                                       *   component (?family, R >= 4.3.0)? */
+        double d_dispersionField;    /**< its value, if present: NA_real_ (free) or
+                                       *   a fixed numeric value; meaningless otherwise */
     public:
         glmDist(Rcpp::List&);
         virtual ~glmDist() {}
@@ -27,7 +32,7 @@ namespace glm {
         virtual const ArrayXd devResid(const ArrayXd&, const ArrayXd&, const ArrayXd&) const;
         virtual double             aic(const ArrayXd&, const ArrayXd&, const ArrayXd&,
                                        const ArrayXd&, double) const;
-        /**< in keeping with the botched up nomenclature in the R glm function, 
+        /**< in keeping with the botched up nomenclature in the R glm function,
          *   the value of aic is the deviance */
         virtual double           theta() const;
         virtual void          setTheta(const double&);
@@ -35,20 +40,21 @@ namespace glm {
          *   (Gamma, gaussian, inverse.gaussian) vs. a fixed one (poisson,
          *   binomial, negative binomial) -- mirrors hasNoScale() in
          *   R/utilities.R. The base implementation is reached only for
-         *   families glmFamily's constructor didn't recognize (i.e.
-         *   user-supplied custom family objects, dispatched via the R
-         *   function fall-backs above): rather than silently guessing,
-         *   this throws, since we don't yet have a policy for
-         *   unrecognized families (see misc/README_Gamma_GLMMs.md,
-         *   Gamma_GLMM branch). */
+         *   families glmFamily's constructor didn't recognize by name
+         *   (i.e. user-supplied/external family objects). Those are
+         *   resolved generically via the family's own $dispersion
+         *   component (?family, R >= 4.3.0: NA_real_ if free, a fixed
+         *   numeric value otherwise) rather than guessed; if that
+         *   component is itself absent (pre-4.3.0-style or incomplete
+         *   custom family objects), there is no way to tell, so this
+         *   throws an error. */
         virtual bool  hasFreeDispersion() const {
-            throw std::runtime_error(
-                "hasFreeDispersion() is not implemented for this family "
-                "(only Gamma, gaussian, inverse.gaussian [free dispersion] "
-                "and poisson, binomial, negative.binomial [fixed dispersion] "
-                "are currently recognized); this is likely a user-supplied "
-                "custom family, which the dispersion-profiling fix for "
-                "GLMMs with a free dispersion parameter does not yet support");
+            if (!d_hasDispersionField)
+                throw std::runtime_error(
+                    "can't tell if dispersion is fixed or free for family '" +
+                    d_familyName + "': it has no 'dispersion' component "
+                    "(see the 'dispersion' item under 'Value' in ?stats::family)");
+            return ISNA(d_dispersionField);
         }
     };
 

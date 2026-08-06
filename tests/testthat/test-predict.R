@@ -333,6 +333,48 @@ test_that("simulation complains appropriately about bad family", {
     expect_error(simulate(model_fit2),"simulation not implemented for family")
 })
 
+test_that("glmer complains appropriately about a family with no way to tell if dispersion is free", {
+    ## unrecognized family *name*, and (unlike the "junk" case above) no
+    ## $dispersion component either -- lme4 has no way to tell whether
+    ## dispersion should be profiled, so this should fail at glmer() fit
+    ## time, not later at simulate() time
+    badfam <- poisson()
+    badfam$family <- "junk"
+    badfam$dispersion <- NULL
+    expect_error(glmer(y ~ 1 + (1|id),
+                        family = badfam,
+                        data = df,
+                        control = glmerControl(check.conv.singular = "ignore")),
+                 "can't tell if dispersion is fixed or free for family 'junk'")
+})
+
+test_that("unrecognized family name with a valid fixed $dispersion fits identically to the real family", {
+    ## fakepois isn't dispatched to lme4's hardcoded PoissonDist subclass
+    ## (name doesn't match), so it falls through to the generic $dispersion-
+    ## based path -- $dispersion is 1 (fixed), same conclusion the hardcoded
+    ## poisson path reaches, so the fits should agree
+    fakepois <- poisson()
+    fakepois$family <- "fakepois"
+
+    set.seed(103)
+    dat <- data.frame(id = factor(rep(1:20, each = 5)))
+    dat$y <- suppressMessages(
+        simulate(~ 1 + (1 | id), newdata = dat, family = poisson,
+                 newparams = list(beta = 1, theta = 0.5))[[1]]
+    )
+    fit_real <- glmer(y ~ 1 + (1 | id), family = poisson, data = dat)
+    fit_fake <- update(fit_real, family = fakepois)
+
+    ## not bit-identical: fakepois takes the generic R-function-fallback
+    ## path (Rcpp::Function callbacks) rather than poisson's hardcoded C++
+    ## PoissonDist methods, so tiny floating-point-level differences
+    ## (~1e-10) are expected even though both converge to the same fit
+    expect_equal(fixef(fit_real), fixef(fit_fake), tolerance = 1e-8)
+    expect_equal(c(VarCorr(fit_real)[["id"]]), c(VarCorr(fit_fake)[["id"]]),
+                 tolerance = 1e-8)
+    expect_equal(c(logLik(fit_real)), c(logLik(fit_fake)), tolerance = 1e-8)
+})
+
 test_that("prediction from large factors", {
     set.seed(101)
     N <- 50000
