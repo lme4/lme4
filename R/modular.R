@@ -792,30 +792,42 @@ glFormula <- function(formula, data=NULL, family = gaussian,
 
 ##' Effective random-effects degrees-of-freedom correction for glmer's
 ##' moment-based dispersion estimator: phi = deviance/(n - qEff) instead
-##' of the plain deviance/n, where qEff = sum(q_k) - (K-1) for K additive
-##' scalar-random-intercept grouping factors (q_k = nlevels of the k-th
-##' term) -- see misc/Gamma_GLMM/README_Gamma_GLMMs.md on the Gamma_GLMM
-##' branch for the derivation and validation (single- and multi-grouping-
-##' factor simulations, both gaussian and Gamma families). Returns
-##' NA_real_ (meaning: no correction, matching pre-existing behaviour)
-##' when disabled, or when any random-effects term has more than one
-##' column (random slopes, correlated blocks) -- the formula is untested
-##' there, so it's not applied rather than guessed at.
+##' of the plain deviance/n. qEff is the rank of the combined
+##' fixed+random "saturated" mean-structure design matrix [X, Z]
+##' (treating every random-effects term as if it were a set of ordinary
+##' fixed-effect dummy/product columns) -- the same n-p logic behind the
+##' classical unbiased variance estimator RSS/(n-p) in linear
+##' regression, generalized here to whatever redundancy structure the
+##' random effects happen to have.
+##'
+##' An earlier version of this used a naive closed-form guess,
+##' qEff = sum(q_k) - (K-1) for K additive random-effects terms (q_k =
+##' the k-th term's raw dimension, levels x columns) -- correct for
+##' crossed, scalar-or-single-multi-column-term structures, but found
+##' (via misc/Gamma_GLMM/paramsurvey_loggaussian/, see README on the
+##' Gamma_GLMM branch) to UNDER-correct for two real structures: nested
+##' terms (e.g. (1|Rail1/Rail2) -- the outer term's columns are an exact
+##' linear combination of the inner nested term's, contributing *zero*
+##' extra rank) and multiple random-slope terms sharing a covariate
+##' (e.g. (1+x|Rail1)+(1+x|Rail2) -- their slope-column blocks are
+##' redundant with *each other*, not just with the intercept). Both are
+##' just special cases of "the naive formula didn't count some linear
+##' dependency among the columns" -- so rather than hand-coding a
+##' growing list of known redundancy patterns, this computes the rank
+##' directly. Verified against every paramsurvey_loggaussian case,
+##' including the two the naive formula got wrong, and checked for
+##' computational cost at a much larger scale (q=1000): the rank
+##' computation is a one-time cost per fit (the design's rank doesn't
+##' depend on theta/phi/beta), and stays a small fraction of the fit's
+##' own cost -- *provided* `method = "qr"` is used, which dispatches to
+##' a genuine sparse QR; the default `rankMatrix()` method
+##' (`"tolNorm2"`, via `svd()`) silently densifies for sparse input and
+##' scales far worse.
 ##' @noRd
-computeQEff <- function(reTrms, enable) {
+computeQEff <- function(X, reTrms, enable) {
     if (!isTRUE(enable)) return(NA_real_)
-    if (!all(lengths(reTrms$cnms) == 1L)) {
-        warning("glmerControl(disp_dof_correction=TRUE) requested, but at least ",
-                "one random-effects term has more than one column (e.g. a ",
-                "random slope or correlated block); the degrees-of-freedom ",
-                "correction is only validated for scalar random-intercept ",
-                "terms, so it has NOT been applied here -- dispersion/sigma ",
-                "estimates may be more biased than necessary. See ",
-                "misc/Gamma_GLMM/README_Gamma_GLMMs.md (Gamma_GLMM branch).")
-        return(NA_real_)
-    }
-    qk <- diff(reTrms$Gp)
-    sum(qk) - (length(qk) - 1)
+    full <- cbind(X, t(reTrms$Zt))
+    unname(rankMatrix(full, method = "qr")[1])
 }
 
 ##' @rdname modular
@@ -833,7 +845,7 @@ mkGlmerDevfun <- function(fr, X, reTrms, family,
                          compDev = control$compDev,
                          dispProfile = identical(control$disp_method %||% "moment", "moment"),
                          maxPhiIter = as.integer(control$maxPhiIter %||% 100L),
-                         qEff = computeQEff(reTrms, control$disp_dof_correction %||% FALSE)),
+                         qEff = computeQEff(X, reTrms, control$disp_dof_correction %||% FALSE)),
                     parent = parent.frame())
     rho$pp <- do.call(merPredD$new,
                       c(reTrms[c("Zt","theta","Lambdat","Lind")],

@@ -1541,6 +1541,13 @@ refit.merMod <- function(object,
                      v <- dc$dims["maxPhiIter"]
                      if (is.na(v)) 100L else as.integer(v)
                  },
+                 ## qEff: NA (no correction) for pre-disp_dof_correction fit
+                 ## objects, same fallback mkGlmerDevfun()/computeQEff() use
+                 ## when the option is off.
+                 qEff = {
+                     v <- dc$dims["qEff"]
+                     if (is.na(v)) NA_real_ else as.double(v)
+                 },
                  nAGQ = nAGQ,
                  lp0 = pp$linPred(1), ## object@resp$eta - baseOffset,
                  baseOffset = baseOffset,

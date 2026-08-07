@@ -492,11 +492,15 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc, lme4conv=NULL) {
               nth = length(pp$theta),
               nAGQ= rho$nAGQ,
               compDev=rho$compDev,
-              ## disp_method/maxPhiIter (glmerControl(); NA for lmer/nlmer)
+              ## disp_method/maxPhiIter/qEff (glmerControl(); NA for lmer/nlmer)
               ## stored so refit() can recover the original fit's setting
               ## rather than silently falling back to package defaults.
+              ## qEff (glmerControl(disp_dof_correction=)) is always
+              ## integer-valued when set (sum(q_k) - (K-1)), so it round-
+              ## trips through this integer-mode dims vector like the rest.
               dispProfile = rho$dispProfile %||% NA,
               maxPhiIter = rho$maxPhiIter %||% NA,
+              qEff = rho$qEff %||% NA,
               ## 'use scale' in the sense of whether dispersion parameter should
               ##  be reported/used (*not* whether theta should be scaled by sigma)
               useSc = !(isGLMM && hasNoScale(resp$family)),
