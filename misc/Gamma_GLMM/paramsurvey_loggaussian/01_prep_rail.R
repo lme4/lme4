@@ -6,7 +6,7 @@
 
 suppressMessages(library(glmmTMB))
 
-outdir <- "/home/bolker/R/pkgs/lme4/misc/Gamma_GLMM/paramsurvey_loggaussian"
+outdir <- here::here("misc", "Gamma_GLMM", "paramsurvey_loggaussian")
 
 data("Rail", package = "nlme")
 

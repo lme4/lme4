@@ -1,4 +1,4 @@
-wd <- "/home/bolker/R/pkgs/lme4/misc/Gamma_GLMM/paramsurvey_loggaussian"
+wd <- here::here("misc", "Gamma_GLMM", "paramsurvey_loggaussian")
 source(file.path(wd, "toolkit.R"))
 
 sim <- readRDS(file.path(wd, "rail_simdata.rds"))

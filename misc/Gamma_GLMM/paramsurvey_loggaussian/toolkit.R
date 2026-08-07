@@ -23,6 +23,10 @@ suppressMessages({
   library(minqa)
   library(reformulas)  # nobars()
 })
+## RTMB backend doesn't implement Gamma yet (as of this glmmTMB dev
+## version); force the legacy backend so gaussian and Gamma runs are on
+## the same numerical footing (matches 08_prep_crossed.R's toggle)
+glmmTMB:::useRTMB(FALSE)
 
 ## ---- standardized per-fit result skeleton ----
 ## sd/sigma (not sd1/sd2/corr/phi as in ../paramsurvey/toolkit.R): this
@@ -237,6 +241,167 @@ fit_mgcv_one <- function(i, dat) {
   emptyResult(i, status, paste(r$warn_msgs, collapse = "; "), time_sec,
               beta = unname(coef(fit)[["(Intercept)"]]), sd = sd_re, sigma = sigma_est,
               negll = negll, singular = singular)
+}
+
+## ---- crossed-RE (Rail1 x Rail2) extension ----
+## Two random intercepts instead of one, so sd1/sd2 replace the single sd
+## field above. q = total number of random-effect levels
+## (nlevels(Rail1) + nlevels(Rail2), after droplevels()) -- a property of
+## the *data*, identical across methods fit to the same dataset; carried
+## through per-fit mainly as a sanity check that no method silently drops
+## levels. glmmPQL is skipped here (crossed grouping needs awkward
+## formula tricks in nlme); joint-phi is skipped (its devfun currently
+## assumes a single scalar RE term).
+emptyResultCrossed <- function(i, status, msg, time_sec = NA_real_,
+                                beta = NA_real_, sd1 = NA_real_, sd2 = NA_real_,
+                                sigma = NA_real_, negll = NA_real_,
+                                singular = NA, q = NA_integer_) {
+  list(i = i, status = status, msg = msg, time_sec = time_sec,
+       beta = unname(beta), sd1 = unname(sd1), sd2 = unname(sd2),
+       sigma = unname(sigma), negll = negll, singular = singular, q = q)
+}
+
+resultsToDFCrossed <- function(results) {
+  data.frame(
+    i = vapply(results, `[[`, integer(1), "i"),
+    status = vapply(results, `[[`, character(1), "status"),
+    singular = vapply(results, function(x) isTRUE(x$singular), logical(1)),
+    msg = vapply(results, `[[`, character(1), "msg"),
+    time_sec = vapply(results, `[[`, numeric(1), "time_sec"),
+    beta = vapply(results, `[[`, numeric(1), "beta"),
+    sd1 = vapply(results, `[[`, numeric(1), "sd1"),
+    sd2 = vapply(results, `[[`, numeric(1), "sd2"),
+    sigma = vapply(results, `[[`, numeric(1), "sigma"),
+    negll = vapply(results, `[[`, numeric(1), "negll"),
+    q = vapply(results, function(x) as.integer(x$q), integer(1))
+  )
+}
+
+qFromData <- function(dat) nlevels(droplevels(dat$Rail1)) + nlevels(droplevels(dat$Rail2))
+
+fit_glmmTMB_crossed_one <- function(i, dat, family = gaussian(link = "log")) {
+  t0 <- Sys.time()
+  r <- withWarnings(glmmTMB(travel ~ 1 + (1 | Rail1) + (1 | Rail2), data = dat,
+                             family = family))
+  time_sec <- as.numeric(Sys.time() - t0, units = "secs")
+  q <- qFromData(dat)
+  if (inherits(r$val, "error")) return(emptyResultCrossed(i, "error", conditionMessage(r$val), time_sec, q = q))
+  fit <- r$val
+  status <- if (length(r$warn_msgs) > 0) "warning" else "clean"
+  singular <- tryCatch(performance::check_singularity(fit), error = function(e) NA)
+  vc <- VarCorr(fit)$cond
+  sd1 <- attr(vc$Rail1, "stddev")[["(Intercept)"]]
+  sd2 <- attr(vc$Rail2, "stddev")[["(Intercept)"]]
+  negll <- tryCatch({
+    ll <- as.numeric(logLik(fit))
+    if (is.na(ll)) 2 * fit$obj$fn(fit$fit$par) else -2 * ll
+  }, error = function(e) NA_real_)
+  emptyResultCrossed(i, status, paste(r$warn_msgs, collapse = "; "), time_sec,
+                      beta = fixef(fit)$cond[["(Intercept)"]], sd1 = sd1, sd2 = sd2,
+                      sigma = sigma(fit), negll = negll, singular = singular, q = q)
+}
+
+fit_glmer_crossed_one <- function(i, dat, family = gaussian(link = "log")) {
+  t0 <- Sys.time()
+  r <- withWarnings(glmer(travel ~ 1 + (1 | Rail1) + (1 | Rail2), data = dat,
+                           family = family))
+  time_sec <- as.numeric(Sys.time() - t0, units = "secs")
+  q <- qFromData(dat)
+  if (inherits(r$val, "error")) return(emptyResultCrossed(i, "error", conditionMessage(r$val), time_sec, q = q))
+  fit <- r$val
+  status <- if (length(r$warn_msgs) > 0) "warning" else "clean"
+  singular <- tryCatch(isSingular(fit), error = function(e) NA)
+  vc <- VarCorr(fit)
+  sd1 <- attr(vc$Rail1, "stddev")[["(Intercept)"]]
+  sd2 <- attr(vc$Rail2, "stddev")[["(Intercept)"]]
+  negll <- tryCatch(-2 * as.numeric(logLik(fit)), error = function(e) NA_real_)
+  emptyResultCrossed(i, status, paste(r$warn_msgs, collapse = "; "), time_sec,
+                      beta = fixef(fit)[["(Intercept)"]], sd1 = sd1, sd2 = sd2,
+                      sigma = sigma(fit), negll = negll, singular = singular, q = q)
+}
+
+fit_mgcv_crossed_one <- function(i, dat, family = gaussian(link = "log")) {
+  t0 <- Sys.time()
+  r <- withWarnings(gam(travel ~ 1 + s(Rail1, bs = "re") + s(Rail2, bs = "re"),
+                         method = "ML", data = dat, family = family))
+  time_sec <- as.numeric(Sys.time() - t0, units = "secs")
+  q <- qFromData(dat)
+  if (inherits(r$val, "error")) return(emptyResultCrossed(i, "error", conditionMessage(r$val), time_sec, q = q))
+  fit <- r$val
+  status <- if (length(r$warn_msgs) > 0) "warning" else "clean"
+  vcomp <- gam.vcomp(fit, conf.lev = 0.95)$vc
+  sd1 <- unname(vcomp["s(Rail1)", "std.dev"])
+  sd2 <- unname(vcomp["s(Rail2)", "std.dev"])
+  sigma_est <- unname(vcomp["scale", "std.dev"])
+  singular <- (sd1 < 1e-4) || (sd2 < 1e-4)
+  ## see fit_mgcv_one's comment above re: gcv.ubre as the ML criterion
+  negll <- 2 * fit$gcv.ubre
+  emptyResultCrossed(i, status, paste(r$warn_msgs, collapse = "; "), time_sec,
+                      beta = unname(coef(fit)[["(Intercept)"]]), sd1 = sd1, sd2 = sd2,
+                      sigma = sigma_est, negll = negll, singular = singular, q = q)
+}
+
+## ---- "oneway" control case: all levels of Rail1, one level of Rail2 ----
+## A genuine one-way design (no crossing at all) subsampled from the same
+## crossed simulation -- q is unambiguously nlevels(Rail1), so this is the
+## control against which the structured/random crossed-design q_eff
+## puzzle can be compared. Uses emptyResultCrossed()'s sd1/sd2/q skeleton
+## (sd2 left NA -- there's no second RE term in this model) so its results
+## slot directly into the same combined analysis as the crossed cases.
+fit_glmmTMB_oneway_one <- function(i, dat, family = gaussian(link = "log")) {
+  t0 <- Sys.time()
+  r <- withWarnings(glmmTMB(travel ~ 1 + (1 | Rail1), data = dat,
+                             family = family))
+  time_sec <- as.numeric(Sys.time() - t0, units = "secs")
+  q <- nlevels(droplevels(dat$Rail1))
+  if (inherits(r$val, "error")) return(emptyResultCrossed(i, "error", conditionMessage(r$val), time_sec, q = q))
+  fit <- r$val
+  status <- if (length(r$warn_msgs) > 0) "warning" else "clean"
+  singular <- tryCatch(performance::check_singularity(fit), error = function(e) NA)
+  sd1 <- attr(VarCorr(fit)$cond$Rail1, "stddev")[["(Intercept)"]]
+  negll <- tryCatch({
+    ll <- as.numeric(logLik(fit))
+    if (is.na(ll)) 2 * fit$obj$fn(fit$fit$par) else -2 * ll
+  }, error = function(e) NA_real_)
+  emptyResultCrossed(i, status, paste(r$warn_msgs, collapse = "; "), time_sec,
+                      beta = fixef(fit)$cond[["(Intercept)"]], sd1 = sd1, sd2 = NA_real_,
+                      sigma = sigma(fit), negll = negll, singular = singular, q = q)
+}
+
+fit_glmer_oneway_one <- function(i, dat, family = gaussian(link = "log")) {
+  t0 <- Sys.time()
+  r <- withWarnings(glmer(travel ~ 1 + (1 | Rail1), data = dat,
+                           family = family))
+  time_sec <- as.numeric(Sys.time() - t0, units = "secs")
+  q <- nlevels(droplevels(dat$Rail1))
+  if (inherits(r$val, "error")) return(emptyResultCrossed(i, "error", conditionMessage(r$val), time_sec, q = q))
+  fit <- r$val
+  status <- if (length(r$warn_msgs) > 0) "warning" else "clean"
+  singular <- tryCatch(isSingular(fit), error = function(e) NA)
+  sd1 <- attr(VarCorr(fit)$Rail1, "stddev")[["(Intercept)"]]
+  negll <- tryCatch(-2 * as.numeric(logLik(fit)), error = function(e) NA_real_)
+  emptyResultCrossed(i, status, paste(r$warn_msgs, collapse = "; "), time_sec,
+                      beta = fixef(fit)[["(Intercept)"]], sd1 = sd1, sd2 = NA_real_,
+                      sigma = sigma(fit), negll = negll, singular = singular, q = q)
+}
+
+fit_mgcv_oneway_one <- function(i, dat, family = gaussian(link = "log")) {
+  t0 <- Sys.time()
+  r <- withWarnings(gam(travel ~ 1 + s(Rail1, bs = "re"), method = "ML",
+                         data = dat, family = family))
+  time_sec <- as.numeric(Sys.time() - t0, units = "secs")
+  q <- nlevels(droplevels(dat$Rail1))
+  if (inherits(r$val, "error")) return(emptyResultCrossed(i, "error", conditionMessage(r$val), time_sec, q = q))
+  fit <- r$val
+  status <- if (length(r$warn_msgs) > 0) "warning" else "clean"
+  vcomp <- gam.vcomp(fit, conf.lev = 0.95)$vc
+  sd1 <- unname(vcomp["s(Rail1)", "std.dev"])
+  sigma_est <- unname(vcomp["scale", "std.dev"])
+  singular <- sd1 < 1e-4
+  negll <- 2 * fit$gcv.ubre
+  emptyResultCrossed(i, status, paste(r$warn_msgs, collapse = "; "), time_sec,
+                      beta = unname(coef(fit)[["(Intercept)"]]), sd1 = sd1, sd2 = NA_real_,
+                      sigma = sigma_est, negll = negll, singular = singular, q = q)
 }
 
 fit_pql_one <- function(i, dat) {

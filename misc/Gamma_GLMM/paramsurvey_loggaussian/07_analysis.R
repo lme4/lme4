@@ -3,7 +3,7 @@
 ## against the "pretty" true values used to simulate the data. Note: PQL's
 ## negll is always NA (not a real ML method -- see toolkit.R).
 
-wd <- "/home/bolker/R/pkgs/lme4/misc/Gamma_GLMM/paramsurvey_loggaussian"
+wd <- here::here("misc", "Gamma_GLMM", "paramsurvey_loggaussian")
 sim <- readRDS(file.path(wd, "rail_simdata.rds"))
 
 methods <- c("glmmTMB", "jointphi", "glmer", "mgcv", "pql")
