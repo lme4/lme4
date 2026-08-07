@@ -56,9 +56,6 @@
       computed with the dispersion parameter fixed to 1, which could
       substantially bias estimates of random-effect variances and the
       dispersion parameter. Fixed effects were largely unaffected.
-      \code{nAGQ>1} (adaptive Gauss-Hermite quadrature) does not yet
-      incorporate this fix and now emits a warning for free-dispersion
-      families instead.
     } % itemize
   } % bug fixes
 } % 2.1-0 (devel)
