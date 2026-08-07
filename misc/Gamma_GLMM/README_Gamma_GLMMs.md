@@ -1374,3 +1374,211 @@ Scripts: `misc/Gamma_GLMM/paramsurvey_loggaussian/toolkit.R`
 `03_fit_jointphi.R`. The crossed-RE caveat above still applies --
 joint-phi confirms the mechanism for the single-grouping-factor case
 specifically, not the general one.
+
+### Crossed random effects: `q_eff = sum(q_k) - (K-1)`, confirmed empirically (2026-08-06)
+
+The single-grouping-factor finding above left an open question: what
+should `q` mean with multiple/crossed grouping factors, since naively
+summing levels (`q1+q2`) was only a guess -- flagged explicitly as
+untested in the TODO.
+
+Tested directly with a new extension,
+`misc/Gamma_GLMM/paramsurvey_loggaussian/08_prep_crossed.R` through
+`12_analysis_crossed.R`: a 16x16-level fully-crossed factorial base
+design (`Rail1 x Rail2`, 3 reps, n=768; RE sd=1 on the log scale for each
+factor, residual sigma=0.01) simulated once via
+`glmmTMB::simulate_new()`, then 8 fixed subsamples fit with
+glmmTMB/glmer/mgcv (B=10 replicates each, all sharing the same
+underlying simulated realizations since every case subsamples the same
+master simulation):
+
+- 3 matched pairs of "structured" (k x k x 3, full crossing, k=4/5/6) vs
+  "random" (uniform row subsample at the same n) crossed designs, all
+  fit with `~1+(1|Rail1)+(1|Rail2)`
+- 2 "oneway" control cases (all levels of Rail1, only 1 level of Rail2,
+  at two different Rail1 level counts) -- effectively a plain one-factor
+  design, fit with `~1+(1|Rail1)`, where `q` is unambiguous
+
+Because each case's design is fixed across replicates (only the response
+is resimulated), the `glmer/glmmTMB` phi ratio (`phi = sigma^2`) turns
+out to be **deterministic given the design, not just unbiased in
+expectation** -- its SD across B=10 replicates is 4-5 orders of
+magnitude smaller than the effect itself. That determinism meant B=10
+was already enough to resolve the implied `q_eff = n*(1 -
+phi_glmer/phi_glmmTMB)` to within ~0.03 of an integer on every design
+tried, an early (RE sd=3) attempt at this design broke glmer's PIRLS
+Cholesky step outright on every replicate -- see `08_prep_crossed.R`'s
+header comment; RE sd=1 avoids it).
+
+| case | n | q (= sum of levels) | q_eff | q1+q2-1 or q1 |
+|---|---|---|---|---|
+| structured (4x4x3) | 48 | 8 | 6.988 | 7 |
+| random (n=48) | 48 | 30 | 28.994 | 29 |
+| oneway (q1=16) | 48 | 16 | 15.991 | 16 |
+| structured5 (5x5x3) | 75 | 10 | 8.984 | 9 |
+| random75 | 75 | 32 | 30.988 | 31 |
+| structured6 (6x6x3) | 108 | 12 | 10.976 | 11 |
+| random108 | 108 | 32 | 30.980 | 31 |
+| oneway10 (q1=10) | 30 | 10 | 9.995 | 10 |
+
+**Both one-way controls match `q_eff = q1` almost exactly; all six
+crossed designs match `q_eff = q1+q2-1`, not `q1+q2`** -- consistently
+off by very close to one full level, regardless of design size, balance,
+or crossing degree (structured vs. random subsample).
+
+**Clean explanation**: classical ANOVA identifiability. With a shared
+fixed intercept plus two crossed grouping factors, each factor's own set
+of level-effects has exactly one redundant direction relative to the
+shared intercept (the usual sum-to-zero constraint), so the count of
+independent mean-structure parameters is `1 + (q1-1) + (q2-1) =
+q1+q2-1`, not `1+q1+q2`. For a single grouping factor this collapses to
+`1+(q1-1) = q1` -- exactly what the one-way controls show. Generalizes
+naturally to `K` crossed intercept-only grouping factors: `q_eff =
+sum(q_k) - (K-1)`.
+
+**Not yet checked**: nested (rather than crossed) grouping factors,
+random slopes (not just intercepts), and correlated multi-term random
+effects -- all likely need a different or more general
+(rank-of-design-matrix-based) treatment. This result is specifically for
+additive, intercept-only, crossed grouping factors.
+
+Scripts: `08_prep_crossed.R` (simulates the shared master dataset,
+derives all 8 case subsamples), `09_fit_glmmTMB_crossed.R` /
+`10_fit_glmer_crossed.R` / `11_fit_mgcv_crossed.R` (dispatch to crossed
+vs. one-way fit wrappers by case name -- glmmPQL and joint-phi are
+skipped here, see `toolkit.R`'s comments), `12_analysis_crossed.R`
+(combines and summarizes).
+
+### `q_eff` finding confirmed family-general: Gamma matches gaussian (2026-08-06)
+
+The `q_eff = sum(q_k) - (K-1)` result above was found under
+`gaussian(link="log")`; there's no obvious reason it should be
+gaussian-specific (it's an argument about the mean-structure design
+matrix's rank, independent of the response distribution), but that's
+worth actually checking rather than assuming. `08_prep_crossed.R`
+through `12_analysis_crossed.R` now take a `family` argument (CLI arg 2
+to `08_prep_crossed.R`, "gaussian" or "Gamma"; propagated through
+`toolkit.R`'s crossed/one-way fit wrappers and saved/loaded via a
+`crossed_simdata_<family>.rds` / `crossed_results_..._<family>.rds`
+naming convention so the two families' results don't clobber each
+other) rather than hardcoding `gaussian(link="log")` throughout.
+
+Two snags surfaced getting `Gamma(link="log")` working, both fixed in
+the toolkit rather than by rewriting the pipeline:
+
+- glmmTMB's current RTMB backend doesn't implement `Gamma` yet
+  (`distribution not implemented yet for use with RTMB backend: Gamma`)
+  -- fixed by calling `glmmTMB:::useRTMB(FALSE)` once at the top of
+  `08_prep_crossed.R` and `toolkit.R`, forcing the legacy TMB backend for
+  *both* families so the comparison stays apples-to-apples.
+- glmmTMB's `betadisp` parameter means different things for different
+  families: for gaussian, `exp(betadisp)` is sigma itself (matching
+  `sigma(fit)`, already used by the single-factor Rail survey above);
+  for Gamma, `exp(betadisp)` is the **shape** parameter (`1/sigma^2`,
+  where `sigma(fit)` is the CV) -- confirmed empirically by fitting a
+  known-shape simulated Gamma sample and checking `exp(betadisp)`
+  against the true shape. Missing this the first time produced a
+  wildly overdispersed (near-zero/huge-outlier) simulated response;
+  `08_prep_crossed.R` now dispatches the true-parameter-to-`betadisp`
+  mapping on `family_name`.
+
+With those fixed, re-running the identical 8-case sweep (B=10) under
+`Gamma(link="log")` gives:
+
+| case | n | q | q_eff | q1+q2-1 or q1 |
+|---|---|---|---|---|
+| structured (4x4x3) | 48 | 8 | 6.986 | 7 |
+| random (n=48) | 48 | 30 | 28.986 | 29 |
+| oneway (q1=16) | 48 | 16 | 15.984 | 16 |
+| structured5 (5x5x3) | 75 | 10 | 8.978 | 9 |
+| random75 | 75 | 32 | 30.976 | 31 |
+| structured6 (6x6x3) | 108 | 12 | 10.970 | 11 |
+| random108 | 108 | 32 | 30.968 | 31 |
+| oneway10 (q1=10) | 30 | 10 | 9.989 | 10 |
+
+Essentially identical to the gaussian table (same designs, same
+precision) -- the one-way controls match `q_eff = q1`, the crossed
+designs match `q_eff = q1+q2-1`, confirming the mechanism is not
+gaussian-specific. (Also notably: glmer had zero fit failures across
+all 240 Gamma fits, cleaner than the 2/240 stray `Downdated VtV`
+failures under gaussian on the same designs -- not investigated
+further, but consistent with Gamma's canonical-ish log link being a
+numerically easier case for PIRLS than gaussian's non-canonical one.)
+
+### First implementation: `glmerControl(disp_dof_correction=TRUE)` (2026-08-06)
+
+First pass at actually applying the `q_eff = sum(q_k) - (K-1)` finding
+inside glmer, rather than just diagnosing it externally. New opt-in
+`glmerControl()` argument, default `FALSE` -- deliberately not on by
+default, since validation so far is simulation-only (one dataset
+family, gaussian/Gamma, crossed scalar-intercept designs) with no real-
+data check and no check of how it interacts with REML or `nAGQ>1`.
+
+**Where `n`, `sum(q_k)`, and `K` live**: investigated before writing any
+code (this was the actual ask that started this round). `n` was already
+available in `profilePhi()` (`rp->weights().sum()`, `external.cpp`).
+`sum(q_k)` (= total random-effects dimension) is also already computed
+in C++ -- `merPredD`'s constructor sets `d_q = d_Zt.rows()`
+(`predModule.cpp`), reachable from `external.cpp` via the existing
+public `pp->Zt().rows()` with no header changes at all. `K` (the number
+of independent random-effects *terms*, as opposed to the number of
+covariance parameters) is **not** reliably recoverable from `Lambdat`/
+`Lind` alone: for scalar-intercept terms you could count distinct
+`Lind` values, but a single correlated random-slope term (`(1+x|g)`)
+contributes 3 theta values (var, cov, var) for what is structurally one
+term, so that approach overcounts `K` in general. The robust source of
+truth is `reTrms$Gp` (R-level, already built by `mkReTrms()`):
+`diff(Gp)` gives each term's `q_k`, `length(Gp)-1` gives `K` -- and this
+was **not** previously passed into the C++ side at all (`merPredD$new()`
+only ever received `Zt`/`theta`/`Lambdat`/`Lind`). One simplifying fact
+found along the way: `nAGQ>1` already hard-restricts to a single scalar
+random-effects term (`updateGlmerDevfun()`, `R/modular.R`, pre-existing
+check), so the crossed-term correction only actually matters for the
+Laplace (`nAGQ<=1`) path -- `glmerAGQ()` will only ever see `K=1`, where
+the formula trivially gives `q_eff=q1`.
+
+**Wiring** (mirrors how `disp_method`/`maxPhiIter` were already threaded
+through as extra params for the original phi-profiling fix): `qEff` is
+computed once in R, in `mkGlmerDevfun()` where `reTrms` is fully in
+scope, via a new `computeQEff(reTrms, enable)` helper (`R/modular.R`);
+stored on `rho$qEff`; threaded through `mkdevfun()`'s devfun closure and
+`glmerPwrssUpdate()` exactly like `dispProfile`/`maxPhiIter`; passed as
+a new trailing arg to `.Call(glmerLaplace, ...)` / `.Call(glmerAGQ,
+...)` (both `CALLDEF` counts bumped); used in `profilePhi()` as `n -
+qEff` instead of `n` when `R_finite(qEff)` (an `NA_real_` sentinel means
+"no correction", the default). `glmerLaplaceHandle()` (the exported
+handle for calling `glmerLaplace` directly) got the same new `qEff`
+argument, defaulting to `NA_real_` for backward compatibility.
+
+**Scalar-RE-only gate**: `computeQEff()` only computes a real correction
+when `all(lengths(reTrms$cnms) == 1L)` -- every random-effects term is a
+scalar random intercept, the only case the formula has been validated
+for (see the crossed-RE section above). Otherwise it returns `NA_real_`
+(no correction applied, matching pre-existing behaviour) and emits a
+`warning()` explaining that sigma/dispersion estimates may be more
+biased than necessary as a result. Deliberately conservative: rather
+than guessing whether `q_k = nlevels_k * ncol_k` generalizes correctly
+to random slopes or correlated blocks, it just doesn't apply anything
+there yet -- see the TODO for the follow-up simulation study
+(`ar1()`/random-slope designs) intended to test that generalization
+before trying it in code. The working guess (untested) is that it
+*will* generalize cleanly, because `q_k` here means the dimension of
+the *spherical* random-effects vector `u` (always independent by
+construction, `u ~ N(0, I_q)`, regardless of how `Lambdat` correlates
+`Lambdat %*% u` afterward) rather than anything about the correlation
+structure itself.
+
+**Spot-checked** (not a full validation) on `sleepstudy` (Gamma,
+`(1|Subject)`, n=180, q=18): `disp_dof_correction=TRUE` raises sigma by
+a factor of 1.0547, close to the predicted `sqrt(n/(n-q)) = 1.0541`.
+`disp_dof_correction=FALSE` (default) reproduces the pre-existing
+`sigma` exactly, as expected. A random-slope model
+(`(Days|Subject)`) with `disp_dof_correction=TRUE` correctly warns and
+falls back to the uncorrected estimate rather than applying anything
+unvalidated.
+
+**Explicitly not done in this pass** (see TODO): a full test-suite run
+to check for both real bugs and reference-value drift, regression tests
+for the new control option, and a NEWS entry. This was intentionally
+stopped at a working checkpoint rather than pushed through to a fully
+validated, tested state in one sitting.
