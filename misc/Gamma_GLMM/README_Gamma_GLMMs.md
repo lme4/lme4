@@ -1771,3 +1771,35 @@ single-dataset spot checks, not averaged, so not expected to match to
 the same precision as the B=10 paramsurvey numbers elsewhere in this
 doc). Full test suite re-run clean after this change
 (`LME4_TEST_LEVEL=2`).
+
+### OLRE/OOM-avoidance regression test added (2026-08-07)
+
+Closes the last untested piece of `computeQEff()`'s safety net (see
+"First implementation" above): `tests/testthat/test-sigma-dof.R` gained
+two regression tests exercising the `tryCatch` fallback around the rank
+computation -- the same code path that catches the "QR factorization ...
+out of memory" failure observed at `q~50000` for very large random-effect
+dimensions. Rather than reproducing an actual `q~50000` failure (slow,
+expensive, and not portable across CI machines), `testthat::
+local_mocked_bindings()` forces `rankMatrix()` to fail deterministically
+and cheaply -- possible because `rankMatrix` is imported directly into
+lme4's own namespace (`importFrom("Matrix", ..., rankMatrix, ...)`,
+`NAMESPACE`), which is exactly what `local_mocked_bindings()` needs to
+intercept a call inside `computeQEff()`.
+
+Uses a real observation-level-random-effect (OLRE) Gamma structure (one
+RE level per observation, `q=n=200`), built via `glFormula()` rather than
+a full `glmer()` fit: an actual OLRE Gamma model turned out to be
+numerically pathological enough (each level has exactly one observation,
+so within-level variance is fully confounded with the residual) that
+`glmer()` errors outright during PIRLS ("Downdated VtV is not positive
+definite") -- unrelated to `computeQEff()` or the dispersion correction
+at all, just a genuinely ill-posed fit, consistent with the standing note
+that an OLRE on a free-dispersion model is probably a modeling mistake to
+begin with. `glFormula()` only builds the design matrices, so it's
+unaffected by that and gives a stable structure to test `computeQEff()`
+against directly. A companion unmocked test confirms the real computation
+succeeds normally on the same structure and returns `qEff == n` exactly
+-- concretely illustrating *why* OLRE plus a free-dispersion family is a
+degenerate combination for this correction specifically: the correction's
+own denominator (`n - qEff`) would be exactly zero.
