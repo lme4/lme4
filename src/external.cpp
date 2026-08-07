@@ -404,12 +404,26 @@ extern "C" {
     // fallback below failed to converge for this candidate theta/beta, in
     // which case the caller should report a flat sentinel deviance
     // instead of proceeding.
+    // qEff: degrees-of-freedom correction to the moment estimator's
+    // denominator (phi = deviance/(n - qEff) instead of deviance/n), or
+    // NA (R_finite(qEff) false) for no correction (the previous,
+    // uncorrected behaviour). Computed in R (mkGlmerDevfun -> computeQEff(),
+    // R/modular.R) from reTrms$Gp, since the number of independent
+    // random-effects *terms* isn't reliably recoverable from Lambdat/Lind
+    // alone here (a correlated multi-parameter term contributes several
+    // Lind values for what is structurally still a single term) --
+    // gated to glmerControl(disp_dof_correction=TRUE), and only computed
+    // (non-NA) for models where every random-effects term is a scalar
+    // random intercept; see misc/Gamma_GLMM/README_Gamma_GLMMs.md
+    // (Gamma_GLMM branch) for the derivation and validation.
     static bool profilePhi(glmResp *rp, merPredD *pp, bool uOnly, double tol,
-                            int maxit, int verb, bool dispProfile, int maxPhiIter) {
+                            int maxit, int verb, bool dispProfile, int maxPhiIter,
+                            double qEff) {
         if (rp->hasFreeDispersion() && dispProfile) {
             double phi = 1.;
             double lastGoodPhi = 1.;
             double n = rp->weights().sum();
+            if (R_finite(qEff)) n -= qEff;
             double phiTol = 1e-8;
             for (int outer = 0; outer < maxPhiIter; ++outer) {
                 rp->setPhi(phi);
@@ -480,7 +494,7 @@ extern "C" {
     }
 
     SEXP glmerLaplace(SEXP pp_, SEXP rp_, SEXP nAGQ_, SEXP tol_, SEXP maxit_, SEXP verbose_,
-                       SEXP dispProfile_, SEXP maxPhiIter_) {
+                       SEXP dispProfile_, SEXP maxPhiIter_, SEXP qEff_) {
         BEGIN_RCPP;
         XPtr<glmResp>  rp(rp_);
         XPtr<merPredD> pp(pp_);
@@ -495,11 +509,14 @@ extern "C" {
         int       verb(::Rf_asInteger(verbose_));
         // dispProfile is R's glmerControl(disp_method=...) == "moment"
         // (TRUE) vs "old/buggy" (FALSE); maxPhiIter is glmerControl's
-        // maxPhiIter, capping the nested loop in profilePhi().
+        // maxPhiIter, capping the nested loop in profilePhi(); qEff is
+        // glmerControl(disp_dof_correction=)'s degrees-of-freedom
+        // correction (NA if disabled/not applicable -- see profilePhi()).
         bool dispProfile(::Rf_asLogical(dispProfile_));
         int  maxPhiIter(::Rf_asInteger(maxPhiIter_));
+        double    qEff(::Rf_asReal(qEff_));
 
-        if (!profilePhi(rp, pp, uOnly, tol, maxit, verb, dispProfile, maxPhiIter))
+        if (!profilePhi(rp, pp, uOnly, tol, maxit, verb, dispProfile, maxPhiIter, qEff))
             return ::Rf_ScalarReal(1e10);
         return ::Rf_ScalarReal(rp->Laplace(pp->ldL2(), pp->ldRX2(), pp->sqrL(1.)));
         END_RCPP;
@@ -533,9 +550,13 @@ extern "C" {
     // maxit: maximum number of pirls iterations
     // GQmat: matrix of quadrature weights
     // fac: grouping factor (gets converted to mapped integer below)
-    // dispProfile, maxPhiIter: as in glmerLaplace() -- see profilePhi()
+    // dispProfile, maxPhiIter, qEff: as in glmerLaplace() -- see
+    // profilePhi(). (qEff will always reduce to the trivial K=1 case
+    // here in practice, since AGQ is only reachable for a single
+    // scalar random-effects term -- see the "AGQ only defined for..."
+    // check below -- but there's no need to special-case that.)
     SEXP glmerAGQ(SEXP pp_, SEXP rp_, SEXP tol_, SEXP maxit_, SEXP GQmat_, SEXP fac_, SEXP verbose_,
-                  SEXP dispProfile_, SEXP maxPhiIter_) {
+                  SEXP dispProfile_, SEXP maxPhiIter_, SEXP qEff_) {
         BEGIN_RCPP;
 
         XPtr<glmResp>     rp(rp_);
@@ -548,6 +569,7 @@ extern "C" {
         double          verb(::Rf_asReal(verbose_));
         bool     dispProfile(::Rf_asLogical(dispProfile_));
         int       maxPhiIter(::Rf_asInteger(maxPhiIter_));
+        double         qEff(::Rf_asReal(qEff_));
         if (fac.size() != rp->mu().size())
             throw std::invalid_argument("size of fac must match dimension of response vector");
 
@@ -555,7 +577,7 @@ extern "C" {
         // nested fixed-point loop glmerLaplace() uses for free-
         // dispersion families (a no-op single pwrssUpdate() call
         // otherwise, as before).
-        if (!profilePhi(rp, pp, true, tol, maxit, (int) verb, dispProfile, maxPhiIter))
+        if (!profilePhi(rp, pp, true, tol, maxit, (int) verb, dispProfile, maxPhiIter, qEff))
             return ::Rf_ScalarReal(1e10);
         double phi(rp->phi());
 
@@ -1191,8 +1213,8 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(glmFamily_theta,    1),
     CALLDEF(glmFamily_variance, 2),
 
-    CALLDEF(glmerAGQ,           9),
-    CALLDEF(glmerLaplace,       8),
+    CALLDEF(glmerAGQ,           10),
+    CALLDEF(glmerLaplace,       9),
 
     CALLDEF(golden_Create,      2),
     CALLDEF(golden_newf,        2),

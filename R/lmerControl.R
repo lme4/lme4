@@ -61,7 +61,7 @@ chk.cconv <- function(copt, callingFn) {
 
 ## work around code check since we adjust formals() later
 check.response.not.const <- compDev <- nAGQ0initStep <- tolPwrss <- NULL
-disp_method <- maxPhiIter <- NULL
+disp_method <- maxPhiIter <- disp_dof_correction <- NULL
 
 merControl <-
     function(optimizer="nloptwrap", # originally Nelder_Mead, then bobyqa ...
@@ -168,11 +168,15 @@ merControl <-
             if (!is.numeric(maxPhiIter) || length(maxPhiIter) != 1 || maxPhiIter < 1)
                 stop("'maxPhiIter' must be a single positive integer")
             maxPhiIter <- as.integer(maxPhiIter)
+            if (!is.logical(disp_dof_correction) || length(disp_dof_correction) != 1 ||
+                is.na(disp_dof_correction))
+                stop("'disp_dof_correction' must be TRUE or FALSE")
             ret <- c(ret, namedList(tolPwrss,
                                     compDev,
                                     nAGQ0initStep,
                                     disp_method,
-                                    maxPhiIter))
+                                    maxPhiIter,
+                                    disp_dof_correction))
             ret$checkControl <- c(ret$checkControl,
                                  namedList(check.response.not.const))
         }
@@ -192,7 +196,8 @@ formals(glmerControl) <- c(formals(glmerControl),
                                 nAGQ0initStep = TRUE,
                                 check.response.not.const="stop",
                                 disp_method = c("moment", "old/buggy"),
-                                maxPhiIter = 100L)
+                                maxPhiIter = 100L,
+                                disp_dof_correction = FALSE)
                            )
 
 ##' @rdname lmerControl

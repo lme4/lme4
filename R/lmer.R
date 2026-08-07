@@ -315,7 +315,7 @@ mkdevfun <- function(rho, nAGQ=1L, maxit = if(extends(rho.cld, "nlsResp")) 300L 
     ## (clearly preferred to using globalVariables() !]
     fac <- pp <- resp <- lp0 <- compDev <- dpars <- baseOffset <- tolPwrss <-
         pwrssUpdate <- ## <-- even though it's a function below
-        GQmat <- nlmerAGQ <- mkTheta <- dispProfile <- maxPhiIter <- NULL
+        GQmat <- nlmerAGQ <- mkTheta <- dispProfile <- maxPhiIter <- qEff <- NULL
 
     ## The deviance function (to be returned, with 'rho' as its environment):
     ff <-
@@ -336,7 +336,7 @@ mkdevfun <- function(rho, nAGQ=1L, maxit = if(extends(rho.cld, "nlsResp")) 300L 
                 pp$setTheta(mkTheta(as.double(par)))
                 p <- pwrssUpdate(pp, resp, tol=tolPwrss, GQmat=GHrule(0L),
                                  compDev=compDev, maxit=maxit, verbose=verbose,
-                                 dispProfile=dispProfile, maxPhiIter=maxPhiIter)
+                                 dispProfile=dispProfile, maxPhiIter=maxPhiIter, qEff=qEff)
                 resp$updateWts()
                 p
             }
@@ -351,7 +351,7 @@ mkdevfun <- function(rho, nAGQ=1L, maxit = if(extends(rho.cld, "nlsResp")) 300L 
                 resp$setOffset(offset)
                 p <- pwrssUpdate(pp, resp, tol=tolPwrss, GQmat=GQmat,
                                  compDev=compDev, grpFac=fac, maxit=maxit, verbose=verbose,
-                                 dispProfile=dispProfile, maxPhiIter=maxPhiIter)
+                                 dispProfile=dispProfile, maxPhiIter=maxPhiIter, qEff=qEff)
                 resp$updateWts()
                 p
             }
@@ -441,18 +441,21 @@ RglmerWrkIter <- function(pp, resp, uOnly=FALSE) {
 ##'     back-compatible with pre-fix behaviour)
 ##' @param maxPhiIter cap on the nested dispersion fixed-point loop
 ##'     (only used when \code{dispProfile=TRUE})
+##' @param qEff degrees-of-freedom correction to the moment estimator's
+##'     denominator (\code{glmerControl(disp_dof_correction=TRUE)}; see
+##'     \code{\link{glmerControl}}), or \code{NA_real_} for none
 glmerPwrssUpdate <- function(pp, resp, tol, GQmat, compDev=TRUE, grpFac=NULL, maxit = 70L, verbose=0,
-                              dispProfile=TRUE, maxPhiIter=100L) {
+                              dispProfile=TRUE, maxPhiIter=100L, qEff=NA_real_) {
     nAGQ <- nrow(GQmat)
     if (compDev) {
         if (nAGQ < 2L)
             return(.Call(glmerLaplace, pp$ptr(), resp$ptr(),
                          nAGQ, tol, as.integer(maxit),
-                         verbose, dispProfile, as.integer(maxPhiIter)))
+                         verbose, dispProfile, as.integer(maxPhiIter), qEff))
         return(.Call(glmerAGQ, pp$ptr(), resp$ptr(),
                      tol, as.integer(maxit),
                      GQmat, grpFac, verbose,
-                     dispProfile, as.integer(maxPhiIter)))
+                     dispProfile, as.integer(maxPhiIter), qEff))
     }
  ### does this show anywhere ??? [i.e. is it ever used in our checks/examples/scripts/vignettes ?
  ### message("glmerPwrssUpdate(*, compDev=FALSE)  --> using more R, no direct .Call() to C.") # [DBG] only

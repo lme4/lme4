@@ -790,6 +790,34 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     c(res, list(family = family))
 }
 
+##' Effective random-effects degrees-of-freedom correction for glmer's
+##' moment-based dispersion estimator: phi = deviance/(n - qEff) instead
+##' of the plain deviance/n, where qEff = sum(q_k) - (K-1) for K additive
+##' scalar-random-intercept grouping factors (q_k = nlevels of the k-th
+##' term) -- see misc/Gamma_GLMM/README_Gamma_GLMMs.md on the Gamma_GLMM
+##' branch for the derivation and validation (single- and multi-grouping-
+##' factor simulations, both gaussian and Gamma families). Returns
+##' NA_real_ (meaning: no correction, matching pre-existing behaviour)
+##' when disabled, or when any random-effects term has more than one
+##' column (random slopes, correlated blocks) -- the formula is untested
+##' there, so it's not applied rather than guessed at.
+##' @noRd
+computeQEff <- function(reTrms, enable) {
+    if (!isTRUE(enable)) return(NA_real_)
+    if (!all(lengths(reTrms$cnms) == 1L)) {
+        warning("glmerControl(disp_dof_correction=TRUE) requested, but at least ",
+                "one random-effects term has more than one column (e.g. a ",
+                "random slope or correlated block); the degrees-of-freedom ",
+                "correction is only validated for scalar random-intercept ",
+                "terms, so it has NOT been applied here -- dispersion/sigma ",
+                "estimates may be more biased than necessary. See ",
+                "misc/Gamma_GLMM/README_Gamma_GLMMs.md (Gamma_GLMM branch).")
+        return(NA_real_)
+    }
+    qk <- diff(reTrms$Gp)
+    sum(qk) - (length(qk) - 1)
+}
+
 ##' @rdname modular
 ##' @export
 mkGlmerDevfun <- function(fr, X, reTrms, family,
@@ -804,7 +832,8 @@ mkGlmerDevfun <- function(fr, X, reTrms, family,
                          tolPwrss= control$tolPwrss,
                          compDev = control$compDev,
                          dispProfile = identical(control$disp_method %||% "moment", "moment"),
-                         maxPhiIter = as.integer(control$maxPhiIter %||% 100L)),
+                         maxPhiIter = as.integer(control$maxPhiIter %||% 100L),
+                         qEff = computeQEff(reTrms, control$disp_dof_correction %||% FALSE)),
                     parent = parent.frame())
     rho$pp <- do.call(merPredD$new,
                       c(reTrms[c("Zt","theta","Lambdat","Lind")],
@@ -823,7 +852,7 @@ mkGlmerDevfun <- function(fr, X, reTrms, family,
         ## initialize (from mustart)
         .Call(glmerLaplace, rho$pp$ptr(), rho$resp$ptr(), nAGQ > 0L,
               control$tolPwrss, maxit, verbose,
-              rho$dispProfile, rho$maxPhiIter)
+              rho$dispProfile, rho$maxPhiIter, rho$qEff)
         rho$lp0         <- rho$pp$linPred(1) # each pwrss opt begins at this eta
         rho$pwrssUpdate <- glmerPwrssUpdate
     }

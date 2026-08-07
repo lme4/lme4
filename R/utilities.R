@@ -890,9 +890,9 @@ nlminbwrap <- function(par, fn, lower, upper, control=list(), ...) {
 }
 
 glmerLaplaceHandle <- function(pp, resp, nAGQ, tol, maxit, verbose,
-                                dispProfile=TRUE, maxPhiIter=100L) {
+                                dispProfile=TRUE, maxPhiIter=100L, qEff=NA_real_) {
     .Call(glmerLaplace, pp, resp, nAGQ, tol, as.integer(maxit), verbose,
-          dispProfile, as.integer(maxPhiIter))
+          dispProfile, as.integer(maxPhiIter), qEff)
 }
 
 isFlexLambda <- function() FALSE
