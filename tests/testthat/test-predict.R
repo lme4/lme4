@@ -317,9 +317,11 @@ model_fit <- glmer(y ~ 1 + (1|id),
 
 test_that("simulation works for inverse gaussian", {
     ## reference value updated for the dispersion-profiling fix (phi is now
-    ## profiled rather than fixed at 1 for free-dispersion families -- see
-    ## misc/Gamma_GLMM/README_Gamma_GLMMs.md)
-    expect_equal(mean(simulate(model_fit)[[1]]), 1.0192826593313,
+    ## profiled rather than fixed at 1 for free-dispersion families), and
+    ## again for disp_dof_correction=TRUE (now the default), which applies
+    ## an n-qEff degrees-of-freedom correction on top -- see
+    ## misc/Gamma_GLMM/README_Gamma_GLMMs.md
+    expect_equal(mean(simulate(model_fit)[[1]]), 1.022158676022,
                  tolerance=1e-5)
 })
 
@@ -427,13 +429,15 @@ if (requireNamespace("statmod")) {
                                 data=dd))
     set.seed(101)
     ## reference values updated for the dispersion-profiling fix (phi is now
-    ## profiled rather than fixed at 1 for free-dispersion families -- see
-    ## misc/Gamma_GLMM/README_Gamma_GLMMs.md)
+    ## profiled rather than fixed at 1 for free-dispersion families), and
+    ## again for disp_dof_correction=TRUE (now the default), which applies
+    ## an n-qEff degrees-of-freedom correction on top -- see
+    ## misc/Gamma_GLMM/README_Gamma_GLMMs.md
     expect_equal(head(unlist(simulate(m))),
-                 c(sim_11 = 0.452104788638966, sim_12 = 0.634104757192598,
-                   sim_13 = 0.482587435336374,
-                   sim_14 = 0.167698932174518, sim_15 = 0.256780272206481,
-                   sim_16 = 0.96257793045354))
+                 c(sim_11 = 0.453344718811628, sim_12 = 0.64148773286959,
+                   sim_13 = 0.484750314445057,
+                   sim_14 = 0.164012565637704, sim_15 = 0.253683796505627,
+                   sim_16 = 0.983549319252098))
   })
 }
 

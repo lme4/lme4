@@ -56,12 +56,14 @@ summary(gm3B)# should be better
 ## Both have "correct" beta ~= (4, 3)  -- but *too* small  (sigma_B, sigma) !!
 ## reference values updated for the dispersion-profiling fix (phi is now
 ## profiled rather than fixed at 1 for free-dispersion families like
-## Gamma -- see misc/Gamma_GLMM/README_Gamma_GLMMs.md): fixed effects are
-## largely, but not exactly, unaffected by the fix (the phi-reweighting
-## does perturb the joint estimation slightly)
+## Gamma), and again for disp_dof_correction=TRUE (now the default),
+## which applies an n-qEff degrees-of-freedom correction on top -- see
+## misc/Gamma_GLMM/README_Gamma_GLMMs.md: fixed effects are largely, but
+## not exactly, unaffected by either fix (both perturb the joint
+## estimation slightly, via PIRLS's working weights)
 stopifnot(exprs = {
-    all.equal(fixef(gm3 ), c(`(Intercept)` = 4.09273562181177, x = 3.07325500796481), tol = 1e-5)
-    all.equal(fixef(gm3B), c(`(Intercept)` = 4.12582628888373, x = 3.05916037732051), tol = 1e-5)
+    all.equal(fixef(gm3 ), c(`(Intercept)` = 4.0923502324289, x = 3.07339575816978), tol = 1e-5)
+    all.equal(fixef(gm3B), c(`(Intercept)` = 4.12612735957073, x = 3.05914408107665), tol = 1e-5)
 })
 VarCorr(gm3)  # both variances / std.dev. should be ~ 1  but are too small
 
@@ -78,12 +80,14 @@ ggl2 <- glmer(y ~ x + (1|block), data=dgl, family=Gamma(link="log"))# true model
 (h.1.2 <- anova(ggl1, ggl2))
 ## reference values updated for the dispersion-profiling fix (phi is now
 ## profiled rather than fixed at 1 for free-dispersion families like
-## Gamma -- see misc/Gamma_GLMM/README_Gamma_GLMMs.md)
+## Gamma), and again for disp_dof_correction=TRUE (now the default),
+## which applies an n-qEff degrees-of-freedom correction on top -- see
+## misc/Gamma_GLMM/README_Gamma_GLMMs.md
 stopifnot(
     all.equal(unlist(h.1.2[2,]),
-              c(npar = 4, AIC = 34230.3451056724, BIC = 34253.7981725685,
-                logLik = -17111.1725528362, "-2*log(L)" = 34222.3451056724,
-                Chisq = 2437.19710638838, Df = 1, `Pr(>Chisq)` = 0))
+              c(npar = 4, AIC = 34230.0757742238, BIC = 34253.5288411198,
+                logLik = -17111.0378871119, "-2*log(L)" = 34222.0757742238,
+                Chisq = 2437.21070033035, Df = 1, `Pr(>Chisq)` = 0))
 )
 ## "true" model :
 summary(ggl2)

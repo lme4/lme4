@@ -109,8 +109,10 @@ expect_equal(var(sumFun(g3)),0)
 ## check dispersion parameter
 ## (lowered tolerance to pass checks on my machine -- SCW)
 ## reference value updated for the dispersion-profiling fix (phi is now
-## profiled rather than fixed at 1 for free-dispersion families -- see
-## misc/Gamma_GLMM/README_Gamma_GLMMs.md)
-expect_equal(sigma(g0)^2, 0.521774624880968, tolerance=1e-4)
+## profiled rather than fixed at 1 for free-dispersion families), and
+## again for disp_dof_correction=TRUE (now the default), which applies
+## an n-qEff degrees-of-freedom correction on top -- see
+## misc/Gamma_GLMM/README_Gamma_GLMMs.md
+expect_equal(sigma(g0)^2, 0.527261951000367, tolerance=1e-4)
 
 } ## skip on windows (for speed)

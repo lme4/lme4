@@ -285,13 +285,14 @@ if (testLevel>1) {
     ## parametric bootstrap:
     ## reference refreshed: gaussian fit via glmer() with a non-identity
     ## link now also gets the free-dispersion phi-profiling fix
-    ## (previously Gamma-only) -- see misc/Gamma_GLMM/README_Gamma_GLMMs.md,
-    ## Gamma_GLMM branch
+    ## (previously Gamma-only), and disp_dof_correction=TRUE (now the
+    ## default) applies an n-qEff degrees-of-freedom correction to sigma
+    ## -- see misc/Gamma_GLMM/README_Gamma_GLMMs.md, Gamma_GLMM branch
     boot_res <- matrix(
       c(
-        0, 0.0196182959816876, -2.51956252971187, 3.96884044819014,
-        0.00107132308596243, 0.0338956680520825, -1.95888497897466,
-        4.90957932670704
+        0, 0.034361786616178, -2.61757496650457, 3.73664214983603,
+        0.00529946962093008, 0.0558814899485592, -1.82356951909793,
+        5.09845277221458
       ), nrow = 4L, ncol = 2L,
       dimnames = list(c(".sig01", ".sigma", "(Intercept)", "prop1"),
                       c("2.5 %", "97.5 %"))
@@ -665,10 +666,12 @@ if (testLevel>1) {
     ## reference refreshed: getME(g1, "sigma") now reports the correct
     ## dispersion (fixing a bug where sigma() for Gamma GLMMs used a
     ## generic pwrss/n formula inconsistent with the phi actually
-    ## converged to internally -- see misc/Gamma_GLMM/README_Gamma_GLMMs.md,
-    ## Gamma_GLMM branch), so the simulated y2 (and hence g2) shifts too
+    ## converged to internally), and again for disp_dof_correction=TRUE
+    ## (now the default), which applies an n-qEff degrees-of-freedom
+    ## correction on top -- see misc/Gamma_GLMM/README_Gamma_GLMMs.md,
+    ## Gamma_GLMM branch -- so the simulated y2 (and hence g2) shifts too
     expect_equal(fixef(g2), tolerance = 4e-7, # 32-bit windows showed 1.34e-7
-                 c(`(Intercept)` = 2.92761131238582, x = 1.02672772289035))
+                 c(`(Intercept)` = 2.97872455138837, x = 1.05320649158952))
 ##                 c("(Intercept)" = 2.81887136759369, x= 1.06543222163626))
 
     ## simulate with re.form = NULL and derived/offset components in formula
