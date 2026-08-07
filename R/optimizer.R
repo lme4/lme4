@@ -1,7 +1,11 @@
 ## --> ../man/NelderMead.Rd
 Nelder_Mead <- function(fn, par, lower=rep.int(-Inf, n),
-                        upper=rep.int(Inf, n), control=list()) {
+                        upper=rep.int(Inf, n), control=list(), trace=FALSE) {
     n <- length(par)
+    if (trace) {
+        trace_names <- list(NULL, c("iteration", "fval", paste0("x", 1:n)))
+        trace_frame <- data.frame()
+    }
     if (is.null(xst <- control[["xst"]])) xst <- rep.int(0.02,n)
     if (is.null(xt <- control[["xt"]])) xt <- xst*5e-4
 
@@ -39,8 +43,14 @@ Nelder_Mead <- function(fn, par, lower=rep.int(-Inf, n),
     it <- 0
     repeat {
         it <- it + 1
-        nMres <- nM$newf(fn(nM$xeval()))
-        if (nMres != 0L) break
+        y <- fn(nM$xeval())
+        nMres <- nM$newf(y)
+        if (trace) {
+          m <- matrix(c(it, y, nM$xeval()), nrow=1, dimnames=trace_names)
+          trace_frame <- rbind(trace_frame, m)
+        }
+        if (nMres != 0L | is.na(y)) 
+            break
     }
 
     cmsg <- "reached max evaluations"
@@ -63,8 +73,12 @@ Nelder_Mead <- function(fn, par, lower=rep.int(-Inf, n),
         (if(cc$warnOnly) warning else stop)( msgvec[nMres+4] )
     }
 
-    list(fval = nM$value(), par = nM$xpos(),
+    result <- list(fval = nM$value(), par = nM$xpos(),
          convergence = pmin(0, nMres), # positive nMres is also 'convergence'
          NM.result = nMres, `message` = msgvec[nMres+4],
          control = c(cc, xst=xst, xt=xt), feval = it)
+    if (trace) {
+        result$trace <- trace_frame
+    }
+    result
 }
