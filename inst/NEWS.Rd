@@ -56,6 +56,12 @@
       computed with the dispersion parameter fixed to 1, which could
       substantially bias estimates of random-effect variances and the
       dispersion parameter. Fixed effects were largely unaffected.
+      \item \code{sigma()} computations for free-dispersion GLMMs (e.g.
+      Gamma) did not account for \dQuote{degree of freedom} corrections,
+      i.e. dividing deviance by \code{(n-q)} rather than \code{n}, where
+      \code{q} is the rank of the combined (\code{X} and \code{Z}) model
+      matrix (fixes GH #936). For back-compatibility, users can specify
+      \code{glmerControl(disp_dof_correction = FALSE)}.
     } % itemize
   } % bug fixes
 } % 2.1-0 (devel)
