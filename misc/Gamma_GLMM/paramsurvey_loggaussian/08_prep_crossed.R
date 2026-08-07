@@ -114,9 +114,89 @@ for (nm in names(sim_data_list)) {
 
 cases <- Map(function(design, sim_data) list(design = design, sim_data = sim_data), designs, sim_data_list)
 
+## ---- random-slope control case: correlated (1+x|Rail1) ----
+## Reuses "oneway10"'s 30-row design (first 10 Rail1 levels, Rail2
+## fixed/irrelevant here) and adds a small-variance covariate x. A
+## single RE term (K=1), but with 2 columns/level (intercept, slope)
+## instead of 1 -- tests whether q_eff = sum(q_k) - (K-1) generalizes to
+## non-scalar terms, since here it predicts q_eff = q = 2*10 = 20 (no
+## extra -1, because K=1). True intercept/slope SD = 1, correlation =
+## 0.1.
+design_randomslope10 <- designs$oneway10
+design_randomslope10$x <- rnorm(nrow(design_randomslope10), 0, 0.1)
+cat(sprintf("%-12s: %3d rows, %2d levels (Rail1), x added\n",
+            "randomslope10", nrow(design_randomslope10), nlevels(design_randomslope10$Rail1)))
+
+corr_rs_pretty <- 0.1
+## glmmTMB's "us" (unstructured) covariance parameterization is NOT the
+## same convention as lme4's theta (a raw relative-Cholesky-factor of
+## the covariance itself): the first n elements are log-SDs, the
+## remaining n(n-1)/2 are a *scaled* Cholesky term of the correlation
+## matrix, not the correlation directly -- see
+## https://cran.r-project.org/web/packages/glmmTMB/vignettes/covstruct.html#mappings.
+## For sd1=sd2=1, correlation=rho: theta = c(0, 0, rho/sqrt(1-rho^2)).
+theta_rs <- c(log(sd_pretty), log(sd_pretty), corr_rs_pretty / sqrt(1 - corr_rs_pretty^2))
+newparams_rs <- list(beta = beta_pretty, betadisp = betadisp_pretty, theta = theta_rs)
+
+sim_y_randomslope10 <- simulate_new(~ 1 + (1 + x | Rail1), nsim = B, seed = sim_seed,
+                                     family = family, newdata = design_randomslope10,
+                                     newparams = newparams_rs)
+sim_data_randomslope10 <- lapply(sim_y_randomslope10, function(y) { d <- design_randomslope10; d$travel <- y; d })
+
+cat("\n=== sanity check on simulated responses (randomslope10) ===\n")
+for (b in seq_len(B)) cat(sprintf("rep %2d: n=%d range=[%.3f, %.2f]\n",
+                                    b, nrow(sim_data_randomslope10[[b]]), min(sim_data_randomslope10[[b]]$travel), max(sim_data_randomslope10[[b]]$travel)))
+
+cases$randomslope10 <- list(design = design_randomslope10, sim_data = sim_data_randomslope10)
+
+## ---- nested-RE control case: ~1 + (1|Rail1/Rail2) ----
+## Same 75-row 5x5x3 design as "structured5" (full crossing), but fit
+## as NESTED (Rail1, Rail1:Rail2) rather than crossed (Rail1, Rail2):
+## q1=nlevels(Rail1)=5, q2=nlevels(Rail1:Rail2)=25, K=2 terms. Tests
+## whether q_eff=sum(q_k)-(K-1) depends on crossing vs. nesting -- the
+## identifiability argument behind the -1 didn't depend on how the
+## terms relate to each other, only that each is its own intercept-
+## bearing term, so the same formula (q_eff=5+25-1=29) is predicted to
+## hold here too. Same true SD=1 for both terms as the original crossed
+## case.
+sim_y_nested5 <- simulate_new(~ 1 + (1 | Rail1 / Rail2), nsim = B, seed = sim_seed,
+                               family = family, newdata = designs$structured5, newparams = newparams)
+sim_data_nested5 <- lapply(sim_y_nested5, function(y) { d <- designs$structured5; d$travel <- y; d })
+
+cat("\n=== sanity check on simulated responses (nested5) ===\n")
+for (b in seq_len(B)) cat(sprintf("rep %2d: n=%d range=[%.3f, %.2f]\n",
+                                    b, nrow(sim_data_nested5[[b]]), min(sim_data_nested5[[b]]$travel), max(sim_data_nested5[[b]]$travel)))
+
+cases$nested5 <- list(design = designs$structured5, sim_data = sim_data_nested5)
+
+## ---- crossed random-slopes case: (1+x|Rail1) + (1+x|Rail2) ----
+## Same 75-row 5x5x3 design plus a covariate x, but now TWO independent
+## correlated random-slope terms instead of one -- combines the
+## crossed-term (-1) mechanism with the multi-column-term (spherical-
+## dimension) mechanism at once: q1=2*5=10, q2=2*5=10, K=2, predicted
+## q_eff=10+10-1=19. Same per-term parameters as "randomslope10" (SD=1,
+## SD=1, corr=0.1) for both terms -- theta is simply that term's theta
+## repeated once per term (the two terms are independent of each other
+## by construction, so there's no cross-term parameter to add).
+design_crossedslopes5 <- designs$structured5
+design_crossedslopes5$x <- rnorm(nrow(design_crossedslopes5), 0, 0.1)
+newparams_cs <- list(beta = beta_pretty, betadisp = betadisp_pretty, theta = rep(theta_rs, 2))
+
+sim_y_crossedslopes5 <- simulate_new(~ 1 + (1 + x | Rail1) + (1 + x | Rail2), nsim = B, seed = sim_seed,
+                                      family = family, newdata = design_crossedslopes5,
+                                      newparams = newparams_cs)
+sim_data_crossedslopes5 <- lapply(sim_y_crossedslopes5, function(y) { d <- design_crossedslopes5; d$travel <- y; d })
+
+cat("\n=== sanity check on simulated responses (crossedslopes5) ===\n")
+for (b in seq_len(B)) cat(sprintf("rep %2d: n=%d range=[%.3f, %.2f]\n",
+                                    b, nrow(sim_data_crossedslopes5[[b]]), min(sim_data_crossedslopes5[[b]]$travel), max(sim_data_crossedslopes5[[b]]$travel)))
+
+cases$crossedslopes5 <- list(design = design_crossedslopes5, sim_data = sim_data_crossedslopes5)
+
 outfile <- file.path(outdir, sprintf("crossed_simdata_%s.rds", family_name))
 saveRDS(list(name = "crossed", formula = form, family = family, family_name = family_name,
-             pretty = list(beta = beta_pretty, sd1 = sd_pretty, sd2 = sd_pretty, sigma = sigma_pretty),
+             pretty = list(beta = beta_pretty, sd1 = sd_pretty, sd2 = sd_pretty, sigma = sigma_pretty,
+                            corr = corr_rs_pretty),
              cases = cases,
              B = B, seed = sim_seed, design_seed = design_seed),
         outfile)

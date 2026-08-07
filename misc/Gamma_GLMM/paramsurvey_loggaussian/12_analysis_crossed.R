@@ -45,6 +45,8 @@ for (cs in cases) {
     cat(sprintf("  sd1   = %.4f (%.2f)\n", median(d$sd1, na.rm = TRUE), sim$pretty$sd1))
     cat(sprintf("  sd2   = %.4f (%.2f)\n", median(d$sd2, na.rm = TRUE), sim$pretty$sd2))
     cat(sprintf("  sigma = %.4f (%.2f)\n", median(d$sigma, na.rm = TRUE), sim$pretty$sigma))
+    if (!all(is.na(d$corr)))
+      cat(sprintf("  corr  = %.4f (%.2f)\n", median(d$corr, na.rm = TRUE), sim$pretty$corr))
     cat(sprintf("  negll = %.4f\n", median(d$negll, na.rm = TRUE)))
   }
 

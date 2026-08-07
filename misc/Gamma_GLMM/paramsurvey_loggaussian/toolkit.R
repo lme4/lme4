@@ -252,13 +252,21 @@ fit_mgcv_one <- function(i, dat) {
 ## levels. glmmPQL is skipped here (crossed grouping needs awkward
 ## formula tricks in nlme); joint-phi is skipped (its devfun currently
 ## assumes a single scalar RE term).
+## corr: the RE intercept-slope correlation for the random-slope case
+## below (NA for the plain crossed/one-way cases, which have no
+## correlation parameter). sd1b/sd2b/corrb: a *second* term's
+## intercept-sd/slope-sd/correlation, for the crossed-random-slopes case
+## (two independent correlated (1+x|g) terms) -- NA everywhere else.
 emptyResultCrossed <- function(i, status, msg, time_sec = NA_real_,
                                 beta = NA_real_, sd1 = NA_real_, sd2 = NA_real_,
                                 sigma = NA_real_, negll = NA_real_,
-                                singular = NA, q = NA_integer_) {
+                                singular = NA, q = NA_integer_, corr = NA_real_,
+                                sd1b = NA_real_, sd2b = NA_real_, corrb = NA_real_) {
   list(i = i, status = status, msg = msg, time_sec = time_sec,
        beta = unname(beta), sd1 = unname(sd1), sd2 = unname(sd2),
-       sigma = unname(sigma), negll = negll, singular = singular, q = q)
+       sigma = unname(sigma), negll = negll, singular = singular, q = q,
+       corr = unname(corr), sd1b = unname(sd1b), sd2b = unname(sd2b),
+       corrb = unname(corrb))
 }
 
 resultsToDFCrossed <- function(results) {
@@ -273,7 +281,11 @@ resultsToDFCrossed <- function(results) {
     sd2 = vapply(results, `[[`, numeric(1), "sd2"),
     sigma = vapply(results, `[[`, numeric(1), "sigma"),
     negll = vapply(results, `[[`, numeric(1), "negll"),
-    q = vapply(results, function(x) as.integer(x$q), integer(1))
+    q = vapply(results, function(x) as.integer(x$q), integer(1)),
+    sd1b = vapply(results, `[[`, numeric(1), "sd1b"),
+    sd2b = vapply(results, `[[`, numeric(1), "sd2b"),
+    corrb = vapply(results, `[[`, numeric(1), "corrb"),
+    corr = vapply(results, `[[`, numeric(1), "corr")
   )
 }
 
@@ -402,6 +414,192 @@ fit_mgcv_oneway_one <- function(i, dat, family = gaussian(link = "log")) {
   emptyResultCrossed(i, status, paste(r$warn_msgs, collapse = "; "), time_sec,
                       beta = unname(coef(fit)[["(Intercept)"]]), sd1 = sd1, sd2 = NA_real_,
                       sigma = sigma_est, negll = negll, singular = singular, q = q)
+}
+
+## ---- random-slope control case: correlated (1+x|Rail1) ----
+## Tests whether q_eff = sum(q_k) - (K-1) generalizes beyond scalar
+## random intercepts: here K=1 (a single term), but that term has 2
+## columns per level (intercept, slope), so q = nlevels(Rail1) * 2. The
+## working hypothesis (not yet validated -- see TODO) is that q is
+## counted on the *spherical* random-effects dimension regardless of
+## how Lambdat correlates it, so a single 2-column term should behave
+## exactly like the already-validated single-scalar-term case with
+## q_eff = q (no additional -1, since K=1 here). sd1/sd2 = intercept/
+## slope SD, corr = their correlation. mgcv is skipped: its
+## `s(g, x, bs="re")` gives a slope-only random effect, not the
+## correlated intercept+slope structure this case needs.
+fit_glmmTMB_randomslope_one <- function(i, dat, family = gaussian(link = "log")) {
+  t0 <- Sys.time()
+  r <- withWarnings(glmmTMB(travel ~ 1 + (1 + x | Rail1), data = dat, family = family))
+  time_sec <- as.numeric(Sys.time() - t0, units = "secs")
+  q <- 2L * nlevels(droplevels(dat$Rail1))
+  if (inherits(r$val, "error")) return(emptyResultCrossed(i, "error", conditionMessage(r$val), time_sec, q = q))
+  fit <- r$val
+  status <- if (length(r$warn_msgs) > 0) "warning" else "clean"
+  singular <- tryCatch(performance::check_singularity(fit), error = function(e) NA)
+  vc <- VarCorr(fit)$cond$Rail1
+  sd1 <- attr(vc, "stddev")[["(Intercept)"]]
+  sd2 <- attr(vc, "stddev")[["x"]]
+  corr <- attr(vc, "correlation")["(Intercept)", "x"]
+  negll <- tryCatch({
+    ll <- as.numeric(logLik(fit))
+    if (is.na(ll)) 2 * fit$obj$fn(fit$fit$par) else -2 * ll
+  }, error = function(e) NA_real_)
+  emptyResultCrossed(i, status, paste(r$warn_msgs, collapse = "; "), time_sec,
+                      beta = fixef(fit)$cond[["(Intercept)"]], sd1 = sd1, sd2 = sd2,
+                      sigma = sigma(fit), negll = negll, singular = singular, q = q,
+                      corr = corr)
+}
+
+fit_glmer_randomslope_one <- function(i, dat, family = gaussian(link = "log")) {
+  t0 <- Sys.time()
+  r <- withWarnings(glmer(travel ~ 1 + (1 + x | Rail1), data = dat, family = family))
+  time_sec <- as.numeric(Sys.time() - t0, units = "secs")
+  q <- 2L * nlevels(droplevels(dat$Rail1))
+  if (inherits(r$val, "error")) return(emptyResultCrossed(i, "error", conditionMessage(r$val), time_sec, q = q))
+  fit <- r$val
+  status <- if (length(r$warn_msgs) > 0) "warning" else "clean"
+  singular <- tryCatch(isSingular(fit), error = function(e) NA)
+  vc <- VarCorr(fit)$Rail1
+  sd1 <- attr(vc, "stddev")[["(Intercept)"]]
+  sd2 <- attr(vc, "stddev")[["x"]]
+  corr <- attr(vc, "correlation")["(Intercept)", "x"]
+  negll <- tryCatch(-2 * as.numeric(logLik(fit)), error = function(e) NA_real_)
+  emptyResultCrossed(i, status, paste(r$warn_msgs, collapse = "; "), time_sec,
+                      beta = fixef(fit)[["(Intercept)"]], sd1 = sd1, sd2 = sd2,
+                      sigma = sigma(fit), negll = negll, singular = singular, q = q,
+                      corr = corr)
+}
+
+## ---- nested-RE control case: ~1 + (1|Rail1/Rail2) ----
+## Two scalar-intercept terms again (K=2), but nested rather than
+## crossed: Rail1 (q1=nlevels(Rail1)) and the Rail1:Rail2 interaction
+## (q2=number of distinct combinations present). Tests whether
+## q_eff=sum(q_k)-(K-1) depends on crossing vs. nesting, or only on term
+## *count* -- the ANOVA-identifiability argument that produced the -1
+## didn't depend on how the two factors relate to each other, only that
+## each contributes its own intercept-bearing dummy-coded term, so the
+## same formula is predicted to apply here too, both group names come
+## back as "Rail1" and "Rail2:Rail1" (lme4/glmmTMB's own group-name
+## convention for (1|Rail1/Rail2), verified empirically).
+qFromDataNested <- function(dat) {
+  nlevels(droplevels(dat$Rail1)) + nlevels(droplevels(interaction(dat$Rail1, dat$Rail2, drop = TRUE)))
+}
+
+fit_glmmTMB_nested_one <- function(i, dat, family = gaussian(link = "log")) {
+  t0 <- Sys.time()
+  r <- withWarnings(glmmTMB(travel ~ 1 + (1 | Rail1 / Rail2), data = dat, family = family))
+  time_sec <- as.numeric(Sys.time() - t0, units = "secs")
+  q <- qFromDataNested(dat)
+  if (inherits(r$val, "error")) return(emptyResultCrossed(i, "error", conditionMessage(r$val), time_sec, q = q))
+  fit <- r$val
+  status <- if (length(r$warn_msgs) > 0) "warning" else "clean"
+  singular <- tryCatch(performance::check_singularity(fit), error = function(e) NA)
+  vc <- VarCorr(fit)$cond
+  sd1 <- attr(vc$Rail1, "stddev")[["(Intercept)"]]
+  sd2 <- attr(vc[["Rail2:Rail1"]], "stddev")[["(Intercept)"]]
+  negll <- tryCatch({
+    ll <- as.numeric(logLik(fit))
+    if (is.na(ll)) 2 * fit$obj$fn(fit$fit$par) else -2 * ll
+  }, error = function(e) NA_real_)
+  emptyResultCrossed(i, status, paste(r$warn_msgs, collapse = "; "), time_sec,
+                      beta = fixef(fit)$cond[["(Intercept)"]], sd1 = sd1, sd2 = sd2,
+                      sigma = sigma(fit), negll = negll, singular = singular, q = q)
+}
+
+fit_glmer_nested_one <- function(i, dat, family = gaussian(link = "log")) {
+  t0 <- Sys.time()
+  r <- withWarnings(glmer(travel ~ 1 + (1 | Rail1 / Rail2), data = dat, family = family))
+  time_sec <- as.numeric(Sys.time() - t0, units = "secs")
+  q <- qFromDataNested(dat)
+  if (inherits(r$val, "error")) return(emptyResultCrossed(i, "error", conditionMessage(r$val), time_sec, q = q))
+  fit <- r$val
+  status <- if (length(r$warn_msgs) > 0) "warning" else "clean"
+  singular <- tryCatch(isSingular(fit), error = function(e) NA)
+  vc <- VarCorr(fit)
+  sd1 <- attr(vc$Rail1, "stddev")[["(Intercept)"]]
+  sd2 <- attr(vc[["Rail2:Rail1"]], "stddev")[["(Intercept)"]]
+  negll <- tryCatch(-2 * as.numeric(logLik(fit)), error = function(e) NA_real_)
+  emptyResultCrossed(i, status, paste(r$warn_msgs, collapse = "; "), time_sec,
+                      beta = fixef(fit)[["(Intercept)"]], sd1 = sd1, sd2 = sd2,
+                      sigma = sigma(fit), negll = negll, singular = singular, q = q)
+}
+
+fit_mgcv_nested_one <- function(i, dat, family = gaussian(link = "log")) {
+  t0 <- Sys.time()
+  d2 <- dat
+  d2$Rail1Rail2 <- interaction(d2$Rail1, d2$Rail2, drop = TRUE)
+  r <- withWarnings(gam(travel ~ 1 + s(Rail1, bs = "re") + s(Rail1Rail2, bs = "re"),
+                         method = "ML", data = d2, family = family))
+  time_sec <- as.numeric(Sys.time() - t0, units = "secs")
+  q <- qFromDataNested(dat)
+  if (inherits(r$val, "error")) return(emptyResultCrossed(i, "error", conditionMessage(r$val), time_sec, q = q))
+  fit <- r$val
+  status <- if (length(r$warn_msgs) > 0) "warning" else "clean"
+  vcomp <- gam.vcomp(fit, conf.lev = 0.95)$vc
+  sd1 <- unname(vcomp["s(Rail1)", "std.dev"])
+  sd2 <- unname(vcomp["s(Rail1Rail2)", "std.dev"])
+  sigma_est <- unname(vcomp["scale", "std.dev"])
+  singular <- (sd1 < 1e-4) || (sd2 < 1e-4)
+  negll <- 2 * fit$gcv.ubre
+  emptyResultCrossed(i, status, paste(r$warn_msgs, collapse = "; "), time_sec,
+                      beta = unname(coef(fit)[["(Intercept)"]]), sd1 = sd1, sd2 = sd2,
+                      sigma = sigma_est, negll = negll, singular = singular, q = q)
+}
+
+## ---- crossed random-slopes case: (1+x|Rail1) + (1+x|Rail2) ----
+## Two independent correlated 2-column terms (K=2, q1=2*nlevels(Rail1),
+## q2=2*nlevels(Rail2)) -- combines the crossed-term (-1) mechanism with
+## the multi-column-term (spherical-dimension) mechanism at once. mgcv
+## is skipped, as for the single-term randomslope case above (no
+## correlated-random-slope equivalent).
+qFromDataCrossedSlopes <- function(dat) {
+  2L * nlevels(droplevels(dat$Rail1)) + 2L * nlevels(droplevels(dat$Rail2))
+}
+
+fit_glmmTMB_crossedslopes_one <- function(i, dat, family = gaussian(link = "log")) {
+  t0 <- Sys.time()
+  r <- withWarnings(glmmTMB(travel ~ 1 + (1 + x | Rail1) + (1 + x | Rail2), data = dat, family = family))
+  time_sec <- as.numeric(Sys.time() - t0, units = "secs")
+  q <- qFromDataCrossedSlopes(dat)
+  if (inherits(r$val, "error")) return(emptyResultCrossed(i, "error", conditionMessage(r$val), time_sec, q = q))
+  fit <- r$val
+  status <- if (length(r$warn_msgs) > 0) "warning" else "clean"
+  singular <- tryCatch(performance::check_singularity(fit), error = function(e) NA)
+  vc1 <- VarCorr(fit)$cond$Rail1
+  vc2 <- VarCorr(fit)$cond$Rail2
+  negll <- tryCatch({
+    ll <- as.numeric(logLik(fit))
+    if (is.na(ll)) 2 * fit$obj$fn(fit$fit$par) else -2 * ll
+  }, error = function(e) NA_real_)
+  emptyResultCrossed(i, status, paste(r$warn_msgs, collapse = "; "), time_sec,
+                      beta = fixef(fit)$cond[["(Intercept)"]],
+                      sd1 = attr(vc1, "stddev")[["(Intercept)"]], sd2 = attr(vc1, "stddev")[["x"]],
+                      corr = attr(vc1, "correlation")["(Intercept)", "x"],
+                      sd1b = attr(vc2, "stddev")[["(Intercept)"]], sd2b = attr(vc2, "stddev")[["x"]],
+                      corrb = attr(vc2, "correlation")["(Intercept)", "x"],
+                      sigma = sigma(fit), negll = negll, singular = singular, q = q)
+}
+
+fit_glmer_crossedslopes_one <- function(i, dat, family = gaussian(link = "log")) {
+  t0 <- Sys.time()
+  r <- withWarnings(glmer(travel ~ 1 + (1 + x | Rail1) + (1 + x | Rail2), data = dat, family = family))
+  time_sec <- as.numeric(Sys.time() - t0, units = "secs")
+  q <- qFromDataCrossedSlopes(dat)
+  if (inherits(r$val, "error")) return(emptyResultCrossed(i, "error", conditionMessage(r$val), time_sec, q = q))
+  fit <- r$val
+  status <- if (length(r$warn_msgs) > 0) "warning" else "clean"
+  singular <- tryCatch(isSingular(fit), error = function(e) NA)
+  vc1 <- VarCorr(fit)$Rail1
+  vc2 <- VarCorr(fit)$Rail2
+  negll <- tryCatch(-2 * as.numeric(logLik(fit)), error = function(e) NA_real_)
+  emptyResultCrossed(i, status, paste(r$warn_msgs, collapse = "; "), time_sec,
+                      beta = fixef(fit)[["(Intercept)"]],
+                      sd1 = attr(vc1, "stddev")[["(Intercept)"]], sd2 = attr(vc1, "stddev")[["x"]],
+                      corr = attr(vc1, "correlation")["(Intercept)", "x"],
+                      sd1b = attr(vc2, "stddev")[["(Intercept)"]], sd2b = attr(vc2, "stddev")[["x"]],
+                      corrb = attr(vc2, "correlation")["(Intercept)", "x"],
+                      sigma = sigma(fit), negll = negll, singular = singular, q = q)
 }
 
 fit_pql_one <- function(i, dat) {
