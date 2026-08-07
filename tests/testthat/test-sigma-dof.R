@@ -145,3 +145,61 @@ test_that("disp_dof_correction defaults to TRUE", {
     expect_equal(sigma(fit_default), sigma(fit_explicit_on))
     expect_false(isTRUE(all.equal(sigma(fit_default), sigma(fit_explicit_off))))
 })
+
+## computeQEff()'s OOM-avoidance tryCatch (R/modular.R): observed to fail
+## outright ("QR factorization ... out of memory") for the sparse QR at
+## q ~ 50000 -- an observation-level random effect (OLRE, one RE level per
+## row) is the natural way q gets that large. Actually reproducing a
+## q ~ 50000 failure here isn't practical (expensive, non-portable across
+## CI machines, and the point is to test computeQEff()'s own fallback
+## logic, not to rely on genuinely exhausting memory) -- local_mocked_bindings()
+## forces rankMatrix() to fail instead, deterministically and cheaply,
+## exercising the exact same tryCatch path.
+##
+## Gamma (not Poisson/gaussian(link="log")) specifically: this needs to be
+## a free-dispersion family so hasNoScale() doesn't gate the computation
+## out before it ever reaches rankMatrix() -- the Poisson OLRE case never
+## exercises this tryCatch at all, for exactly that reason (see
+## computeQEff()'s header comment).
+##
+## Only tests computeQEff() directly via glFormula()-built X/reTrms, not a
+## full glmer() fit: a real OLRE Gamma model is numerically pathological
+## enough (each level has exactly one observation, so within-level
+## variance is fully confounded with the residual) that glmer() errors
+## outright during PIRLS ("Downdated VtV is not positive definite") --
+## unrelated to computeQEff() or the dispersion correction at all, just a
+## genuinely ill-posed fit, matching the TODO's own note that an OLRE on a
+## free-dispersion model is probably a modeling mistake to begin with.
+## glFormula() only builds the design matrices, no iterative fitting, so
+## it's unaffected by that and gives a stable, realistic q~n structure to
+## test computeQEff() against directly. No LME4_TEST_LEVEL gating needed
+## here -- unlike a real q~50000 reproduction, the mocked version is fast
+## and cheap regardless.
+
+olreGamma <- local({
+    set.seed(1)
+    n <- 200
+    dd <- data.frame(obs = factor(seq_len(n)), y = rgamma(n, shape = 2, rate = 2))
+    list(data = dd, gm = glFormula(y ~ 1 + (1 | obs), data = dd, family = Gamma(link = "log")))
+})
+
+test_that("computeQEff falls back gracefully when rankMatrix fails (Gamma OLRE)", {
+    local_mocked_bindings(rankMatrix = function(...) stop("forced OOM"), .package = "lme4")
+    expect_warning(
+        result <- computeQEff(olreGamma$gm$X, olreGamma$gm$reTrms, TRUE, Gamma()),
+        "computing the degrees-of-freedom correction failed"
+    )
+    expect_true(is.na(result))
+})
+
+test_that("computeQEff succeeds normally on the same OLRE structure (unmocked)", {
+    ## sanity check alongside the mocked-failure test above: with one RE
+    ## column per observation, [X,Z] saturates every row, so q_eff == n
+    ## exactly -- the correction's own denominator (n - q_eff) would be
+    ## exactly zero, illustrating concretely why OLRE + a free-dispersion
+    ## family is a degenerate combination, not just an unusual one
+    n <- nrow(olreGamma$data)
+    qEff <- computeQEff(olreGamma$gm$X, olreGamma$gm$reTrms, TRUE, Gamma())
+    expect_true(is.finite(qEff))
+    expect_equal(qEff, n)
+})
