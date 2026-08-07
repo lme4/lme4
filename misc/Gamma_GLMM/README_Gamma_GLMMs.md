@@ -1582,3 +1582,192 @@ to check for both real bugs and reference-value drift, regression tests
 for the new control option, and a NEWS entry. This was intentionally
 stopped at a working checkpoint rather than pushed through to a fully
 validated, tested state in one sitting.
+
+### `randomslope10`: `q_eff` generalizes to a correlated random-slope term (2026-08-07)
+
+Directly tests the working hypothesis above (TODO item, and the
+"spherical random effects" framing in the `disp_dof_correction`
+scalar-RE-only gate): does `q_eff = sum(q_k) - (K-1)` still hold when a
+single term (`K=1`) has more than one column per level, rather than
+requiring `K` separate scalar-intercept terms?
+
+New case `randomslope10` in `misc/Gamma_GLMM/paramsurvey_loggaussian/`:
+reuses `oneway10`'s 30-row design (first 10 `Rail1` levels, 3 reps) and
+adds a small-variance covariate `x = rnorm(n, 0, 0.1)`, fit with
+`travel ~ 1 + (1 + x | Rail1)` -- a single correlated random-intercept-
+and-slope term, true intercept/slope SD = 1, true correlation = 0.1.
+`q` for this term is `nlevels(Rail1) * 2 = 20` (2 columns/level); with
+`K=1`, the formula predicts `q_eff = q = 20` (no extra `-1`, since
+that only applies *between* multiple terms sharing the fixed
+intercept). `mgcv` is skipped here -- its `s(g, x, bs="re")` gives a
+slope-only random effect, not the correlated intercept+slope structure
+this case needs, and no other easy mgcv equivalent was found.
+
+Getting the *true* covariance right for `glmmTMB::simulate_new()` took
+care: glmmTMB's `theta` for an unstructured ("us") covariance term is
+**not** the same convention as lme4's (`reTrms$theta`, a raw relative-
+Cholesky-factor of the covariance itself) -- glmmTMB's first `n`
+elements are log-SDs, the remaining `n(n-1)/2` are a *scaled* Cholesky
+term of the *correlation* matrix, not the correlation directly (see
+glmmTMB's
+[covstruct vignette](https://cran.r-project.org/web/packages/glmmTMB/vignettes/covstruct.html#mappings)).
+For SD=1, SD=1, correlation=`rho`: `theta = c(0, 0, rho/sqrt(1-rho^2))`.
+Caught before implementing (not after, this time) by asking rather than
+assuming, given the earlier `betadisp` mapping mistake in the crossed-RE
+work above.
+
+**Result, B=10, both families**: all 10 glmmTMB and glmer fits clean for
+both gaussian and Gamma (`q=20` confirmed identical across methods, as
+usual). The `glmer/glmmTMB` phi ratio is -- again -- essentially
+deterministic given the fixed design: gaussian mean ratio 0.33347 (sd
+1.6e-5) against a predicted `(n-q)/n = (30-20)/30 = 0.3333`, giving
+implied `q_eff = 19.996`; Gamma mean ratio 0.33353 (sd 3.8e-3), implied
+`q_eff = 19.994`. Both essentially exactly `20`, confirming the
+prediction with no extra correction needed beyond treating the term's
+full raw (spherical) dimension as `q`. (The correlation estimates
+themselves are noisy across the B=10 replicates, as expected with only
+10 groups -- correlation parameters are notoriously hard to pin down
+with few groups -- but that's orthogonal to the dispersion-scale `q_eff`
+check, which doesn't depend on how well `corr` itself is recovered.)
+
+This is a real, if single-case, confirmation that `q_eff` generalizes
+beyond scalar-intercept terms when measured on the spherical `u` scale,
+supporting (but not yet fully justifying -- nested designs and
+multi-term correlated models are still untested) relaxing
+`computeQEff()`'s current scalar-RE-only gate in a future pass.
+
+### The naive formula breaks for nesting and shared-covariate crossed slopes (2026-08-07)
+
+Two more cases, `nested5` and `crossedslopes5`, both on the same 75-row
+5x5x3 `structured5` design (full crossing, first 5 levels of each
+factor):
+
+- `nested5`: `~1 + (1|Rail1/Rail2)` (nested, not crossed), true SD=1 for
+  both `Rail1` and `Rail1:Rail2`. `q1=nlevels(Rail1)=5`,
+  `q2=nlevels(Rail1:Rail2)=25`, `K=2`, naive prediction `q_eff=29`.
+- `crossedslopes5`: `~1 + (1+x|Rail1) + (1+x|Rail2)`, same per-term
+  parameters as `randomslope10` (SD=1, SD=1, corr=0.1) for *both*
+  terms, `x` shared across both (same covariate, not two different
+  ones). `q1=2*5=10`, `q2=2*5=10`, `K=2`, naive prediction `q_eff=19`.
+
+**Both broke the naive formula, in both families:**
+
+| case | naive prediction | observed q_eff (gaussian / Gamma) |
+|---|---|---|
+| nested5 | 29 | **24.99 / 24.98** |
+| crossedslopes5 | 19 | **17.99 / 17.94** |
+
+**Why, in both cases -- the real mechanism is the *rank* of the design
+matrix you'd get treating every RE term as a saturated fixed effect,
+not a simple one-redundancy-per-term count:**
+
+- Nested: `Rail1`'s 5 dummy columns are each exactly reconstructible by
+  summing the `Rail1:Rail2` columns that fall inside them
+  (`Rail1_i = sum_j Rail1:Rail2_{i,j}`). `Rail1`'s whole block is
+  redundant with the finer nested term, not just "one direction" -- it
+  contributes **zero** extra rank beyond `Rail1:Rail2` (25 levels)
+  minus the one usual redundancy with the intercept:
+  `q_eff = 1 + (25-1) = 25`, matching observed ~24.99 almost exactly.
+  The outer level of a nested design costs nothing beyond the finest
+  level.
+- Crossed slopes: beyond the usual one redundancy per term's intercept
+  column (both sum to the shared fixed intercept), the two terms'
+  *slope* columns are also redundant with **each other**:
+  `sum(Rail1's x-slope columns) = x = sum(Rail2's x-slope columns)`,
+  even with no explicit fixed `x` term to blame it on -- the two
+  random-slope blocks are linearly dependent on each other directly.
+  One extra redundancy beyond the naive count: `20 - 2 = 18`, matching
+  observed ~17.94-17.99.
+
+**This mattered beyond the paramsurvey**: `computeQEff()`'s previous
+gate ("every RE term is scalar") would have let a nested model like
+`(1|school/class)` -- both terms scalar -- through to the naive formula
+and gotten a silently-wrong (too-large) `q_eff`. Real correctness gap
+in already-shipped (if experimental/opt-in) code, not just a
+paramsurvey curiosity.
+
+### Structural safety gate replaces the "all-scalar" gate (2026-08-07)
+
+Rather than a blanket "every term must be scalar" gate (which was both
+too conservative -- it blocked the now-validated single-random-slope
+case -- and not conservative enough -- it let nested models through to
+a formula known to be wrong for them), `R/modular.R` gained a new
+standalone `qEffUnsafeReason(reTrms)`: returns `NULL` if the naive
+formula is safe to apply, or a reason string otherwise. Two checks,
+directly targeting the two failure modes just found:
+
+1. **Nesting** between any pair of RE terms, via
+   `reformulas::isNested()` (a fast, already-existing check -- not
+   written new for this) on every pair of terms' grouping factors.
+2. **Shared slope covariates** across more than one multi-column term,
+   via `reTrms$cnms` (already lists every slope covariate per term;
+   just checking for a name duplicated across terms). A *single*
+   multi-column term (`K=1`) is unaffected by this check -- no second
+   term for its slope to be redundant with, and that case is validated
+   separately (spot-checked on `sleepstudy`, `(Days|Subject)`,
+   `disp_dof_correction=TRUE`: sigma ratio 1.1228 vs. predicted
+   `sqrt(n/(n-q))=1.1180` for `n=180, q=36`).
+
+`computeQEff()` now calls this once and only falls back (with a
+`warning()` naming the specific reason) when it fires -- otherwise
+applies the same `sum(q_k)-(K-1)` formula as before, now also correctly
+covering the single-random-slope-term case that the old gate
+incorrectly blocked.
+
+**Not checked** (no paramsurvey case yet, but consistent with the same
+rank argument and left enabled rather than blocked): a mix of scalar
+and multi-column terms where the multi-column term's slope covariate
+isn't shared with any other term, e.g. `(1+x|Rail1)+(1|Rail2)`.
+
+**Deliberately not attempted in this pass**: a fully general numerical
+rank computation (which would catch redundancy patterns beyond these
+two known ones, without needing them enumerated by hand) -- see TODO.
+The two structural checks here are cheap (`O(n)`/`O(q)` factor-level
+bookkeeping, no linear algebra) but only catch what they're explicitly
+checking for.
+
+### Replaced by a real rank computation -- structural gate retired (2026-08-07)
+
+The TODO item above ("what if some other redundancy pattern shows up
+that neither structural check catches?") turned out to be answerable
+directly, and cheaply. `computeQEff()` no longer uses the naive
+`sum(q_k)-(K-1)` formula plus a hand-maintained list of known-bad
+structures at all -- it computes `q_eff` as the actual rank of the
+combined "saturated" design `[X, Z]` (fixed-effect columns plus every
+random-effects term's raw dummy/product columns, exactly the classical
+`RSS/(n-p)` logic generalized to whatever redundancy the random effects
+happen to have), via `Matrix::rankMatrix(cbind(X, t(Zt)), method =
+"qr")`. `qEffUnsafeReason()` and the whole structural-detection gate
+above are gone -- nesting and shared-slope-covariates aren't special
+cases to detect anymore, they just fall out of the rank computation
+like any other redundancy would.
+
+**Why `method = "qr"` specifically**: `rankMatrix()`'s default method
+(`"tolNorm2"`) calls `svd(x, 0, 0)` internally, which has no sparse
+path and silently densifies (with an explicit warning past a size
+threshold: `"rankMatrix(<large sparse Matrix>, ...) coerces to dense
+matrix"`). `method="qr"` calls `qr(x, ...)` directly, which *does*
+dispatch to a real sparse QR for `Matrix` sparse classes, confirmed via
+direct comparison at `q=1000` (two 500-level crossed factors, `n=5000`):
+`method="qr"` took 0.72s and stayed sparse; the default method took
+3.96s after densifying. 0.72s is already *less* than that model's own
+fit time (0.83s) -- and the rank only needs computing once per fit (the
+design's rank doesn't depend on theta/phi/beta, unlike everything else
+`profilePhi()` iterates on), so in context it's a rounding error. At
+the much smaller paramsurvey scale (`n<=108`) the rank computation cost
+was consistently under 0.1% of the corresponding fit's own time.
+
+**Verified against every case already in this document**: the rank
+computation reproduces `structured5`'s `q_eff~9`, `nested5`'s `~25`,
+and `crossedslopes5`'s `~18` exactly (computed once from the actual
+design matrices, not re-run through the full B=10 paramsurvey sweep --
+this is a direct structural check, not a new simulation study). Spot-
+checked live on `glmer()` fits too (Gamma family): the nested and
+crossed-slopes-sharing-`x` cases above, which the structural gate used
+to decline with a warning, now get a real correction applied
+automatically, with observed/predicted sigma ratios close (nested:
+1.234 observed vs. 1.225 predicted; crossed-slopes: 1.149 vs. 1.147 --
+single-dataset spot checks, not averaged, so not expected to match to
+the same precision as the B=10 paramsurvey numbers elsewhere in this
+doc). Full test suite re-run clean after this change
+(`LME4_TEST_LEVEL=2`).
