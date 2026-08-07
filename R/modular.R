@@ -823,11 +823,47 @@ glFormula <- function(formula, data=NULL, family = gaussian,
 ##' a genuine sparse QR; the default `rankMatrix()` method
 ##' (`"tolNorm2"`, via `svd()`) silently densifies for sparse input and
 ##' scales far worse.
+##'
+##' Only meaningful for free-dispersion families -- profilePhi()
+##' (external.cpp) only ever applies qEff when hasFreeDispersion() is
+##' true, so for fixed-dispersion families (binomial, Poisson,
+##' negative.binomial) the result would never be used at all. Gated
+##' here via hasNoScale(family) (same check mkMerMod() already uses)
+##' rather than computing it and throwing it away -- not just for
+##' efficiency: for a model with as many random-effects columns as
+##' observations (e.g. an observation-level random effect used to model
+##' overdispersion in a Poisson GLMM), the rank computation itself can
+##' be expensive or fail outright (observed: sparse QR out-of-memory at
+##' q ~ 50000) for a family where the answer was always going to be
+##' discarded.
 ##' @noRd
-computeQEff <- function(X, reTrms, enable) {
-    if (!isTRUE(enable)) return(NA_real_)
+computeQEff <- function(X, reTrms, enable, family) {
+    if (!isTRUE(enable) || hasNoScale(family)) return(NA_real_)
     full <- cbind(X, t(reTrms$Zt))
-    unname(rankMatrix(full, method = "qr")[1])
+    ## Matrix::qr() warns ("matrix is structurally rank deficient; using
+    ## augmented matrix..." / "computing t(x) as nrow(x) < ncol(x)")
+    ## whenever [X,Z] is rank-deficient or wider than it is tall -- both
+    ## routine here (nested terms, shared-covariate random slopes, or
+    ## any other redundancy computeQEff() exists to detect in the first
+    ## place; or a model with more random-effects columns than
+    ## observations), not something the caller needs to see.
+    ##
+    ## For very large q (e.g. an observation-level random effect, one
+    ## level per row) the sparse QR itself can fail outright (observed:
+    ## "QR factorization of .gCMatrix failed: out of memory" at
+    ## q ~ 50000) rather than just being slow. Rather than guess a safe
+    ## size cutoff, just catch any failure and fall back to no
+    ## correction -- the same safe default as when disp_dof_correction
+    ## is off entirely.
+    qEff <- tryCatch(
+        unname(suppressWarnings(rankMatrix(full, method = "qr"))[1]),
+        error = function(e) {
+            warning("glmerControl(disp_dof_correction=TRUE): computing the ",
+                    "degrees-of-freedom correction failed (", conditionMessage(e),
+                    "); proceeding without it.")
+            NA_real_
+        })
+    qEff
 }
 
 ##' @rdname modular
@@ -845,7 +881,7 @@ mkGlmerDevfun <- function(fr, X, reTrms, family,
                          compDev = control$compDev,
                          dispProfile = identical(control$disp_method %||% "moment", "moment"),
                          maxPhiIter = as.integer(control$maxPhiIter %||% 100L),
-                         qEff = computeQEff(X, reTrms, control$disp_dof_correction %||% FALSE)),
+                         qEff = computeQEff(X, reTrms, control$disp_dof_correction %||% TRUE, family)),
                     parent = parent.frame())
     rho$pp <- do.call(merPredD$new,
                       c(reTrms[c("Zt","theta","Lambdat","Lind")],

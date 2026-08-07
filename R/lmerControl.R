@@ -197,7 +197,7 @@ formals(glmerControl) <- c(formals(glmerControl),
                                 check.response.not.const="stop",
                                 disp_method = c("moment", "old/buggy"),
                                 maxPhiIter = 100L,
-                                disp_dof_correction = FALSE)
+                                disp_dof_correction = TRUE)
                            )
 
 ##' @rdname lmerControl

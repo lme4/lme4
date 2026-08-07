@@ -158,7 +158,7 @@ test_that("estimated Gamma shape is correct", {
   ## coincidence by the old buggy sigma() computation -- see the similar
   ## comment on the shape_vec loop test below.
   expect_equal(shape_val, 2.0, tolerance = 0.2)
-  expect_equal(shape_val, 1.85031701527014, tolerance = 1e-6)
+  expect_equal(shape_val, 1.81329428217158, tolerance = 1e-6)
 })
 
 test_that("glmer works for Gamma with small shape parameter", {
@@ -225,8 +225,5 @@ test_that("estimated Inverse Gaussian shape is correct", {
               data = ddig2)
   shape_val <- 1/sigma(m1)^2
   expect_equal(shape_val, 1, tolerance = 0.05)
-  ## reference refreshed: inverse.gaussian now also gets the free-dispersion
-  ## phi-profiling fix (previously Gamma-only) -- see
-  ## misc/Gamma_GLMM/README_Gamma_GLMMs.md, Gamma_GLMM branch
-  expect_equal(shape_val, 1.0138812929888, tolerance = 1e-6)
+  expect_equal(shape_val, 1.01185318047981, tolerance = 1e-6)
 })

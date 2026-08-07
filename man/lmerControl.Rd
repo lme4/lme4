@@ -86,7 +86,7 @@ glmerControl(optimizer = c("bobyqa", "Nelder_Mead"),
     check.response.not.const = "stop",
     disp_method = c("moment", "old/buggy"),
     maxPhiIter = 100L,
-    disp_dof_correction = FALSE
+    disp_dof_correction = TRUE
  )
 
 nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
@@ -187,12 +187,10 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
   \item{disp_dof_correction}{(GLMMs only) logical - for free-dispersion
     families, apply a degrees-of-freedom correction to the
     \code{disp_method="moment"} estimator (\code{deviance/(n-q)} instead
-    of \code{deviance/n}, where \code{q} accounts for the random-effects
-    levels used up in estimation) when every random-effects term is a
-    scalar random intercept. Experimental; \code{FALSE} by default. Has
-    no effect (and warns) if any random-effects term has more than one
-    column (random slopes, correlated blocks) -- untested territory for
-    this correction.}
+    of \code{deviance/n}), where \code{q} is the rank of the combined
+    fixed-and-random-effects (\code{X} and \code{Z}) model matrix.
+    \code{TRUE} by default; set to \code{FALSE} to reproduce the older,
+    uncorrected behaviour.}
   \item{check.nlev.gtreq.5}{character - rules for
     checking whether all random effects have >= 5 levels.
     See \code{action}.}

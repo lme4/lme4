@@ -335,12 +335,13 @@ if(FALSE) { ## Hadley broke this
                  mustart=pmax(dd$y,0.1))
     
     msum <- c(fixef(g1),unlist(c(VarCorr(g1))),c(logLik(g1)))
-    ## reference values refreshed after fixing sigma()'s dispersion
-    ## reporting for GLMMs with a free dispersion parameter (previously
-    ## Gamma-only; now also applies to gaussian fit via glmer(), as here)
-    ## -- see misc/Gamma_GLMM/README_Gamma_GLMMs.md, Gamma_GLMM branch
+    ## reference values refreshed after glmerControl(disp_dof_correction=)
+    ## defaulted to TRUE (rank-based degrees-of-freedom correction to
+    ## sigma() for free-dispersion GLMMs, GH #936) -- see
+    ## misc/Gamma_GLMM/README_Gamma_GLMMs.md, Gamma_GLMM branch
     expect_equal(msum,
-                 c(`(Intercept)` = 0.23512994, x = 1.0017413, f = 0.31648764, -157.73048),
+                 c(`(Intercept)` = 0.234996498342744, x = 1.00174252457886,
+                   f = 0.316754268570863, -157.152316029256),
                  tolerance=1e-5)
 
     ## GH 415
