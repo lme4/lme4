@@ -44,9 +44,8 @@
 }
 
 \source{
-  This data and most of this documentation was taken from the \CRANpkg{mixor} 
-  package, which is no longer from CRAN. The references below mostly reference 
-  the deprecated \CRANpkg{mixor} program.
+  This data set and most of this documentation was taken from the \CRANpkg{mixor} 
+  package.
 }
 \references{
   \itemize{
@@ -55,7 +54,9 @@
   }
 }
 \examples{
+\dontrun{
 schmod <- glmer(imps79 ~ TxDrug * Week + (1 | id),
                 data = schizophrenia, family = Gamma(link = "log"))
+}
 }
 \keyword{datasets}
