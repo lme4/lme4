@@ -507,7 +507,7 @@ or, on the deviance scale,
     \|\tilde{\bm u}\|^2 + \log(|\bm L|^2)+\frac{q}{2}\log(2\pi)
 \end{equation}
 
-The Laplace approximation normally conditions on both the fixed effects $\beta$ and the variance-covariance parameters $\theta$. A further approximation, which is denoted in \code{glmer} by \code{nAGQ=0}, profiles out the fixed effects by minimizing with respect to $\bm\beta$ and $\bm u$ simultaneously in the PIRLS algorithm (i.e., replacing $\bm u$ with $(\bm \beta \; \bm u)$ and $\bm Z \bm \Lambda$ with $(\bm X | \bm Z \bm \Lambda)$ throughout, except with the penalty term still applying only to $\bm u$). This approximation is exact when (1) $\partial(\log L)/\partial \beta$ is a linear function of the conditional modes $\bm u$ and (2) when the conditional mode is equal to the conditional mean (typically, although not necessarily, implying a symmetric conditional distribution). Both assumptions hold for linear mixed models (although a Laplace approximation is not necessary there), consistent with \cite{bates2015fitting} showing that the fixed effects can be profiled out of the log-likelihood for LMMs. The Julia \code{MixedModels.jl} package offers the same approximation as the \code{fast} argument to the \code{pirls!} function (\url{https://juliastats.org/MixedModels.jl/stable/optimization/}); Template Model Builder \citep{kristensenTMB2016}, and downstream packages such as \code{glmmTMB}, provide this function via a \code{profile} argument.
+The Laplace approximation normally conditions on both the fixed effects $\bm\beta$ and the variance-covariance parameters $\bm\theta$. A further approximation, which is denoted in \code{glmer} by \code{nAGQ=0}, profiles out the fixed effects by minimizing with respect to $\bm\beta$ and $\bm u$ simultaneously in the PIRLS algorithm (i.e., replacing $\bm u$ with $(\bm \beta \; \bm u)$ and $\bm Z \bm \Lambda$ with $(\bm X | \bm Z \bm \Lambda)$ throughout, except with the penalty term still applying only to $\bm u$). This approximation is exact when (1) $\partial(\log L)/\partial \beta$ is a linear function of the conditional modes $\bm u$ and (2) when the conditional mode is equal to the conditional mean (typically, although not necessarily, implying a symmetric conditional distribution). Both assumptions hold for linear mixed models (although a Laplace approximation is not necessary there), consistent with \cite{bates2015fitting} showing that the fixed effects can be profiled out of the log-likelihood for LMMs. The Julia \code{MixedModels.jl} package offers the same approximation as the \code{fast} argument to the \code{pirls!} function (\url{https://juliastats.org/MixedModels.jl/stable/optimization/}); Template Model Builder \citep{kristensenTMB2016}, and downstream packages such as \code{glmmTMB}, provide this function via a \code{profile} argument.
 
 By default, \code{glmer} uses a two-stage optimization procedure (described below) with \code{nAGQ=0} in the first stage; users can also specify \code{nAGQ=0} for faster, approximate model fits.
 
@@ -533,8 +533,8 @@ $\mc U=\bm u$, the conditional densities of the $u_j,j=1,\dots,q$
 given $\mc Y=\bm y$ are independent.  We partition the indices
 $1,\dots,n$ as $\mathbb{I}_j,j=1,\dots,q$ according to the levels of
 $\bm h$.  That is, the index $i$ is in $\mathbb{I}_j$ if $h_i=j$.
-This partitioning also applies to the deviance residuals in that
-the $i$th deviance residual depends only on $u_j$ when $i\in\mathbb{I}_j$.
+This partitioning also applies to the unit deviances in that
+the $i$th unit deviance depends only on $u_j$ when $i\in\mathbb{I}_j$.
 
 Writing the univariate conditional densities as
 \begin{equation}
@@ -760,7 +760,7 @@ shows $t(z)$ for each of the unidimensional integrals in the
 likelihood for the model \code{m1} at the parameter estimates.
 While this view shows the deficiency of the Laplace approximation
 (deviation from a horizontal reference line at $z=1$) clearly,
-The AGQ(3) approximation fits extremely well over the range shown.
+the AGQ(3) approximation fits extremely well over the range shown.
 The tails of the polynomials implied by the AGQ approximation
 can fluctuate widely, but these fluctuations are suppressed by
 multiplying by the thin tails of the Gaussian distribution (so that
@@ -967,9 +967,9 @@ number and using \code{update()} on the previous model (we switch the optimizer 
 <<cbppModelII, message=FALSE>>=
 cbpp2 <- transform(cbpp2,obs=factor(seq(nrow(cbpp2))))
 bob_opt <- glmerControl(optimizer = "bobyqa")
-## herd and observation-level REs
-gm2 <- update(gm1,.~.+(1|obs), control = bob_opt)  
 ## observation-level REs only
+gm2 <- update(gm1,.~.+(1|obs), control = bob_opt)  
+## herd and observation-level REs
 gm3 <- update(gm1,.~.-(1|herd)+(1|obs))  
 @
 
@@ -1127,7 +1127,7 @@ philosophy of model-building \citep{barrRandomEffectsStructure2013,matuschekBala
 One might either stick with the full model, or continue
 with the reduced model with observation-level random effects
 only (as it has exactly the same likelihood as the full
-model but uses an additional parameter, it would be chosen
+model but uses one fewer parameter, it would be chosen
 according to either an information-theoretic or a
 hypothesis-testing model selection framework).
 
@@ -1480,7 +1480,7 @@ combCI <- transform(contr_combCI,
 ggplot(combCI, aes(var, est, colour=type, shape=model)) +
   geom_pointrange(aes(ymin=lwr, ymax=upr),
                   position=position_dodge(width=0.6)) +
-  labs(x="", y="Estimate (log-odds of seropositivity)") +
+  labs(x="", y="Estimate (log-odds of contraception use)") +
   geom_hline(yintercept=0, lty=2) +
   coord_flip() +
   scale_colour_brewer(palette="Dark2", guide = revguide) +
@@ -1512,11 +1512,11 @@ cm.homdiag <- glmer(update(base_form, . ~ . + diag(1 + urban|district, hom = TRU
 cm.homcs <- glmer(update(base_form, . ~ . + cs(1 + urban|district, hom = TRUE)), Contraception, binomial, control = cc)
 @
 
-For example, the compound symmetric model is fitted as follows:
+For example, the compound symmetric model is fitted as follows (we suppress some warnings here; we discuss troubleshooting in the next section).
 
-<<cm_cs, message = FALSE>>=
+<<cm_cs, message = FALSE, warning = FALSE>>=
 cm.cs <- glmer(use ~ age*ch + I(age^2) + urban + cs(1 + urban | district),
-               Contraception, binomial, control = cc)
+               Contraception, binomial)
 @
 
 We can use \code{VarCorr} and other accessor methods as we would for models with default, unstructured covariance matrices, e.g.:
@@ -1532,7 +1532,7 @@ We close with a short discussion of some of the issues that can arise when fitti
 
 \subsection{Singular fits}
 
-\emph{Singular fits} describe the case where one or more of the estimated variance-covariance matrices of a model are only semi-positive-definite, i.e. some variance components (or variances of linear combinations of latent variables) are effectively zero \bmb{better/less awkward/more correct way to say this?}.  (We say ``effectively zero'' because, due to the limitations of numerical optimization, the estimate is sometimes very small rather than exactly zero; the default tolerance for singularity checks is a value of $10^{-4}$ on the Cholesky-factor [standard deviation] scale.) For small covariance matrices ($1 \times 1$, for a scalar random effect, or $2 \times 2$, for a random-slope model) singular fits are immediately clear, i.e. one or both variances (diagonal elements of the covariance matrix) are nearly zero, or the correlation is near $\pm 1$. However, it is often impossible to see at a glance that larger covariance matrices are singular. \pkg{lme4}'s automatic singularity tests (which print a message if they detect a singular covariance matrix), and the \code{rePCA} function (which computes the eigenvalues and eigenvectors of the covariance matrices) can both help in diagnosing which components are causing singularity \citep{batesParsimoniousMixedModels2015b}.
+\emph{Singular fits} describe the case where one or more of the estimated variance-covariance matrices of a model are only semi-positive-definite, i.e. some variance components (or variances of linear combinations of latent variables) are effectively zero. (We say ``effectively zero'' because, due to the limitations of numerical optimization, the estimate is sometimes very small rather than exactly zero; the default tolerance for singularity checks is a value of $10^{-4}$ on the Cholesky-factor [standard deviation] scale.) For small covariance matrices ($1 \times 1$, for a scalar random effect, or $2 \times 2$, for a random-slope model) singular fits are immediately clear, i.e. one or both variances (diagonal elements of the covariance matrix) are nearly zero, or the correlation is near $\pm 1$. However, it is often impossible to see at a glance that larger covariance matrices are singular. \pkg{lme4}'s automatic singularity tests (which print a message if they detect a singular covariance matrix), and the \code{rePCA} function (which computes the eigenvalues and eigenvectors of the covariance matrices) can both help in diagnosing which components are causing singularity \citep{batesParsimoniousMixedModels2015b}.
 
 While a singular fit suggests that a model is overparameterized, it does not represent a fitting error --- the model is still theoretically sound, although some approaches that depend on the likelihood surface being locally log-quadratic at the MLE (such as computing Wald intervals) are no longer valid. There is no universally accepted strategy for handling singular fits:
 \begin{itemize}
@@ -1569,7 +1569,7 @@ Either to resolve singularity and convergence issues, or to optimize the bias-va
 complex models, researchers often want to find a simpler model than the \emph{maximal model} (i.e., the model that contains
 all random effects that are identifiable under a given experimental or observational design: \cite{barrRandomEffectsStructure2013}).
 Such model selection may be desirable and is often necessary, but there is no consensus on the most appropriate strategy.
-A good strategy would identify a model that can feasibly fitted with the available data, and ideally maximize power and
+A good strategy would identify a model that can feasibly be fitted with the available data, and ideally maximize power and
 precision of estimates, while respecting the inherent danger of data-driven model selection \citep{chatfieldModel1995}.
 
 %% http://talklab.psy.gla.ac.uk/simgen/simgen_1.54.tar.gz
@@ -1585,7 +1585,7 @@ precision of estimates, while respecting the inherent danger of data-driven mode
   (with $\alpha = 0.2$), using a sequence which first sets correlations to zero, then drops random slopes one at a time.  \cite{batesParsimoniousMixedModels2015b} suggest an approach that first drops correlations, then drops singular or non-significant variance terms (which are easier to identify in a model with a diagonal covariance matrix), then adds correlations back to the resulting lower-dimensional covariance matrices to check for model improvement.
 \item \cite{scandola2024} suggest \emph{complex random intercepts}, which are compound-symmetric models implemented by nesting terms; e.g. simplifying the unstructured covariance model \code{(1+f|g)} to \code{(1|g/f)}; this is equivalent to \code{cs(0+f|g, hom=TRUE)}, with the correlation parameter constrained to be positive.
 \item for a model with three grouping variables, \cite{moritzRoleFireTerrestrial2023} fitted three possibilities at each grouping level (intercept-only, diagonal, or unstructured); from the resulting $3^3=27$ models that were non-singular, they chose the minimum-AIC model.
-\item The R packages (\pkg{cAIC4}, \pkg{buildmer}, \pkg{glmmsel}) implement various model selection strategies.
+\item The R packages \pkg{cAIC4}, \pkg{buildmer}, and \pkg{glmmsel} implement various model selection strategies.
 \end{itemize}
 
 While these approaches have been tested on simulated data and illustrated in case studies, there is little if any theory
@@ -1601,8 +1601,6 @@ cfun <- function(n) {
   3*(2^n - ((n^2 + n)/2 + 1)) + n*(n-1)/2 + n
 }
 @
-
-\bmb{comment on use of finite-difference or RX-based Hessian for standard errors of parameters?}
 
 \section*{Acknowledgements}
 
