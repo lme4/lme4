@@ -217,7 +217,7 @@ For the Poisson distribution the unit deviance function is
   \end{cases}
 \end{equation}
 where $w_i$ is an optional prior case weight.
-For simplicity we generally neglect the prior weights and write $d(y_i, u_i)$ below.
+For simplicity we generally neglect the prior weights and write $d(y_i, \mu_i)$ below.
 
 Minimizing the sum of the squared residuals in a linear model (i.e. finding the \emph{least squares} estimates
 $\widehat{\bm\beta}$ for an LM) can be performed as a direct (i.e. non-iterative) calculation.
@@ -324,7 +324,7 @@ The conditional mode, which minimizes the \emph{penalized sum of unit deviances}
 \end{equation}
 is determined by penalized iteratively reweighted least squares (PIRLS)
 (we use $\sigma^2$ for the dispersion here rather than $\phi$, more common in GLM treatments, because
-we use $\bm\phi$ for the cumulant functions in Appendix~\ref{sec:pirls-app}).
+we use $\bm\phi$ to denote cumulant functions in Appendix~\ref{sec:pirls-app}).
 
 In the case of an LMM, minimizing the PSSR provided the value of the integral defining the likelihood of
 the parameters, given the observed response, $\mc Y=\bm y$. 
@@ -365,8 +365,8 @@ To summarize:
   profiled log-likelihood becomes a function of $\bm\theta$ only, as discussed below.
   This approximation can save computation time for large problems.
 \item For models with an estimated dispersion parameter, we estimate $\sigma^2$ (both in step 4 above and for
-  the final fitted model) as $\sum_{i=1}^n d(y_i,\mu_i)/(n-\qeff)$, where $n$ is the number of observations and $\qeff$ is the
-  rank of the combined (concatenated) $\bm X$ and $\bm Z$ matrices.
+  the final fitted model) as $\sum_{i=1}^n d(y_i,\mu_i)/(n-\qeff)$, where $n$ is the number of observations and $\qeff$ is the rank of the combined (concatenated) $\bm X$ and $\bm Z$ matrices. (Such models require an additional outer loop around the algorithm described here; see \S\ref{sec:nested-pirls-loop}.)
+  
 \end{enumerate}
 
 \subsection{Determining the conditional mode}
@@ -405,8 +405,6 @@ For the \emph{penalized iteratively reweighted least squares} (PIRLS) algorithm 
 $\bm u^{(k+1)}$ from $\bm u^{(k)}$ it is easiest to use the working response because the penalty
 is defined as $\|\bm u^{(k+1)}\|^2$ so the penalized weighted least squares calculation should be
 in terms of $\bm u$.
-
-\bmb{need to add the point about incorporating dispersion (from GH643/Gamma\_GLMM branch)}
 
 In more detail, the PIRLS algorithm has the form
 \begin{enumerate}
@@ -803,7 +801,7 @@ a widely used data set on toenail onychomycosis \citep{debacker+1998}, which has
 average of about 6.5 binary observations (``moderate or severe'' vs ``none or mild'' disease) per patient --- represents
 an example where Gauss-Hermite quadrature is necessary for reliable results. In this case the
 conditional densities depart much more clearly from the standard normal (Figure~\ref{fig:toenailplot}; note the scale of the
-density ratios goes from 0 to 10, in contrast the maximum of 4 in Figure~\ref{fig:tfunc}).
+density ratios goes from 0 to 10, in contrast to the maximum of 4 in Figure~\ref{fig:tfunc}).
 \cite{stringerAsymptoticsNumericalIntegration2022} and \cite{stringerExactGradientEvaluation2024} further explore the limitations of Laplace approximation.
 %% from Alex S.: The "Stringer A, Bilodeau B, Tang Y (2022)” paper was accepted in March 2025: Bilodeau, B., Stringer, A., and Tang, Y. (2026). Asymptotics of adaptive quadrature for two-level mixed models. Bernoulli (forthcoming). It is scheduled to be published quite soon I believe.
 
@@ -1534,7 +1532,7 @@ print(VarCorr(cm.cs))
 \section{Troubleshooting}
 \label{sec:troubleshooting}
 
-We close with a short discussion of some of the issues that can arise when fitting mixed models. These issues are not specific to GLMMs, although are more common because GLMMs are often more computationally challenging than similarly complex LMMs.
+We close with a short discussion of some of the issues that can arise when fitting mixed models. These issues are not specific to GLMMs, although they are more common because GLMMs are often more computationally challenging than similarly complex LMMs.
 
 \subsection{Singular fits}
 
@@ -1543,7 +1541,7 @@ We close with a short discussion of some of the issues that can arise when fitti
 While a singular fit suggests that a model is overparameterized, it does not represent a fitting error --- the model is still theoretically sound, although some approaches that depend on the likelihood surface being locally log-quadratic at the MLE (such as computing Wald intervals) are no longer valid. There is no universally accepted strategy for handling singular fits:
 \begin{itemize}
 \item removing a scalar random effect whose variance is estimated as (near) zero has no effect on (RE)ML estimates (removing the term is equivalent to setting its variance to zero, which the model has already done). However, it will narrow confidence intervals based on likelihood profiling or parametric bootstrapping.
-\item one can attempt to simplify vector-valued random effects in several ways to try to make them non-singular, rather than removing them entirely (see \ref{sec:modelbuilding} below)
+\item one can attempt to simplify vector-valued random effects in several ways to try to make them non-singular, rather than removing them entirely (see \S\ref{sec:modelbuilding} below)
 \item a regularizing prior as in \cite{chungNondegeneratePenalizedLikelihood2013} (as implemented in the \pkg{blme} package) can move the estimates for variances of scalar random effects, or covariance matrices of vector-valued random effects, away from the singular point. However, the effects of this approach on frequentist characteristics (e.g. bias or type~I error) have not been explored.
 \end{itemize}
 
@@ -1560,7 +1558,7 @@ in detecting poorly posed or numerically unstable models, we have opted to keep 
 Users can take several approaches to further evaluate the seriousness of problems indicated by a convergence warning:
 
 \begin{itemize}
-\item Center and scale continuous predictors to improve numerical stability (\code{[g]lmerControl(autoscale=TRUE)} will do this automatically, returning parameter estimates on the scale of the original predictors).
+\item Center and scale continuous predictors to improve numerical stability; the \code{autoscale=TRUE} option of \code{[g]lmerControl} will do this automatically, returning parameter estimates on the scale of the original predictors.
 \item Run \code{allFit} to determine how results vary among optimization methods. If some subset of optimization methods gives
   results that are sensible and sufficiently similar to each other, for the purposes of a particular analysis (e.g. fixed effects
   estimates are within 5\% of each other, if that is the focus of the current modelling exercise), then one can ignore the warning
@@ -1805,6 +1803,7 @@ the Hessian via $\bm R$, we have that
 Like base R's \code{glm}, \code{glmer} uses Fisher scoring throughout (which is identical to Newton's method for canonical links) to enable the use of the (P)IRLS algorithm. As usual, we minimize the conditional negative log-density rather than maximizing the conditional log-density.
 
 \subsection{Nested PIRLS loop for free-dispersion GLMMs}
+\label{sec:nested-pirls-loop}
 
 For GLMM families with free rather than fixed dispersion parameters (most often Gamma, but theoretically also inverse-Gaussian or Gaussian with a non-identity link; Gaussian, identity-link models are fitted with the simpler procedures for LMMs), the deviance depends on $\sigma^2$ as well as $\bm \beta$ and $\bm\theta$.  We embed the PIRLS loop described in Section~\ref{sec:conditionalMode} in an outer loop. At each iteration of the outer loop, we run the PIRLS algorithm from \S\ref{sec:conditionalMode} and then compute $\widehat{\sigma^2}=\sum_{i=1}^n d(y_i,\mu_i)/(n-\qeff)$ where, as mentioned earlier, $n$ is the number of observations and $\qeff$ is the rank of the combined (concatenated) $\bm X$ and $\bm Z$ matrices.
 To manage numerical instability in this loop, we compute the updated value of $\sigma^{2,(i)}$ as
@@ -1813,6 +1812,6 @@ $$
 $$
 The outer loop stops when $|\sigma^{2,(i-1)}-\widehat{\sigma^2}|/\sigma^{2,(i-1)}$ drops below a specified tolerance (currently set to $10^{-8}$).
 
-An alternative approach, which numerical explorations suggest would be both faster and more accurate than the method described here but would require more architectural changes to the code, would be to include $\sigma^2$ in the parameter vector for the outer, derivative-free optimization (i.e. optimizing over $\{\bm \theta, \bm \beta, \sigma^2\}$ rather than solely over $\{\bm \theta, \bm \beta\}$).
+An alternative approach, which numerical explorations suggest would be both faster and more accurate than the method described here but would require more architectural changes to the code, would be to include $\sigma^2$ in the parameter vector for the outer, derivative-free optimization (i.e. optimizing over $\{\bm \theta, \bm \beta, \sigma^2\}$ rather than solely over $\{\bm \theta, \bm \beta\}$); we plan to implement this improved approach in the future.
 
 \end{document}
