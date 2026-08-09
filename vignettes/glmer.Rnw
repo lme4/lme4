@@ -17,7 +17,8 @@
 \newcommand{\bbeta}{{\bm \beta}}
 \newcommand{\btheta}{{\bm \theta}}
 \newcommand{\bmb}[1]{{\color{blue} #1}}
-
+\newcommand{\normdist}{{\cal N}}
+\newcommand{\qeff}{q_{\textrm{eff}}}
 \DeclareUnicodeCharacter{0394}{$\Delta$}
 %
 \shortcites{lesnoff_within-herd_2004}
@@ -312,16 +313,18 @@ effects in the linear predictor, as in an LMM.
 The unconditional distribution of the random effects, $\mc B\sim\mc N(\bm 0, \bm\Sigma_{\bm\theta})$,
 and the definitions of the spherical random effects, $\mc U$, such that $\mc B=\bm\Lambda_{\bm\theta}\mc U$ where
 $\Lambda_{\bm\theta}\Lambda_{\bm\theta}\trans=\bm\Sigma$ are as in the LMM except that the scale parameter,
-$\sigma$, is not present in the most common GLMMs (binomial and Poisson families).
+$\sigma$, is fixed to 1 in the most common GLMMs (binomial and Poisson families).
 The mean of the conditional distribution, $\mc Y|\mc U=\bm u$, is the inverse link applied to the
 linear predictor $\bm\eta=\bm X\bm\beta+\bm Z\bm\Lambda_{\bm\theta}\bm u$.
 
 The conditional mode, which minimizes the \emph{penalized sum of unit deviances} (PSUD),
 \begin{equation}
   \label{eq:condmodeGLMM}
-  (\tilde{\bm u}|\mc Y=\bm y,\bm\theta,\bm\beta)=\argmin_{\bm u}\left[\sum_{i=1}^n d(y_i,\mu_i) + \|\bm u\|^2\right],
+  (\tilde{\bm u}|\mc Y=\bm y,\bm\theta,\bm\beta)=\argmin_{\bm u}\left[\sum_{i=1}^n d(y_i,\mu_i)/\sigma^2 + \|\bm u\|^2\right],
 \end{equation}
-is determined by penalized iteratively reweighted least squares (PIRLS).
+is determined by penalized iteratively reweighted least squares (PIRLS)
+(we use $\sigma^2$ for the dispersion here rather than $\phi$, more common in GLM treatments, because
+we use $\bm\phi$ for the cumulant functions in Appendix~\ref{sec:pirls-app}).
 
 In the case of an LMM, minimizing the PSSR provided the value of the integral defining the likelihood of
 the parameters, given the observed response, $\mc Y=\bm y$. 
@@ -350,9 +353,9 @@ To summarize:
   parameters, $\bm\beta$, and random effects, $\mc B\sim\mc N(\bm 0,\bm\Sigma_{\bm\theta})$.
 \item The parameters $\bm\theta$ determine a triangular relative covariance factor, $\bm\Lambda_{\bm\theta}$,
   such that $\bm\Sigma_{\bm\theta}=\bm\Lambda_{\bm\theta}\bm\Lambda_{\bm\theta}\trans$.
-  (A scale parameter, $\sigma$, is incorporated for families like the Gaussian that use one.)
+  In contrast to the LMM formulation above, we choose to fit GLMMs in terms of the \emph{unscaled} covariance.
 \item For given values of $\bm\beta$ and $\bm\theta$, the penalized sum of unit deviances (PSUD),
-  $\sum_{i=1}^n d(y_i,\mu_i)+\|\bm u\|^2$, is minimized with respect to $\bm u$ using PIRLS.
+  $\sum_{i=1}^n d(y_i,\mu_i)/\sigma^2+\|\bm u\|^2$, is minimized with respect to $\bm u$ using PIRLS.
 \item A local quadratic approximation to the PSUD at the conditional mode provides Laplace's approximation
   to the log-likelihood, which is minimized with respect to $\bm\beta$ and $\bm\theta$.
 \item In certain simple models adaptive Gauss-Hermite quadrature (aGHQ) can be used to
@@ -361,6 +364,9 @@ To summarize:
 \item If the PSUD is minimized with respect to $\bm u$ and $\bm\beta$ simultaneously then the approximate
   profiled log-likelihood becomes a function of $\bm\theta$ only, as discussed below.
   This approximation can save computation time for large problems.
+\item For models with an estimated dispersion parameter, we estimate $\sigma^2$ (both in step 4 above and for
+  the final fitted model) as $\sum_{i=1}^n d(y_i,\mu_i)/(n-\qeff)$, where $n$ is the number of observations and $\qeff$ is the
+  rank of the combined (concatenated) $\bm X$ and $\bm Z$ matrices.
 \end{enumerate}
 
 \subsection{Determining the conditional mode}
@@ -443,8 +449,8 @@ In more detail, the PIRLS algorithm has the form
 \item Evaluate $\bm u^{(1)}$ as the solution to the penalized, weighted least squares problem
   \begin{equation}
     \label{eq:PIRLSeqn}
-    \left(\bm \Lambda^\top\bm Z^\top\bm W^{(0)}\bm Z\bm\Lambda + \bm I\right)\bm u^{(1)}=
-    \bm\Lambda^\top\bm Z^\top \bm W^{(0)}\tilde{\bm y}^{(0)}
+    \left(\frac{1}{\sigma^2}\bm \Lambda^\top\bm Z^\top\bm W^{(0)}\bm Z\bm\Lambda + \bm I\right)\bm u^{(1)}=
+    \frac{1}{\sigma^2} \bm\Lambda^\top\bm Z^\top \bm W^{(0)}\tilde{\bm y}^{(0)}
   \end{equation} 
   using the sparse Cholesky factor, $\bm L_{\bm\beta,\bm\theta}^{(0)}$, defined by
   \begin{equation}
@@ -503,7 +509,7 @@ provides
 or, on the deviance scale,
 \begin{equation}
   \label{eq:LaplaceDev}
-  -2\ell(\bm\beta,\bm\theta|\bm y)\approx\sum_{i=1}^n d(y_i, \mu_i) +
+  -2\ell(\bm\beta,\bm\theta|\bm y)\approx\sum_{i=1}^n d(y_i, \mu_i)/\sigma^2 +
     \|\tilde{\bm u}\|^2 + \log(|\bm L|^2)+\frac{q}{2}\log(2\pi)
 \end{equation}
 
@@ -573,7 +579,7 @@ deviance.  We can assess the quality of this approximation by
 evaluating the unscaled conditional density at $u_j(z)=\tilde{u_j} +
 z/{\bm L_{j,j}}$ and comparing the ratio,
 $f_j(\bm y,u)/(\tilde{f_j}\sqrt{2\pi})$, to the standard normal
-density, $\phi(z)=e^{-z^2/2}/\sqrt{2\pi}$, as shown in Figure~\ref{fig:densities}.
+density, $\normdist(z)=e^{-z^2/2}/\sqrt{2\pi}$, as shown in Figure~\ref{fig:densities}.
 <<density-utils, echo = FALSE>>=
 zeta <- function(m, zmin=-3, zmax=3, npts=301L, rank = FALSE) {
     stopifnot (is(m, "glmerMod"),
@@ -719,12 +725,12 @@ provide a closer approximation to the integral.  Univariate
 Gauss-Hermite quadrature evaluates the integral of a function that is
 multiplied by a ``kernel'' where the kernel is a multiple of
 $e^{-z^2}$ or $e^{-z^2/2}$.  For statisticians the natural candidate
-is the standard normal density, $\phi(z)=e^{-z^2/2}/\sqrt(2\pi)$.
+is the standard normal density, $\normdist(z)=e^{-z^2/2}/\sqrt(2\pi)$.
 A $k$th-order Gauss-Hermite formula provides knots, $z_i,i=1,...,k$,
 and weights, $w_i,i=1,\dots,k$, such that
 \begin{equation}
   \label{eq:GHquad}
-  \int_{\mathbb{R}}t(z)\phi(z)\,dz\approx\sum_{i=1}^kw_it(z_i)
+  \int_{\mathbb{R}}t(z)\normdist(z)\,dz\approx\sum_{i=1}^kw_it(z_i)
 \end{equation}
 The function \code{GHrule} in \pkg{lme4} (based on code in the
 \pkg{SparseGrid} package) provides knots and weights relative to the
@@ -843,7 +849,7 @@ for AGQ for models with nested random effects.)
 
 \section{Model fitting}
 
-  Once we can calculate the deviance by PIRLS for specified values of $\btheta$ and $\bbeta$ (or only $\btheta$ if profiling out the fixed effects via \code{nAGQ=0}), we then estimate the parameters by nonlinear optimization. This procedure largely follows the description in \cite{bates2015fitting}, using derivative-free optimizers with box constraints to prevent non-positive-(semi)definite covariance matrices. Specifically, the elements of $\btheta$ corresponding to the diagonal of $\bm\Lambda_\theta$ are currently constrained to be non-negative.
+Once we can calculate the deviance by PIRLS for specified values of $\btheta$ and $\bbeta$ (or only $\btheta$ if profiling out the fixed effects via \code{nAGQ=0}), we then estimate the parameters by nonlinear optimization. This procedure largely follows the description in \cite{bates2015fitting}, using derivative-free optimizers with box constraints to prevent non-positive-(semi)definite covariance matrices. Specifically, the elements of $\btheta$ corresponding to the diagonal of $\bm\Lambda_\theta$ are currently constrained to be non-negative.
   
 The only difference is that by default \code{glmer} uses a two-step fitting procedure, using \code{nAGQ=0} at the first stage to get preliminary estimates which are then used as starting points for a second optimization with Laplace approximation or Gauss-Hermite quadrature as specified by the user. Different nonlinear optimizers can be used at each stage: the current default, as specified in \code{glmerControl}, is to use Powell's BOBYQA \citep{Powell_bobyqa} followed by a box-constrained variant of the Nelder-Mead simplex algorithm. For faster, approximate fitting, the second stage can be omitted; in the rare cases where the initial \code{nAGQ=0} fit gives poor results, the first stage can be skipped via \code{glmerControl(nAGQ0initStep = FALSE)}.
   
@@ -1620,6 +1626,7 @@ ppp <- paste(pp, collapse  = "; ")
 Compiled with \Sexpr{R.version.string} and package versions \Sexpr{pp}.
 
 \section{Appendix: derivation of PIRLS}
+\label{sec:pirls-app}
 
 We seek to maximize the unscaled conditional log density for a GLMM
 over the conditional modes, $\bm u$. This problem is very similar to
@@ -1634,9 +1641,9 @@ least squares (PIRLS).
 
 The unscaled conditional log-density takes the form,
 \begin{equation}
-  f(\bm u) = \log p(\bm y, \bm u | \bm\beta, \bm\theta) = 
-  \bm\psi^\top \bm A \bm y - 
-  \bm a^\top \bm \phi  + 
+  f(\bm u) = \log p(\bm y, \bm u | \bm\beta, \bm\theta) =
+  \frac{1}{\sigma^2}\left(\bm\psi^\top \bm A \bm y -
+  \bm a^\top \bm \phi\right)  +
   \bm c -
   \frac{1}{2}\bm u^\top \bm u -
   \frac{q}{2}\log{2\pi}
@@ -1646,8 +1653,13 @@ where $\bm\psi$ is the $n$-by-$1$ canonical parameter of an
 exponential family, $\bm\phi$ is the $n$-by-$1$ vector of cumulant
 functions, $\bm c$ an $n$-by-$1$ vector of normalizing constants, and
 $\bm A$ is an $n$-by-$n$ diagonal matrix of prior weights, $\bm
-a$. Both $\bm a$ and $\bm c$ could depend on a dispersion parameter,
-although we ignore this possibility for now.
+a$. $\bm c$ could also depend on the dispersion parameter, but since it does
+not depend on $\bm\mu$ (and hence not on $\bm u$) it is irrelevant to
+locating the conditional mode and we ignore it from here on. Because
+$\sigma^2$ does not depend on $\bm\mu$, $\bm\eta$, or $\bm u$ either, it
+passes through every derivative below unchanged; we omit writing it at each
+intermediate step and reintroduce it explicitly in the final gradient and
+Hessian expressions.
 
 The canonical parameter, $\bm\psi$, and vector of cumulant functions,
 $\bm\phi$, depend on a linear predictor,
@@ -1703,7 +1715,7 @@ Finally, because $\bm u$ affects $\bm\eta$ only linearly,
 Therefore we have,
 \begin{equation}
   \frac{d L(\bm\beta, \bm\theta | \bm y, \bm u)}{d \bm u} = 
-  (\bm y - \bm\mu)^\top \bm A
+  \frac{1}{\sigma^2} (\bm y - \bm\mu)^\top \bm A
   \bm V^{-1}
   \bm M
   \bm Z \bm\Lambda_\theta -
@@ -1750,7 +1762,7 @@ The Hessian can therefore be expressed as,
 \label{eq:betaHessian}
 \end{equation}
 This result can be simplified by expressing it in terms of a weighted
-random-effects design matrix, $\bm U = \bm A^{1/2}\bm V^{-1/2}\bm M
+random-effects design matrix, $\bm U = \sigma^{-1} \bm A^{1/2}\bm V^{-1/2}\bm M
 \bm Z \bm\Lambda_\theta$,
 \begin{equation}
   \frac{d^2 L(\bm\beta, \bm\theta | \bm y, \bm u)}{d \bm u \, d \bm u} = 
@@ -1791,5 +1803,16 @@ the Hessian via $\bm R$, we have that
 \end{equation}
 
 Like base R's \code{glm}, \code{glmer} uses Fisher scoring throughout (which is identical to Newton's method for canonical links) to enable the use of the (P)IRLS algorithm. As usual, we minimize the conditional negative log-density rather than maximizing the conditional log-density.
+
+\subsection{Nested PIRLS loop for free-dispersion GLMMs}
+
+For GLMM families with free rather than fixed dispersion parameters (most often Gamma, but theoretically also inverse-Gaussian or Gaussian with a non-identity link; Gaussian, identity-link models are fitted with the simpler procedures for LMMs), the deviance depends on $\sigma^2$ as well as $\bm \beta$ and $\bm\theta$.  We embed the PIRLS loop described in Section~\ref{sec:conditionalMode} in an outer loop. At each iteration of the outer loop, we run the PIRLS algorithm from \S\ref{sec:conditionalMode} and then compute $\widehat{\sigma^2}=\sum_{i=1}^n d(y_i,\mu_i)/(n-\qeff)$ where, as mentioned earlier, $n$ is the number of observations and $\qeff$ is the rank of the combined (concatenated) $\bm X$ and $\bm Z$ matrices.
+To manage numerical instability in this loop, we compute the updated value of $\sigma^{2,(i)}$ as
+$$
+\exp\left(0.9 \log\left(\sigma^{2,(i-1)}\right) + 0.1 \log\left(\widehat{\sigma^2} \right) \right).
+$$
+The outer loop stops when $|\sigma^{2,(i-1)}-\widehat{\sigma^2}|/\sigma^{2,(i-1)}$ drops below a specified tolerance (currently set to $10^{-8}$).
+
+An alternative approach, which numerical explorations suggest would be both faster and more accurate than the method described here but would require more architectural changes to the code, would be to include $\sigma^2$ in the parameter vector for the outer, derivative-free optimization (i.e. optimizing over $\{\bm \theta, \bm \beta, \sigma^2\}$ rather than solely over $\{\bm \theta, \bm \beta\}$).
 
 \end{document}
