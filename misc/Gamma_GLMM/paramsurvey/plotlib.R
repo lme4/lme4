@@ -124,6 +124,15 @@ make_plot_pointrange <- function(sim, results_list, title, method_levels, method
           panel.grid.major.x = element_blank(), strip.text.y.right = element_text(angle = 0))
 }
 
+combine_and_save <- function(plot_list, outfile, width_per_example, height = 9, dpi = 130) {
+  combined <- Reduce(`|`, plot_list) + plot_layout(guides = "collect") &
+    theme(legend.position = "bottom")
+  ggsave(outfile, combined, width = width_per_example * length(plot_list), height = height,
+         dpi = dpi, limitsize = FALSE)
+  cat("saved to", outfile, "\n")
+  outfile
+}
+
 load_results <- function(wd, example, methods) {
   sim <- readRDS(file.path(wd, paste0(example, "_simdata.rds")))
   results_list <- setNames(lapply(methods, function(m) {
@@ -223,11 +232,7 @@ make_summary_plots <- function(examples, methods,
     make_plot(data_list[[ex]]$sim, data_list[[ex]]$results, dataset_labels[[ex]],
               methods, method_labels, palette, show_ylab = (k == 1))
   })
-  combined <- Reduce(`|`, plots) + plot_layout(guides = "collect") &
-    theme(legend.position = "bottom")
-  outfile <- file.path(wd, paste0(out_prefix, "param_summary_distrib.png"))
-  ggsave(outfile, combined, width = 4.2 * length(examples), height = 9, dpi = 130, limitsize = FALSE)
-  cat("saved to", outfile, "\n")
+  outfile <- combine_and_save(plots, file.path(wd, paste0(out_prefix, "param_summary_distrib.png")), 4.2)
 
   ## ---- mean +/- 2SE version ----
   plots_pr <- lapply(seq_along(examples), function(k) {
@@ -235,11 +240,7 @@ make_summary_plots <- function(examples, methods,
     make_plot_pointrange(data_list[[ex]]$sim, data_list[[ex]]$results, dataset_labels[[ex]],
                           methods, method_labels, palette, show_ylab = (k == 1))
   })
-  combined_pr <- Reduce(`|`, plots_pr) + plot_layout(guides = "collect") &
-    theme(legend.position = "bottom")
-  outfile_pr <- file.path(wd, paste0(out_prefix, "param_summary_stderr.png"))
-  ggsave(outfile_pr, combined_pr, width = 3.2 * length(examples), height = 9, dpi = 130, limitsize = FALSE)
-  cat("saved to", outfile_pr, "\n")
+  outfile_pr <- combine_and_save(plots_pr, file.path(wd, paste0(out_prefix, "param_summary_stderr.png")), 3.2)
 
   ## ---- elapsed time + paired Delta(-2*logLik) vs negll_ref_method ----
   long_time <- do.call(rbind, lapply(examples, function(ex) {
@@ -300,4 +301,32 @@ make_summary_plots <- function(examples, methods,
   cat("saved to", outfile2, "\n")
 
   invisible(list(distrib = outfile, stderr = outfile_pr, time_negll = outfile2))
+}
+
+#' Build and save just the mean +/- 2SE pointrange plot (no distrib/
+#' time-negll companions) for an arbitrary method/dataset/output-file
+#' combo -- for one-off subset comparisons, e.g. 08_summary_plots.R's
+#' "_newonly" plot that drops PIRLS/fixed-phi (CRAN)/lme4 2.0-6 from the
+#' full six-method set without needing a whole separate
+#' make_summary_plots() call (and its two other, redundant PNGs).
+make_stderr_plot <- function(examples, methods, outfile,
+                              wd = here::here("misc/Gamma_GLMM/paramsurvey"),
+                              dataset_labels = NULL) {
+  stopifnot(all(methods %in% names(.method_registry)))
+  method_labels <- .method_registry[methods]
+  palette <- setNames(.method_palette[methods], method_labels)
+
+  if (is.null(dataset_labels)) {
+    dataset_labels <- ifelse(examples %in% names(.dataset_label_registry),
+                              .dataset_label_registry[examples], examples)
+    names(dataset_labels) <- examples
+  }
+
+  data_list <- setNames(lapply(examples, load_results, wd = wd, methods = methods), examples)
+  plots_pr <- lapply(seq_along(examples), function(k) {
+    ex <- examples[k]
+    make_plot_pointrange(data_list[[ex]]$sim, data_list[[ex]]$results, dataset_labels[[ex]],
+                          methods, method_labels, palette, show_ylab = (k == 1))
+  })
+  combine_and_save(plots_pr, outfile, 3.2)
 }

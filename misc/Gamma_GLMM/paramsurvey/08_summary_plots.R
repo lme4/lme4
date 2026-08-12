@@ -15,6 +15,21 @@ make_summary_plots(
   methods  = c("glmmTMB", "jointphi", "pirlsdigamma", "pirlsmoment", "lme4current", "lme4old"),
   negll_ref_method = "glmmTMB",
   negll_diff_exclude = "lme4old",
-  negll_diff_outliers = data.frame(example = "epil2_simple", method = "jointphi", threshold = 300),
+  negll_diff_outliers = rbind(
+    data.frame(example = "epil2_simple", method = "jointphi", threshold = 300),
+    ## replicate 417: non-convergence (singular Hessian warning), negll
+    ## collapses to a ~1e10 sentinel-like value, not a real likelihood
+    data.frame(example = "epil2_phigt1", method = "lme4current", threshold = 1000)
+  ),
   out_prefix = ""
+)
+
+## "new methods only" pointrange plot -- same five datasets, drops
+## PIRLS/fixed-phi (CRAN)/lme4 2.0-6 (the pre-fix baseline, not a fair
+## phi-estimator alternative) so the remaining five methods' spread is
+## easier to read without the old-CRAN outlier stretching each y-axis.
+make_stderr_plot(
+  examples = c("epil2_simple", "epil2_phigt1", "epil2_complex", "report4bb", "schizophrenia"),
+  methods  = c("glmmTMB", "jointphi", "pirlsdigamma", "pirlsmoment", "lme4current"),
+  outfile  = here::here("misc/Gamma_GLMM/paramsurvey/param_summary_stderr_newonly.png")
 )
