@@ -6,10 +6,11 @@
 args <- commandArgs(trailingOnly = TRUE)
 example <- if (length(args) >= 1) args[[1]] else "epil2_complex"
 
-wd <- "/tmp/claude-1000/-home-bolker-Documents-R-pkgs-lme4/6bffb877-f2f1-42e7-974f-8b4550ca1ead/scratchpad/param_survey"
+wd <- here::here("misc/Gamma_GLMM/paramsurvey")
 sim <- readRDS(file.path(wd, paste0(example, "_simdata.rds")))
 
-methods <- c("glmmTMB", "jointphi", "pirlsdigamma", "pirlsmoment", "lme4current", "lme4old")
+methods <- c("glmmTMB", "jointphi", "pirlsdigamma", "pirlsmoment", "lme4current", "lme4old",
+             "juliaMixedModels")
 res <- setNames(lapply(methods, function(m) {
   f <- file.path(wd, paste0(example, "_results_", m, ".rds"))
   if (!file.exists(f)) return(NULL)

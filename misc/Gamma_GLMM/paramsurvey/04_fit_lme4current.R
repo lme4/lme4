@@ -9,7 +9,7 @@ MC_CORES <- if (length(args) >= 2) as.integer(args[[2]]) else 1
 ## default control, preserving the existing baseline output file.
 maxPhiIter <- if (length(args) >= 3) as.integer(args[[3]]) else NA_integer_
 
-wd <- "/tmp/claude-1000/-home-bolker-Documents-R-pkgs-lme4/6bffb877-f2f1-42e7-974f-8b4550ca1ead/scratchpad/param_survey"
+wd <- here::here("misc/Gamma_GLMM/paramsurvey")
 source(file.path(wd, "toolkit.R"))
 library(parallel)
 cat("Using lme4", as.character(packageVersion("lme4")), "(current dev install) -- mc.cores =", MC_CORES,

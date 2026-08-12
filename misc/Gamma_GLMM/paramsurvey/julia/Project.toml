@@ -1,0 +1,10 @@
+[deps]
+CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
+DaemonMode = "d749ddd5-2b29-4920-8305-6ff5a704e36e"
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+GLM = "38e38edf-8417-5370-95a0-9cbb8c7f171a"
+MixedModels = "ff71e718-51f3-5ec2-a782-8ffcbfa3c316"
+StatsModels = "3eaba693-59b7-5ba5-a881-562e759f1c8d"
+
+[sources]
+MixedModels = {rev = "pa/dispersion-again", url = "https://github.com/JuliaStats/MixedModels.jl"}

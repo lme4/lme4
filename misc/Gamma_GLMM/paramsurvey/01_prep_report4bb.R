@@ -1,22 +1,23 @@
 ## Prep step for the "Report4BB" example: the real dataset/model that
 ## kicked off this whole investigation (README #1), reconstructed from
-## https://github.com/TiagoAMarques/Report4BB (cloned to
-## ../report4bb_repo; see testing_lme4/Testing_lme4.R for the original
-## data-prep + crglmer model code this mirrors). crate ~ (1|location) +
-## (1|fyear), Gamma(log), n=103 -- TWO independent (crossed, not nested)
-## single-term random-intercept grouping factors, with few levels each (7
-## locations, 10 years): a genuinely different regime from both epil2
-## examples (no correlation parameter at all, but two separate small-group
-## RE terms instead of one).
+## https://github.com/TiagoAMarques/Report4BB (data file copied directly
+## into ./report4bb_data/, self-contained -- no clone needed; see
+## testing_lme4/Testing_lme4.R in that repo for the original data-prep +
+## crglmer model code this mirrors). crate ~ (1|location) + (1|fyear),
+## Gamma(log), n=103 -- TWO independent (crossed, not nested) single-term
+## random-intercept grouping factors, with few levels each (7 locations,
+## 10 years): a genuinely different regime from both epil2 examples (no
+## correlation parameter at all, but two separate small-group RE terms
+## instead of one).
 
 suppressMessages({ library(tidyverse); library(glmmTMB) })
-source("/tmp/claude-1000/-home-bolker-Documents-R-pkgs-lme4/6bffb877-f2f1-42e7-974f-8b4550ca1ead/scratchpad/param_survey/toolkit.R")
+source(here::here("misc/Gamma_GLMM/paramsurvey/toolkit.R"))
 
-outdir <- "/tmp/claude-1000/-home-bolker-Documents-R-pkgs-lme4/6bffb877-f2f1-42e7-974f-8b4550ca1ead/scratchpad/param_survey"
-repo <- "/tmp/claude-1000/-home-bolker-Documents-R-pkgs-lme4/6bffb877-f2f1-42e7-974f-8b4550ca1ead/scratchpad/report4bb_repo"
+outdir <- here::here("misc/Gamma_GLMM/paramsurvey")
+data_dir <- here::here("misc/Gamma_GLMM/paramsurvey/report4bb_data")
 
 ## --- reconstruct the `tags` dataset (verbatim from testing_lme4/Testing_lme4.R) ---
-load(file.path(repo, "data_4_article_clickrates_deep_dive.rda"))
+load(file.path(data_dir, "data_4_article_clickrates_deep_dive.rda"))
 DDCs <- ddata1[ddata1$sonar != "sonar", ]
 tags <- DDCs %>%
   group_by(tag) %>%

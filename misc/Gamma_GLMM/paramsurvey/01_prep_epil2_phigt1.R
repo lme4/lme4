@@ -10,9 +10,9 @@
 ## examples).
 
 suppressMessages(library(glmmTMB))
-source("/tmp/claude-1000/-home-bolker-Documents-R-pkgs-lme4/6bffb877-f2f1-42e7-974f-8b4550ca1ead/scratchpad/param_survey/toolkit.R")
+source(here::here("misc/Gamma_GLMM/paramsurvey/toolkit.R"))
 
-outdir <- "/tmp/claude-1000/-home-bolker-Documents-R-pkgs-lme4/6bffb877-f2f1-42e7-974f-8b4550ca1ead/scratchpad/param_survey"
+outdir <- here::here("misc/Gamma_GLMM/paramsurvey")
 
 data(epil2, package = "glmmTMB")
 epil2$subject <- factor(epil2$subject)
