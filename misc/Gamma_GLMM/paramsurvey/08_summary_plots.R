@@ -15,5 +15,6 @@ make_summary_plots(
   methods  = c("glmmTMB", "jointphi", "pirlsdigamma", "pirlsmoment", "lme4current", "lme4old"),
   negll_ref_method = "glmmTMB",
   negll_diff_exclude = "lme4old",
+  negll_diff_outliers = data.frame(example = "epil2_simple", method = "jointphi", threshold = 300),
   out_prefix = ""
 )

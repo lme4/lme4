@@ -11,5 +11,6 @@ make_summary_plots(
   examples = c("epil2_simple", "report4bb", "schizophrenia", "epil2_complex"),
   methods  = c("glmmTMB", "jointphi", "lme4current", "juliaMixedModels"),
   negll_ref_method = "glmmTMB",
+  negll_diff_outliers = data.frame(example = "epil2_simple", method = "jointphi", threshold = 300),
   out_prefix = "julia_compare_"
 )

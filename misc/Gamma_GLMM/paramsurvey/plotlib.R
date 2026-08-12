@@ -150,7 +150,7 @@ build_negll_diff_long <- function(name, results_list, ref_method) {
   }))
 }
 
-make_metric_plot <- function(d, xlab, palette, logx = FALSE, vline0 = FALSE) {
+make_metric_plot <- function(d, xlab, palette, logx = FALSE, vline0 = FALSE, annot = NULL) {
   p <- ggplot(d, aes(y = method, x = value, color = method, fill = method)) +
     geom_violin(alpha = 0.25, color = NA, width = 0.9) +
     geom_boxplot(width = 0.15, alpha = 0.6, outlier.shape = NA, show.legend = FALSE) +
@@ -162,6 +162,10 @@ make_metric_plot <- function(d, xlab, palette, logx = FALSE, vline0 = FALSE) {
     theme_bw(base_size = 10)
   if (logx) p <- p + scale_x_log10()
   if (vline0) p <- p + geom_vline(xintercept = 0, linetype = "dashed", color = "black")
+  if (!is.null(annot) && nrow(annot) > 0) {
+    p <- p + geom_text(data = annot, aes(x = x, y = method, label = label),
+                        inherit.aes = FALSE, vjust = -0.6, size = 5, fontface = "bold")
+  }
   p
 }
 
@@ -181,6 +185,11 @@ make_metric_plot <- function(d, xlab, palette, logx = FALSE, vline0 = FALSE) {
 #' @param negll_ref_method reference method for the paired
 #'   Delta(-2*logLik) panel (must be one of `methods`); excluded from
 #'   that panel's own method axis (it would trivially be all zeros).
+#' @param negll_diff_outliers optional data.frame(example, method,
+#'   threshold) of Delta(-2*logLik) points to drop from that panel (per
+#'   dataset/method, values > threshold), so a single extreme replicate
+#'   doesn't compress the rest of that facet's scale. Each dropped
+#'   method/facet gets a "*" annotated just above its remaining points.
 #' @param dataset_labels named character vector, dataset name -> display
 #'   title; defaults to `.dataset_label_registry`, falling back to the
 #'   raw name for anything not registered there.
@@ -189,6 +198,7 @@ make_summary_plots <- function(examples, methods,
                                 out_prefix = "",
                                 negll_ref_method = "glmmTMB",
                                 negll_diff_exclude = character(0),
+                                negll_diff_outliers = NULL,
                                 dataset_labels = NULL) {
   stopifnot(all(methods %in% names(.method_registry)))
   stopifnot(negll_ref_method %in% methods)
@@ -245,16 +255,43 @@ make_summary_plots <- function(examples, methods,
   long_negll_diff <- long_negll_diff[!is.na(long_negll_diff$value), ]
   methods_diff <- setdiff(methods, c(negll_ref_method, negll_diff_exclude))
   long_negll_diff <- long_negll_diff[long_negll_diff$method %in% methods_diff, ]
+
+  ## drop flagged outliers (per dataset/method, value > threshold) before
+  ## the free_x per-facet scaling is fixed, tracking a "*" annotation
+  ## positioned at each dropped method's remaining max.
+  outlier_annot <- NULL
+  if (!is.null(negll_diff_outliers) && nrow(negll_diff_outliers) > 0) {
+    for (k in seq_len(nrow(negll_diff_outliers))) {
+      ex_lab <- dataset_labels[[negll_diff_outliers$example[k]]]
+      m <- negll_diff_outliers$method[k]
+      thresh <- negll_diff_outliers$threshold[k]
+      sel <- long_negll_diff$dataset == ex_lab & long_negll_diff$method == m
+      excl <- sel & long_negll_diff$value > thresh
+      if (any(excl)) {
+        remaining_max <- max(long_negll_diff$value[sel & !excl])
+        outlier_annot <- rbind(outlier_annot, data.frame(
+          dataset = ex_lab, method = method_labels[[m]], x = remaining_max, label = "*"
+        ))
+        long_negll_diff <- long_negll_diff[!excl, ]
+      }
+    }
+  }
+
   long_negll_diff$dataset <- factor(long_negll_diff$dataset, levels = unname(dataset_labels[examples]))
   long_negll_diff$method <- factor(long_negll_diff$method, levels = methods_diff,
                                     labels = method_labels[methods_diff])
+  if (!is.null(outlier_annot)) {
+    outlier_annot$dataset <- factor(outlier_annot$dataset, levels = levels(long_negll_diff$dataset))
+    outlier_annot$method <- factor(outlier_annot$method, levels = levels(long_negll_diff$method))
+  }
 
   p_time <- make_metric_plot(long_time, "elapsed time (s)", palette, logx = TRUE) +
     theme(legend.position = "bottom")
   p_negll_diff <- make_metric_plot(long_negll_diff,
                                     paste0("Δ (-2*logLik) vs ", method_labels[[negll_ref_method]],
                                            " (paired by replicate)"),
-                                    palette[method_labels[methods_diff]], vline0 = TRUE) +
+                                    palette[method_labels[methods_diff]], vline0 = TRUE,
+                                    annot = outlier_annot) +
     theme(legend.position = "none")
   p_time_negll <- p_time / p_negll_diff
 
