@@ -125,8 +125,17 @@ row labels -- these can vary a little by SAS release/options).
 
 | file | purpose |
 |---|---|
-| `fitlib.sas` | shared macro, `%fit_glimmix(example=, method=, classvars=, modelrhs=, nbeta=, randomstmt=, ...)`: fits `PROC GLIMMIX` to all B replicates of one example via `BY rep;` processing under one `METHOD=` (`rspl` or `laplace`), reshapes `ParameterEstimates`/`CovParms`/`ConvergenceStatus` into the same column shape the other methods use, writes `results_<example>_<method>.csv`. |
+| `fitlib.sas` | shared macro, `%fit_glimmix(example=, method=, classvars=, modelrhs=, nbeta=, randomstmt=, ...)`: fits `PROC GLIMMIX` to all B replicates of one example via `BY rep;` processing under one `METHOD=` (`rspl` or `laplace`), reshapes `ParameterEstimates`/`CovParms`/`ConvergenceStatus` into the same column shape the other methods use, writes `results_<example>_<method>.csv`. Its `indir=`/`outdir=` defaults (and the plain `%include "fitlib.sas"` in each `fit_<example>.sas`) assume SAS is launched **from inside `sas/`** as the working directory -- `run_sas_survey.sh` (below) does this via `cd sas && ...`. |
 | `fit_epil2_simple.sas`, `fit_epil2_complex.sas`, `fit_report4bb.sas`, `fit_schizophrenia.sas` | thin per-dataset scripts, each just supplies the model/class/random-effect specifics and calls `%fit_glimmix` twice (rspl + laplace). |
+
+`../run_sas_survey.sh` orchestrates all four datasets end to end (export
+CSV -> `PROC GLIMMIX` RSPL+Laplace -> ingest -> combined analysis),
+mirroring `run_full_survey.sh`'s structure. Point it at your actual SAS
+batch executable first (install-dependent, not guessable from here):
+`SAS_EXE=/path/to/sas ./run_sas_survey.sh`. SAS's own process exit code
+isn't a reliable success signal, so the script greps each `.log` for
+`^ERROR` instead of trusting `$?`, and keeps going through the remaining
+datasets even if one fails.
 
 Two things worth knowing before running these:
 - **Fixed-effect term order matters and isn't auto-corrected.** R's

@@ -42,8 +42,12 @@
     randomstmt=,        /* one or more full RANDOM statements (with
                             trailing semicolons), e.g.
                             %str(random intercept Visit / subject=subject type=un solution;) */
-    indir=%str(sas/data),
-    outdir=%str(sas)
+    indir=%str(data),   /* relative to CWD -- these defaults assume SAS is
+                            launched with the `sas/` directory itself as
+                            the working directory (matching %include
+                            "fitlib.sas" above, which has no path prefix
+                            and so also needs CWD=sas/) */
+    outdir=%str(.)
   );
 
   %local t0 t1 nrep;
