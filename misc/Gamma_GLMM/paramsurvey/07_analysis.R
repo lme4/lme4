@@ -10,7 +10,7 @@ wd <- here::here("misc/Gamma_GLMM/paramsurvey")
 sim <- readRDS(file.path(wd, paste0(example, "_simdata.rds")))
 
 methods <- c("glmmTMB", "jointphi", "pirlsdigamma", "pirlsmoment", "lme4current", "lme4old",
-             "juliaMixedModels")
+             "juliaMixedModels", "sasRSPL", "sasLaplace")
 res <- setNames(lapply(methods, function(m) {
   f <- file.path(wd, paste0(example, "_results_", m, ".rds"))
   if (!file.exists(f)) return(NULL)

@@ -2,12 +2,12 @@
 
 Broader successor to the multistart diagnostic (see `../README_Gamma_GLMMs.md`
 §11-12 for full background/motivation). For each of four real datasets, fit
-**seven** methods to **B** freshly-simulated datasets drawn from "pretty"
+**up to nine** methods to **B** freshly-simulated datasets drawn from "pretty"
 (rounded) parameters near a real reference fit, and compare parameter
 recovery, reliability (clean/warning/error/singular), timing, and
 -2\*logLik across methods.
 
-## Seven methods
+## Nine methods
 
 1. **glmmTMB** — reference/gold standard, full joint TMB optimization.
 2. **joint-phi (R)** — phi as a first-class outer `bobyqa` parameter
@@ -30,6 +30,25 @@ recovery, reliability (clean/warning/error/singular), timing, and
    fix as #5: profiles phi-hat = pwrss/n at the converged PIRLS mode,
    matching lme4's `sigma()`. Run via a separate, isolated Julia project
    in `julia/` (see below) -- not part of the R `toolkit.R` machinery.
+8. **SAS GLIMMIX (RSPL/PQL)** — `PROC GLIMMIX`'s default estimation
+   method, residual/restricted pseudo-likelihood via linearization
+   (SAS's implementation of PQL, the same family as `MASS::glmmPQL`).
+   A genuinely different bias mechanism from #1-7 (Breslow & Clayton
+   1993's classic PQL bias, not the phi-profiling issue this whole
+   investigation is about) -- included as another point of comparison,
+   not a redundant one. Doesn't produce a real marginal -2\*logLik (its
+   fit statistics are on the linearized pseudo-data scale), so `negll`
+   is left missing for this method.
+9. **SAS GLIMMIX (Laplace)** — same `PROC GLIMMIX`, `METHOD=LAPLACE`: a
+   proper marginal-likelihood Laplace approximation, the most directly
+   comparable SAS method to lme4's/Julia's default (`nAGQ=1`-equivalent).
+   Run via a separate `sas/` directory (see below) -- not part of the R
+   `toolkit.R` machinery. **`METHOD=QUAD` (adaptive Gauss-Hermite
+   quadrature) deliberately not included**: like lme4's `nAGQ>1`, it's
+   restricted to a single scalar random effect per subject, and none of
+   methods #1-8 use anything beyond `nAGQ=1`/Laplace either, so it
+   wouldn't be a like-for-like addition without first extending the
+   comparison to quadrature everywhere.
 
 ## Four datasets
 
@@ -61,7 +80,9 @@ recovery, reliability (clean/warning/error/singular), timing, and
 | `09_export_csv_for_julia.R` | export one example's B simulated replicate datasets to `julia/data/<example>/rep_NNN.csv` (only the formula's columns), so the Julia side can fit them without RCall/RDS. |
 | `10_ingest_julia_results.R` | read `julia/results_<example>.csv` back into R, reshape into the same `resultsToDF()` column shape as the other methods, save as `<example>_results_juliaMixedModels.rds`. |
 | `11_summary_plots_julia.R` | 4-method (glmmTMB/joint-phi/lme4current/Julia) comparison plots via `plotlib.R::make_summary_plots()`, output prefixed `julia_compare_` so it never collides with `08_summary_plots.R`'s files. |
-| `plotlib.R` | shared, parameterized plotting library (factored out of the original `08_summary_plots.R`): `make_summary_plots(examples, methods, out_prefix, ...)` builds all four plot types for any subset of the registered methods/datasets. Master method/colour/dataset-label registries live at the top of this file -- extend them there when adding a new method or dataset, never reassign an existing method's colour. |
+| `12_export_csv_for_sas.R` | export one example's B simulated replicate datasets to a single stacked `sas/data/<example>.csv` (all B replicates, keyed by a `rep` column) -- SAS's `PROC GLIMMIX BY rep;` fits all replicates in one step, unlike Julia's per-file loop. |
+| `13_ingest_sas_results.R` | read `sas/results_<example>_<rspl|laplace>.csv` back into R, reshape into the same `resultsToDF()` column shape as the other methods, save as `<example>_results_sasRSPL.rds` / `<example>_results_sasLaplace.rds`. Takes `example` and `rspl`/`laplace` as its two `commandArgs()`. |
+| `plotlib.R` | shared, parameterized plotting library (factored out of the original `08_summary_plots.R`): `make_summary_plots(examples, methods, out_prefix, ...)` builds all four plot types for any subset of the registered methods/datasets; `make_stderr_plot(examples, methods, outfile, ...)` builds just the mean±2SE pointrange plot for one-off subset comparisons that don't need the full three-plot set (e.g. `08_summary_plots.R`'s `_newonly` plot). Master method/colour/dataset-label registries live at the top of this file -- extend them there when adding a new method or dataset, never reassign an existing method's colour. |
 | `run_remaining_datasets.sh`, `run_full_survey.sh <B>` | bash orchestration: per dataset, run prep -> CSV export -> R fits (glmmTMB/joint-phi/lme4current concurrently via mclapply) -> Julia fit (via the warm DaemonMode server) -> ingest -> `07_analysis.R`. `run_full_survey.sh` is the general one (takes B as an argument, covers all four datasets incl. epil2_simple); `run_remaining_datasets.sh` was the one-off B=50 calibration version, kept for reference. |
 
 Fitting scripts 02-06 all take `example` (dataset name) as their first
@@ -91,6 +112,44 @@ existing pattern (formula + `run_survey()` call with the right
 `sdcorr_spec` -- a single grouping-factor `Symbol` for one RE term (with
 1 or 2 correlated components), or a `Tuple{Symbol,Symbol}` for two
 independent single-term grouping factors).
+
+## SAS side (`sas/`)
+
+**Written but not yet run against real SAS** -- there's no SAS install
+in this environment, so this arm was authored from `PROC GLIMMIX`/`ODS
+OUTPUT` documentation rather than verified interactively. Expect the
+first real run to need debugging; `sas/fitlib.sas`'s header and inline
+comments flag the specific things most likely to need adjustment (exact
+`CovParm` label text, `ConvergenceStatus` column names, Fit Statistics
+row labels -- these can vary a little by SAS release/options).
+
+| file | purpose |
+|---|---|
+| `fitlib.sas` | shared macro, `%fit_glimmix(example=, method=, classvars=, modelrhs=, nbeta=, randomstmt=, ...)`: fits `PROC GLIMMIX` to all B replicates of one example via `BY rep;` processing under one `METHOD=` (`rspl` or `laplace`), reshapes `ParameterEstimates`/`CovParms`/`ConvergenceStatus` into the same column shape the other methods use, writes `results_<example>_<method>.csv`. |
+| `fit_epil2_simple.sas`, `fit_epil2_complex.sas`, `fit_report4bb.sas`, `fit_schizophrenia.sas` | thin per-dataset scripts, each just supplies the model/class/random-effect specifics and calls `%fit_glimmix` twice (rspl + laplace). |
+
+Two things worth knowing before running these:
+- **Fixed-effect term order matters and isn't auto-corrected.** R's
+  `terms()` moves interaction terms to the end of the model regardless
+  of where they're written in the formula (e.g. `Base*trt + Age + Visit`
+  becomes `Base, trt, Age, Visit, Base:trt` in `beta_pretty`'s order);
+  SAS's `MODEL` statement does not do this. The `modelrhs=` arguments in
+  each `fit_<example>.sas` are written in R's final term order by hand
+  (e.g. `Base trt Age Visit Base*trt`, not the more natural-looking
+  `Base*trt Age Visit`) so the positional beta-matching in
+  `13_ingest_sas_results.R` lines up -- same positional-matching
+  approach the Julia arm uses, since SAS's own effect-name strings don't
+  string-match R's factor-contrast names either.
+- **`negll` is only filled in for `method=laplace`.** RSPL's fit
+  statistics are on the linearized pseudo-data scale, not a real
+  marginal -2\*logLik, so reporting a number there would look
+  comparable to the other methods' `negll` without actually being so.
+- **`time_sec` is a whole-batch average, not a per-replicate
+  measurement.** `BY rep;` processing fits all B replicates inside one
+  `PROC GLIMMIX` step, so there's no per-replicate wall-clock split the
+  way R's `system.time()`-per-fit or Julia's per-file timing gives --
+  every row for a given (dataset, method) gets the same value
+  (total elapsed / B).
 
 ## Outputs
 
@@ -152,3 +211,5 @@ subset) should pick its own `out_prefix` when calling
 - `05_fit_lme4old.R` expects an isolated lme4 2.0-6 library at
   `lme4_206_lib` (sibling of this directory) -- not committed, rebuild
   before rerunning (see comment at the top of that script).
+- The `sas/` scripts have never been run against real SAS -- see the
+  "SAS side" section above before trusting their output.

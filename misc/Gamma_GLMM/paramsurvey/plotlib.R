@@ -26,14 +26,23 @@ suppressMessages({
   pirlsmoment      = "PIRLS/moment (R)",
   lme4current      = "PIRLS/moment (C++)",
   lme4old          = "PIRLS/fixed-phi (CRAN)",
-  juliaMixedModels = "MixedModels.jl (pa/dispersion-again)"
+  juliaMixedModels = "MixedModels.jl (pa/dispersion-again)",
+  sasRSPL          = "SAS GLIMMIX (RSPL/PQL)",
+  sasLaplace       = "SAS GLIMMIX (Laplace)"
 )
 
-## Okabe-Ito, excluding black only (7 colours for 7 registered methods).
-## Indexed by method name (not position) so a subset always gets the same
-## colour a method has everywhere else.
+## Okabe-Ito (7 colours, excluding black -- black is reserved for the
+## truth/reference dashed lines drawn elsewhere) plus two extras from
+## Paul Tol's muted qualitative palette for the two SAS methods -- past 7
+## methods this is no longer strictly Okabe-Ito colourblind-safe, just
+## kept maximally distinct by eye. Deliberately not grey: theme_bw()'s
+## gridlines/panel border are already light grey, so a grey data series
+## would blend into the plot's own scaffolding. Indexed by method name
+## (not position) so a subset always gets the same colour a method has
+## everywhere else.
 .method_palette <- setNames(
-  c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7"),
+  c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7",
+    "#882255", "#332288"),
   names(.method_registry)
 )
 
