@@ -40,3 +40,35 @@ test_that("npar test works for models with 0 FE parameters", {
                   data = sleepstudy),
             "merMod")
 })
+
+## test for GH #996
+test_that("vcov gets correct dimensions for models with par < theta", {
+    sleepstudy$Daysf <- factor(sleepstudy$Days)
+    fm1.ar1B <- glmer(round(Reaction) ~ Days + ar1(0 + Daysf | Subject),
+                      family = poisson,
+                      sleepstudy)
+    ## fails with 'hessian unavailable' previously
+    v1 <- vcov(fm1.ar1B, use.hessian = TRUE)
+    expect_identical(dim(v1), c(2L, 2L))
+    ##
+    if (testLevel > 1) {
+        data("Orthodont", package = "nlme")
+        oo <- transform(Orthodont,
+                        cAge = age - min(age),
+                        fAge = factor(age))
+        oo$rdist <- simulate( ~Sex*fAge + ar1(0 + fAge|Subject),
+                             family = poisson,
+                             seed = 101,
+                             newdata = oo,
+                             newparams = list(beta = c(1, 0.5, 0.5, 0, 0, 0, 0, 0),
+                                              par = c(2, 0.4)))[[1]]
+
+        ## previously
+        ## fails with length of Dimnames[[1]] (8) is not equal to Dim[1] (3)
+        m1 <- glmer(rdist ~ Sex*fAge + ar1(0 + fAge|Subject) + (1|Subject),
+                    family = poisson, data = oo,
+                    control = glmerControl(check.conv.grad = "ignore"))
+        expect_identical(dim(vcov(m1)), c(8L, 8L))
+    }
+})
+

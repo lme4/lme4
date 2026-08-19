@@ -2250,17 +2250,18 @@ vcov.merMod <- function(object, correlation = TRUE, sigm = sigma(object),
          ## (1) numerical Hessian computed?
         (!is.null(h <- object@optinfo$derivs$Hessian) &&
          ## (2) does Hessian include fixed-effect parameters?
-         nrow(h) > (ntheta <- length(object@theta)))
+         nrow(h) > (npar <- getParLength(object)))
     if (is.null(use.hessian)) use.hessian <- hess.avail
     if (use.hessian && !hess.avail) stop(shQuote("use.hessian"),
                                          "=TRUE specified, ",
                                          "but Hessian is unavailable")
+
     calc.vcov.hess <- function(h) {
         ## invert 2*Hessian, catching errors and forcing symmetric result
         ## ~= forceSymmetric(solve(h/2)[i,i]) : solve(h/2) = 2*solve(h)
         h <- tryCatch(solve(h),
                       error=function(e) matrix(NA_real_,nrow=nrow(h),ncol=ncol(h)))
-        i <- -seq_len(ntheta)  ## drop var-cov parameters
+        i <- -seq_len(npar)  ## drop var-cov parameters
         h <- h[i,i]
         forceSymmetric(h + t(h))
     }
