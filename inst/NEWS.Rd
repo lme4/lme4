@@ -44,6 +44,8 @@
   } % user-visible changes
   \subsection{BUG FIXES}{
     \itemize{
+      \item \code{vcov()} would fail for GLMMs using structured
+      covariance matrices under some circumstances (GH #996, @jphughes9)
       \item fixed a long-standing bug for GLMMs with estimated dispersion
       parameters (Gamma, inverse Gaussian, and Gaussian families fitted
       via \code{glmer}); log-likelihood was too large by an additive
