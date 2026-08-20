@@ -34,7 +34,15 @@ module load gsl
 
 run_one () {
     local ver="$1" results="$2"
-    singularity exec \
+    ## --no-home: without this, Singularity auto-binds the real $HOME (and
+    ## sets HOME to it inside the container), so R's R_LIBS_USER picks up
+    ## the host's personal library (e.g. ~/R/x86_64-pc-linux-gnu-library/*)
+    ## ahead of the container's own r2u-installed packages in .libPaths().
+    ## Those host .so files were built outside the container (different R
+    ## build/glibc) and fail to load -- this shadows perfectly good
+    ## in-container installs (stringi, mvtnorm, TMB, ragg, ...) with
+    ## broken host ones. The explicit --bind mounts below are unaffected.
+    singularity exec --no-home \
         --bind "${results}:/results" \
         --bind "${CHECK_ONE_R}:/opt/revdep/check_one.R" \
         --env "REVDEP_LME4=${ver}" \
