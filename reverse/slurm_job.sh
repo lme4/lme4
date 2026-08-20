@@ -25,6 +25,24 @@
 module load apptainer
 module load gsl
 
+## Singularity generally inherits host environment variables, but PATH is an
+## exception: the container's own baked-in PATH (from its Docker/rocker
+## heritage) takes precedence over whatever 'module load gsl' prepended on
+## the host, so packages whose configure script shells out to gsl-config
+## (e.g. abn) fail to find it even though gsl's headers/libs themselves are
+## already visible inside the container (CVMFS is a real OS-level mount,
+## not a per-process bind, so no extra binding is needed for those).
+## APPTAINERENV_/SINGULARITYENV_PREPEND_PATH is the purpose-built mechanism
+## for this: it safely prepends to the container's PATH without clobbering
+## it and without needing gsl-config's target path to already exist inside
+## the (read-only) image, unlike a --bind trick would. Export both prefixes
+## since the module could be loaded as either apptainer or singularity.
+GSL_CONFIG_DIR="$(dirname "$(command -v gsl-config)" 2>/dev/null || true)"
+if [[ -n "${GSL_CONFIG_DIR}" ]]; then
+    export APPTAINERENV_PREPEND_PATH="${GSL_CONFIG_DIR}"
+    export SINGULARITYENV_PREPEND_PATH="${GSL_CONFIG_DIR}"
+fi
+
 ## CHECK_ONE_R is passed via --export in slurm_submit.sh (absolute path on the
 ## host filesystem).  We bind-mount it over the baked-in copy so that script
 ## changes take effect without rebuilding the .sif image.
