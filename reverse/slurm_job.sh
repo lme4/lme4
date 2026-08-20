@@ -29,19 +29,29 @@ module load gsl
 ## exception: the container's own baked-in PATH (from its Docker/rocker
 ## heritage) takes precedence over whatever 'module load gsl' prepended on
 ## the host, so packages whose configure script shells out to gsl-config
-## (e.g. abn) fail to find it even though gsl's headers/libs themselves are
-## already visible inside the container (CVMFS is a real OS-level mount,
-## not a per-process bind, so no extra binding is needed for those).
-## APPTAINERENV_/SINGULARITYENV_PREPEND_PATH is the purpose-built mechanism
-## for this: it safely prepends to the container's PATH without clobbering
-## it and without needing gsl-config's target path to already exist inside
-## the (read-only) image, unlike a --bind trick would. Export both prefixes
-## since the module could be loaded as either apptainer or singularity.
+## (e.g. abn) fail to find it. APPTAINERENV_/SINGULARITYENV_PREPEND_PATH is
+## the purpose-built mechanism for extending PATH: it safely prepends
+## without clobbering the container's own PATH and without needing the
+## target to already exist inside the (read-only) image, unlike a --bind
+## trick onto a fixed location would. Export both prefixes since the
+## module could be loaded as either apptainer or singularity.
+##
+## On CVMFS-based stacks (e.g. Compute Canada), gsl-config lives under
+## /cvmfs, which is NOT auto-visible inside the container by default --
+## unlike a normal host mount, CVMFS's FUSE mount doesn't propagate into
+## Apptainer's mount namespace unless explicitly bound (confirmed: PATH
+## correctly included the /cvmfs gsl bin dir, but 'command -v gsl-config'
+## still failed to find it there, until --bind /cvmfs was added). GSL's
+## headers/libs themselves aren't affected by this -- they come from
+## libgsl-dev, pulled in inside the image itself as a transitive
+## dependency of some other reverse-dependency package, not from CVMFS.
 GSL_CONFIG_DIR="$(dirname "$(command -v gsl-config)" 2>/dev/null || true)"
 if [[ -n "${GSL_CONFIG_DIR}" ]]; then
     export APPTAINERENV_PREPEND_PATH="${GSL_CONFIG_DIR}"
     export SINGULARITYENV_PREPEND_PATH="${GSL_CONFIG_DIR}"
 fi
+CVMFS_BIND=()
+[[ -d /cvmfs ]] && CVMFS_BIND=(--bind /cvmfs)
 
 ## CHECK_ONE_R is passed via --export in slurm_submit.sh (absolute path on the
 ## host filesystem).  We bind-mount it over the baked-in copy so that script
@@ -61,6 +71,7 @@ run_one () {
     ## in-container installs (stringi, mvtnorm, TMB, ragg, ...) with
     ## broken host ones. The explicit --bind mounts below are unaffected.
     singularity exec --no-home \
+        "${CVMFS_BIND[@]}" \
         --bind "${results}:/results" \
         --bind "${CHECK_ONE_R}:/opt/revdep/check_one.R" \
         --env "REVDEP_LME4=${ver}" \
