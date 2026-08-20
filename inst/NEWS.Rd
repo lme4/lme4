@@ -58,6 +58,17 @@
       computed with the dispersion parameter fixed to 1, which could
       substantially bias estimates of random-effect variances and the
       dispersion parameter. Fixed effects were largely unaffected.
+      \item fixed a bug affecting \code{glmer.nb()} fits with
+      \code{nAGQ>1}: the deviance computed for these fits
+      omitted a normalizing constant that depends on the negative
+      binomial dispersion parameter \code{theta} but not on the
+      random-effects variance being optimized within a given fit
+      (GH #868, Bert van der Veen).
+      \item normalizing constants are now included in the
+      log-likelihoods and deviances of models fitted with
+      \code{nAGQ>1}, making the log-likelihoods and deviances for these
+      fits consistent with those where Laplace approximation is used
+      (\code{nAGQ=1}) and with \code{stats::glm()}
       \item \code{sigma()} computations for free-dispersion GLMMs (e.g.
       Gamma) did not account for \dQuote{degree of freedom} corrections,
       i.e. dividing deviance by \code{(n-q)} rather than \code{n}, where
@@ -141,7 +152,7 @@
       if an object of the wrong type is found (e.g. the name \code{data}
       resolving to \code{utils::data}), the message reports the type and
       location of what was found and notes the likely masking (GH #808)
-      \item the Gauss-Hermite quadrature (GH) nodes and weights used when
+      \item the Gauss-Hermite quadrature nodes and weights used when
       \code{nAGQ > 1} are now symmetrized (nodes averaged with their
       negatives in reverse order; weights averaged in forward and reverse
       order), matching the convention in
