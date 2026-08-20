@@ -222,6 +222,14 @@ updateGlmerDevfun(devfun, reTrms, nAGQ = 1L)
     random-effect terms, a model frame, and a model all and produces a
     \code{[g]lmerMod} object.
   }
+
+  Note that the \code{control} (and \code{start}, \code{verbose}) arguments
+  are not automatically propagated between these steps: for example,
+  \code{control} given to \code{[g]lFormula} only governs the formula/data
+  processing done there, and must be passed again explicitly to
+  \code{mk(Gl|L)merDevfun} and to \code{optimize(Gl|L)mer} (as
+  \code{optimizer} and \code{control}) if non-default optimization settings
+  are needed at those steps.
 }
 \examples{
 ### Fitting a linear mixed model in 4 modularized steps
@@ -242,6 +250,15 @@ mkMerMod(environment(devfun), opt, lmod$reTrms, fr = lmod$fr)
 
 ### Same model in one line
 lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
+
+
+### Passing 'control' options through the modular steps
+### (control is not automatically propagated from lFormula() to
+### mkLmerDevfun()/optimizeLmer())
+ctrl <- lmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 1))
+lmod2 <- lFormula(Reaction ~ Days + (Days|Subject), sleepstudy, control = ctrl)
+devfun2 <- do.call(mkLmerDevfun, c(lmod2, list(control = ctrl)))
+opt2 <- optimizeLmer(devfun2, optimizer = ctrl$optimizer, control = ctrl$optCtrl)
 
 
 ### Fitting a generalized linear mixed model in six modularized steps
