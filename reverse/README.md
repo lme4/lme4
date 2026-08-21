@@ -159,13 +159,46 @@ module load apptainer/1.4.5
 singularity pull lme4_revdep.sif docker://${DOCKERUSER}/lme4-revdep:${OLD}_vs_${NEW}
 ```
 
+`singularity pull` caches downloaded Docker layers and conversion intermediates under
+`$HOME/.apptainer` (or `$APPTAINER_CACHEDIR` if set), which can easily reach tens of GB for
+an image this size -- `$HOME`'s quota on Compute Canada is small, and this cache is a common
+way to blow it (symptom: obscure "Disk quota exceeded" errors on unrelated tiny file writes,
+e.g. `.git/FETCH_HEAD`, once the filesystem is full or an inode limit is hit). Run
+`diskusage_report` to check. Once the `.sif` is built you no longer need the cache, so it's
+safe to just clear it:
+
+```bash
+apptainer cache clean   # or: rm -rf ~/.apptainer/cache
+```
+
+To keep the cache around (e.g. for future rebuilds) without it eating `$HOME`, relocate it and
+point `APPTAINER_CACHEDIR` at the new location (add the `export` to `~/.bashrc` too, or it
+reverts to `$HOME/.apptainer` on the next pull):
+
+```bash
+mkdir -p ~/project/$CCUSER/apptainer_cache
+mv ~/.apptainer/cache/* ~/project/$CCUSER/apptainer_cache/
+export APPTAINER_CACHEDIR=~/project/$CCUSER/apptainer_cache
+```
+
 ### 3. Submit checking job arrays
+
+A full run's `R CMD check` output (per package: install log, check log, example
+`.Rout`s, unpacked sources, vignette builds, ...) generates a large number of
+small files -- for ~600 reverse dependencies times two lme4 versions, easily
+tens of thousands. `/project`'s per-file (inode) quota is comparatively small
+and this can exhaust it outright even while byte usage still looks fine
+(`diskusage_report` shows files and bytes as separate quotas -- check both).
+Point the results-dir argument at `/scratch` instead of the `lme4/reverse`
+checkout under `/project`, since `/scratch` has a much larger file-count
+quota and the checked-out package tarballs don't need `/project`'s
+persistence:
 
 ```bash
 # On the Compute Canada login node:
 cd ~/project/${CCUSER}/lme4/reverse
-bash slurm_submit.sh lme4_revdep.sif results_old old --account=${CCACCOUNT}
-bash slurm_submit.sh lme4_revdep.sif results_new new --account=${CCACCOUNT}
+bash slurm_submit.sh lme4_revdep.sif /scratch/results_old old --account=${CCACCOUNT}
+bash slurm_submit.sh lme4_revdep.sif /scratch/results_new new --account=${CCACCOUNT}
 ```
 
 If your cluster has a per-user job limit that prevents both arrays running
