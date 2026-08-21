@@ -189,8 +189,8 @@ small files -- for ~600 reverse dependencies times two lme4 versions, easily
 tens of thousands. `/project`'s per-file (inode) quota is comparatively small
 and this can exhaust it outright even while byte usage still looks fine
 (`diskusage_report` shows files and bytes as separate quotas -- check both).
-Point the results-dir argument at `/scratch` instead of the `lme4/reverse`
-checkout under `/project`, since `/scratch` has a much larger file-count
+Point the results-dir argument at `~/scratch` instead of the `lme4/reverse`
+checkout under `/project`, since `~/scratch` has a much larger file-count
 quota and the checked-out package tarballs don't need `/project`'s
 persistence:
 
@@ -206,18 +206,18 @@ submit quota the moment they're submitted, so staggering old/new via
 ```bash
 # On the Compute Canada login node:
 cd ~/project/${CCUSER}/lme4/reverse
-bash slurm_submit.sh lme4_revdep.sif /scratch/results both --account=${CCACCOUNT}
+bash slurm_submit.sh lme4_revdep.sif ~/scratch/results both --account=${CCACCOUNT}
 ```
 
-Results land in `/scratch/results/old/` and `/scratch/results/new/`.
+Results land in `~/scratch/results/old/` and `~/scratch/results/new/`.
 
 If you'd rather run old and new as two independent arrays (e.g. to compare
 timing, or because `both` mode's doubled per-task runtime doesn't fit your
 `--time` budget), submit them separately:
 
 ```bash
-bash slurm_submit.sh lme4_revdep.sif /scratch/results_old old --account=${CCACCOUNT}
-bash slurm_submit.sh lme4_revdep.sif /scratch/results_new new --account=${CCACCOUNT}
+bash slurm_submit.sh lme4_revdep.sif ~/scratch/results_old old --account=${CCACCOUNT}
+bash slurm_submit.sh lme4_revdep.sif ~/scratch/results_new new --account=${CCACCOUNT}
 ```
 
 If this hits the submit-job limit, the only real fix is to wait for the
