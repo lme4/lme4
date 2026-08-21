@@ -53,7 +53,17 @@ export OLD=2.0-1
 export CCUSER=bolker
 export CCACCOUNT=def-bolker
 export DOCKERUSER=bbolker
+export SIF=/scratch/$USER/lme4_revdep.sif
 ```
+
+**Always refer to the `.sif` by this full absolute path (`$SIF`), never a bare
+relative `lme4_revdep.sif`.** This `reverse/` directory accumulates images
+from *previous, unrelated* version comparisons across releases (e.g. an old
+image sitting there from checking a completely different `OLD`/`NEW` pair
+months earlier) -- a bare relative filename silently resolves to whichever
+`lme4_revdep.sif` happens to be in your current directory, and there is no
+warning if that's stale. Also keep the `.sif` out of `$HOME` (small quota,
+see the cache note below) -- `/scratch/$USER/` is a good default location.
 
 ### 1. Build the Singularity image (locally, needs Docker + Singularity)
 
@@ -143,7 +153,7 @@ the Dockerfile and rebuild.
 **Option A: direct file transfer via scp**
 
 ```bash
-scp lme4_revdep.sif username@cedar.computecanada.ca:~/revdep/
+scp lme4_revdep.sif username@cedar.computecanada.ca:$SIF
 ```
 
 **Option B: via Docker Hub**
@@ -156,7 +166,8 @@ docker push ${DOCKERUSER}/lme4-revdep:${OLD}_vs_${NEW}
 
 # On the Compute Canada login node: pull and convert
 module load apptainer/1.4.5
-singularity pull lme4_revdep.sif docker://${DOCKERUSER}/lme4-revdep:${OLD}_vs_${NEW}
+mkdir -p "$(dirname "$SIF")"
+singularity pull "$SIF" docker://${DOCKERUSER}/lme4-revdep:${OLD}_vs_${NEW}
 ```
 
 `singularity pull` caches downloaded Docker layers and conversion intermediates under
@@ -206,7 +217,7 @@ submit quota the moment they're submitted, so staggering old/new via
 ```bash
 # On the Compute Canada login node:
 cd ~/project/${CCUSER}/lme4/reverse
-bash slurm_submit.sh lme4_revdep.sif /scratch/$USER/results both --account=${CCACCOUNT}
+bash slurm_submit.sh "$SIF" /scratch/$USER/results both --account=${CCACCOUNT}
 ```
 
 Results land in `/scratch/$USER/results/old/` and `/scratch/$USER/results/new/`.
@@ -216,8 +227,8 @@ timing, or because `both` mode's doubled per-task runtime doesn't fit your
 `--time` budget), submit them separately:
 
 ```bash
-bash slurm_submit.sh lme4_revdep.sif /scratch/$USER/results_old old --account=${CCACCOUNT}
-bash slurm_submit.sh lme4_revdep.sif /scratch/$USER/results_new new --account=${CCACCOUNT}
+bash slurm_submit.sh "$SIF" /scratch/$USER/results_old old --account=${CCACCOUNT}
+bash slurm_submit.sh "$SIF" /scratch/$USER/results_new new --account=${CCACCOUNT}
 ```
 
 If this hits the submit-job limit, the only real fix is to wait for the
