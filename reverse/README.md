@@ -194,31 +194,51 @@ checkout under `/project`, since `/scratch` has a much larger file-count
 quota and the checked-out package tarballs don't need `/project`'s
 persistence:
 
+Recommended: submit a single combined array with `both` mode, where each
+task checks its package against old and new sequentially. This halves the
+number of jobs submitted at once compared to two separate arrays -- worth
+doing by default, since many clusters' per-user `AssocMaxSubmitJobLimit` is
+easy to hit otherwise. Note that a SLURM `--dependency` chain does **not**
+help with that limit: dependency-held array tasks still count against the
+submit quota the moment they're submitted, so staggering old/new via
+`--dependency=afterany:` does not avoid it, it just delays when you hit it.
+
 ```bash
 # On the Compute Canada login node:
 cd ~/project/${CCUSER}/lme4/reverse
+bash slurm_submit.sh lme4_revdep.sif /scratch/results both --account=${CCACCOUNT}
+```
+
+Results land in `/scratch/results/old/` and `/scratch/results/new/`.
+
+If you'd rather run old and new as two independent arrays (e.g. to compare
+timing, or because `both` mode's doubled per-task runtime doesn't fit your
+`--time` budget), submit them separately:
+
+```bash
 bash slurm_submit.sh lme4_revdep.sif /scratch/results_old old --account=${CCACCOUNT}
 bash slurm_submit.sh lme4_revdep.sif /scratch/results_new new --account=${CCACCOUNT}
 ```
 
-If your cluster has a per-user job limit that prevents both arrays running
-simultaneously, submit them sequentially using SLURM's `--dependency` flag:
-
-```bash
-JOBID=$(bash slurm_submit.sh lme4_revdep.sif results_old old --account=${CCACCOUNT})
-bash slurm_submit.sh lme4_revdep.sif results_new new --account=${CCACCOUNT} \
-    --dependency=afterany:${JOBID}
-```
+If this hits the submit-job limit, the only real fix is to wait for the
+first array to fully drain (`squeue -j JOBID -r` returns empty) before
+submitting the second -- not `--dependency`, per above.
 
 Each array runs one task per reverse dependency (up to 50 concurrently).
-SLURM logs go to `results_*/slurm_JOBID_TASKID.{out,err}`.
-Check results go to `results_*/rdepends_PKGNAME.Rcheck/`.
+SLURM logs go to `results*/slurm_JOBID_TASKID.{out,err}`.
+Check results go to `results*/rdepends_PKGNAME.Rcheck/` (nested under
+`old/`/`new/` for `both` mode).
 
 ### 4. Compare results
 
-Once both arrays complete, run `checkChanges.R` as usual:
+Once the array (or both arrays) complete, run `checkChanges.R` as usual:
 
 ```bash
+# both mode:
 R --vanilla -f checkChanges.R --args \
-    --old=results_old --new=results_new
+    --old=/scratch/results/old --new=/scratch/results/new
+
+# separate old/new arrays:
+R --vanilla -f checkChanges.R --args \
+    --old=/scratch/results_old --new=/scratch/results_new
 ```
