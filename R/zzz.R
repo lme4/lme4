@@ -9,9 +9,12 @@
            function(x, y) if(is.null(x)) y else x)
     if(Rv < "4.1.0") {
       ## https://stackoverflow.com/questions/49056642/how-to-make-variable-available-to-namespace-at-loading-time/67664852#67664852
-      ## not quite equivalent; this *forces* ... entries whereas true ...names()  doesn't
+      ## parent.frame() (not sys.frame(-1L)) follows lexical scoping correctly
+      ## through S3/S4 dispatch; substitute() (not list()) avoids forcing '...'
+      ## promises -- both match the semantics of the real ...names() primitive
       assign('...names', envir = Ons,
-             function() eval(quote(names(list(...))), sys.frame(-1L)))
+             function() eval(quote(names(as.list(substitute(list(...))))[-1]),
+                              parent.frame()))
       if(Rv < "4.0.0") {
         ## NB: R >= 4.0.0's deparse1() is a generalization of our previous safeDeparse()
         assign('deparse1', envir = Ons,
