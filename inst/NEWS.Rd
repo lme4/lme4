@@ -44,6 +44,11 @@
   } % user-visible changes
   \subsection{BUG FIXES}{
     \itemize{
+      \item \code{ar1} and \code{cs} covariance structures with zero
+      variances (making correlation unidentifiable) now return
+      \code{NA} with a warning rather than throwing an error;
+      correlation calculations are more robust (GH #967, #999,
+      @jphughes9)
       \item \code{vcov()} would fail for GLMMs using structured
       covariance matrices under some circumstances (GH #996, @jphughes9)
       \item fixed a long-standing bug for GLMMs with estimated dispersion

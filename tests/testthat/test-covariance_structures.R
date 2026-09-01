@@ -368,6 +368,47 @@ test_that("unit tests for autoregressive covariances", {
   }
 })
 
+test_that("setTheta correlation fallback: cs and ar1 unidentifiable/degenerate rho", {
+  make_value <- function(cls, nc, sigma, rho) {
+    getTheta(new(cls, nc = as.integer(nc), hom = FALSE, par = c(sigma, rho)))
+  }
+  fresh <- function(cls, nc) new(cls, nc = as.integer(nc), hom = FALSE, par = rep(NA_real_, nc + 1L))
+
+  for (rho in c(-0.2, 0.4)) {
+    value <- make_value("Covariance.cs", 4, c(2, 0, 3, 5), rho)
+    res <- setTheta(fresh("Covariance.cs", 4), value)
+    expect_equal(res@par, c(2, 0, 3, 5, rho))
+  }
+
+  for (rho in c(-0.7, 0.7)) {
+    value <- make_value("Covariance.ar1", 4, c(2, 0, 3, 5), rho)
+    res <- setTheta(fresh("Covariance.ar1", 4), value)
+    expect_equal(res@par, c(2, 0, 3, 5, rho))
+  }
+  for (rho in c(-0.7, 0.7)) {
+    value <- make_value("Covariance.ar1", 4, c(2, 0, 0, 5), rho)
+    res <- setTheta(fresh("Covariance.ar1", 4), value)
+    expect_equal(res@par, c(2, 0, 0, 5, rho))
+  }
+  for (rho in c(-0.7, 0.7)) {
+    value <- make_value("Covariance.ar1", 5, c(0, 0, 2, 0, 5), rho)
+    res <- setTheta(fresh("Covariance.ar1", 5), value)
+    expect_equal(res@par, c(0, 0, 2, 0, 5, abs(rho)))
+  }
+
+  for (cls in c("Covariance.cs", "Covariance.ar1")) {
+    value <- make_value(cls, 4, c(0, 0, 5, 0), 0.5)
+    expect_warning(res <- setTheta(fresh(cls, 4), value), "not identifiable")
+    rho_out <- res@par[length(res@par)]
+    expect_true(is.na(rho_out) && is.double(rho_out))
+    expect_equal(res@par[1:4], c(0, 0, 5, 0))
+
+    value0 <- make_value(cls, 4, c(0, 0, 0, 0), 0.5)
+    expect_warning(res0 <- setTheta(fresh(cls, 4), value0), "not identifiable")
+    expect_true(is.na(res0@par[length(res0@par)]))
+  }
+})
+
 ## lme4 linear mixed models
 
 fm1 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy, REML = FALSE)

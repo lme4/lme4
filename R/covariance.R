@@ -611,6 +611,40 @@ setMethod("setTheta",
 
 rm(.fn)
 
+## Recover 'rho' from the reconstructed Cholesky factor 'L' when it
+## cannot be read directly from L[2, 1] and L[2, 2] (i.e., sigma[2] ==
+## 0). Returns the row norms 'd' of 'L' (needed to recover 'sigma' when
+## 'rho' turns out to be unidentifiable) alongside 'rho' itself. For
+## AR1, the correlation between rows i and j decays as rho^|i - j| and
+## must be corrected for the distance between the chosen pair of rows;
+## for compound symmetry the correlation is the same for every pair, so
+## no correction is needed.
+.rhoFallback <- function(L, ar1 = FALSE) {
+    d <- sqrt(rowSums(L * L))
+    ## prefer the closest pair of nonzero-norm rows: for AR1 this keeps
+    ## the distance small (best case 1, recovering rho with no root at
+    ## all); for compound symmetry any pair gives the same answer
+    h <- order(d, decreasing = TRUE)[1L:2L]
+    nz <- which(d != 0)
+    if (length(nz) >= 2L)
+        h <- nz[which.min(diff(nz)) + 0L:1L]
+    d12 <- prod(d[h])
+    rho <-
+    if (d12 == 0) {
+        warning(gettextf("'%s' is not identifiable as there is no pair of nonzero standard deviations",
+                        "rho"),
+                domain = NA)
+        NA_real_
+    } else {
+        ratio <- sum(L[h[1L], ] * L[h[2L], ])/d12
+        ## sign(ratio) * abs(ratio)^(1/k) rather than plain ratio^(1/k):
+        ## R's `^` gives NaN for a negative base with a non-integer
+        ## exponent even when a real k-th root exists (k odd)
+        if (ar1) sign(ratio) * abs(ratio)^(1/abs(h[1L] - h[2L])) else ratio
+    }
+    list(d = d, rho = rho)
+}
+
 setMethod("setTheta",
           c(object = "Covariance.cs", value = "numeric"),
           function (object, value, pos = 0L) {
@@ -640,19 +674,18 @@ setMethod("setTheta",
                       else (pos + 1L):(pos + (nc * (nc - 1L)) %/% 2L + nc)
                       L <- matrix(0, nc, nc)
                       L[i] <- value[j]
-                      d <- sqrt(rowSums(L * L))
-                      h <- order(d, decreasing = TRUE)[1L:2L]
-                      d12 <- prod(d[h])
-                      if (d12 == 0)
-                          stop(gettextf("'%s' is not identifiable as there is no pair of nonzero standard deviations",
-                                        "rho"),
-                               domain = NA)
-                      sum(L[h[1L], ] * L[h[2L], ])/d12
-                  }
+                      fb <- .rhoFallback(L)
+                      d <- fb$d
+                      fb$rho
+                  } ## Fall back to constructing the Cholesky factor
                   sigma <-
                   if (hom)
                       value[pos + 1L]
+                  else if (is.na(rho))
+                      ## row norms of L equal sigma exactly, regardless of rho
+                      d
                   else if (rho == 0)
+                      ## get sigma values from diagonal
                       value[cumsum(c(pos + 1L, nc:2L))]
                   else
                       value[seq.int(from = pos + 1L, length.out = nc)]/
@@ -691,18 +724,16 @@ setMethod("setTheta",
                       else (pos + 1L):(pos + (nc * (nc - 1L)) %/% 2L + nc)
                       L <- matrix(0, nc, nc)
                       L[i] <- value[j]
-                      d <- sqrt(rowSums(L * L))
-                      h <- order(d, decreasing = TRUE)[1L:2L]
-                      d12 <- prod(d[h])
-                      if (d12 == 0)
-                          stop(gettextf("'%s' is not identifiable as there is no pair of nonzero standard deviations",
-                                        "rho"),
-                               domain = NA)
-                      (sum(L[h[1L], ] * L[h[2L], ])/d12)^(1/abs(h[1L] - h[2L]))
+                      fb <- .rhoFallback(L, ar1 = TRUE)
+                      d <- fb$d
+                      fb$rho
                   }
                   sigma <-
                   if (hom)
                       value[pos + 1L]
+                  else if (is.na(rho))
+                      ## row norms of L equal sigma exactly, regardless of rho
+                      d
                   else if (rho == 0)
                       value[cumsum(c(pos + 1L, nc:2L))]
                   else # avoid underflow of powers of abs(rho)
