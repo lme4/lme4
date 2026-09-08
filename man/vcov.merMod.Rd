@@ -61,6 +61,14 @@
   a finite difference approximation, which is also error-prone): see
   e.g. \url{https://github.com/lme4/lme4/issues/720}
 
+  As a guard against such cases, the standard errors implied by the
+  finite-difference Hessian are compared with the \code{RX}-based ones
+  whenever the Hessian is used; if any of them differ by more than a
+  factor of \code{getOption("lme4.vcov.hess.se.ratio")} (default 2),
+  the Hessian is treated as unreliable, a warning is issued and the
+  \code{RX}-based matrix is returned instead (set the option to
+  \code{Inf} to disable the check).
+
 }
     
 \examples{
