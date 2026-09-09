@@ -9,11 +9,11 @@
 }
 \usage{
 Nelder_Mead(fn, par, lower = rep.int(-Inf, n), upper = rep.int(Inf, n),
-            control = list())
+            control = list(), trace=FALSE)
 }
 \arguments{
   \item{fn}{a \code{\link{function}} of a single numeric vector argument
-    returning a numeric scalar.}
+    returning a numeric scalar. If the function returns NA, the iteration is stopped.}
 
   \item{par}{numeric vector of starting values for the parameters.}
 
@@ -48,6 +48,8 @@ Nelder_Mead(fn, par, lower = rep.int(-Inf, n), upper = rep.int(Inf, n),
 	Defaults to \code{FALSE}, i.e., stop on non-convergence.}
     }
   }
+  \item{trace}{logical indicating if a trace of the optimization
+    should be kept.}
 }
 \value{
   a \code{\link{list}} with components
@@ -66,6 +68,7 @@ Nelder_Mead(fn, par, lower = rep.int(-Inf, n), upper = rep.int(Inf, n),
   \item{control}{the \code{\link{list}} of control settings after
     substituting for defaults.}
   \item{feval}{the number of function evaluations.}
+  \item{trace}{A dataframe with the iteration number, the fval, and the coordinates X1...Xn (only of trace is TRUE).}
 }
 \seealso{
   The \code{\linkS4class{NelderMead}} class definition and generator
