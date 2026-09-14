@@ -44,6 +44,15 @@
   } % user-visible changes
   \subsection{BUG FIXES}{
     \itemize{
+      \item \code{vcov()} (hence \code{summary()} and Wald
+      \code{confint()}) for GLMMs now falls back to the \code{RX}-based
+      variance-covariance matrix, with a warning, when the standard
+      errors implied by the finite-difference Hessian differ from the
+      \code{RX}-based ones by more than a factor of
+      \code{getOption("lme4.vcov.hess.se.ratio")} (default 2). On
+      ordinary Bernoulli random-intercept fits the Hessian occasionally
+      gave standard errors about 100 times too small, always together
+      with a \code{max|grad|} convergence warning (GH #867)
       \item \code{ar1} and \code{cs} covariance structures with zero
       variances (making correlation unidentifiable) now return
       \code{NA} with a warning rather than throwing an error;
