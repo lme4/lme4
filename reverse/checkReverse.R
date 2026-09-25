@@ -126,18 +126,20 @@ function (args) {
     .libPaths(libpaths)
 
     repos <- utils:::.expand_BioC_repository_URLs(
-        c("CRAN.local" =
+        c("CRAN"     =
               if (iam.mikael)
-                  "file:///Users/mikael/CRAN"
-              else NULL,
-          "CRAN"     = "https://cloud.r-project.org",
+                  "file:///Users/mikael/R/CRAN"
+              else "https://cloud.r-project.org",
           "BioCsoft" = "%bm/packages/%v/bioc",
           "BioCann"  = "%bm/packages/%v/data/annotation",
           "BioCexp"  = "%bm/packages/%v/data/experiment",
           "INLA"     = "https://inla.r-inla-download.org/R/stable",
           "CmdStan"  = "https://stan-dev.r-universe.dev"))
     .op <- options(repos = repos,
-                   install.packages.compile.from.source = TRUE,
+                   pkgType = "source",
+                   available_packages_filters =
+                       c("R_version", "OS_type", "subarch",
+                         "CRAN", "duplicates"),
                    useFancyQuotes = FALSE)
     on.exit(options(.op), add = TRUE)
 
@@ -166,12 +168,13 @@ function (args) {
     configure.args <-
         list()
     configure.vars <-
-        list(arrow = c("LIBARROW_BINARY=false",
-                       "ARROW_R_DEV=true",
-                       "ARROW_DEPENDENCY_SOURCE=BUNDLED",
-                       if (iam.mikael)
-                           "PKG_CONFIG=\"pkg-config --static\"",
-                       NULL))
+        list()
+    if (iam.mikael)
+        configure.vars <-
+            c(configure.vars,
+              list(arrow = c("LIBARROW_BINARY=false",
+                             "LIBARROW_BUILD=false",
+                             "PKG_CONFIG='pkg-config --static'")))
     out <- cpid(outdir, reverse = reverse, Ncpus = Ncpus, clean = clean,
                 check_env = check.vars,
                 install_args = list(configure.args = configure.args,
