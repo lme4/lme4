@@ -1,2 +1,3 @@
 *.sif
 results_*/
+local_check*/

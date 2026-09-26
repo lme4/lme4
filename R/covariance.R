@@ -1510,10 +1510,14 @@ setMethod("getPar",
               `length<-`(object@optinfo[["val"]],
                          length(object@lower)))
 
+## counted from the reCovs rather than as length(object@lower):
+## some downstream packages overwrite the 'lower' slot by setting
+## attributes(fit)$lower (e.g. BayesSenMC, for its own link bounds)
 setMethod("getParLength",
           c(object = "merMod"),
           function (object)
-              length(object@lower))
+              sum(vapply(getReCovs(object), getParLength, 0L,
+                         USE.NAMES = FALSE)))
 
 setMethod("getParNames",
           c(object = "merMod", cnm = "missing", gnm = "missing"),

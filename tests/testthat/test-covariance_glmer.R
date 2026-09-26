@@ -72,3 +72,14 @@ test_that("vcov gets correct dimensions for models with par < theta", {
     }
 })
 
+test_that("vcov is unaffected by a downstream package overwriting the 'lower' slot", {
+    ## BayesSenMC sets attributes(fit)$lower to its own link bound
+    cbpp$obs <- factor(seq_len(nrow(cbpp)))
+    gm <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd) + (1 | obs),
+                family = binomial, data = cbpp)
+    v0 <- vcov(gm)
+    attributes(gm)$lower <- 0
+    expect_identical(getParLength(gm), 2L)
+    expect_equal(vcov(gm), v0)
+})
+
