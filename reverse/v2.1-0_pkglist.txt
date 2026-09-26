@@ -1,0 +1,12 @@
+## packages with worse check results, lme4 2.0-6 -> 2.1-0 (CHANGES_2.0-6_2.1-0)
+BayesSenMC
+autonomics
+evolvability
+glmmSeq
+insight
+merDeriv
+nadir
+panelr
+registr
+steppedwedge
+tidybulk

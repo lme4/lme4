@@ -1,4 +1,4 @@
-## check_local_subset.R -- download a named list of CRAN packages and run
+## check_local_subset.R -- download a named list of CRAN/Bioconductor packages and run
 ## R CMD check on them using whatever lme4 is currently installed on
 ## .libPaths() (no reverse-dependency discovery, no separate lme4 library).
 ##
@@ -36,7 +36,12 @@ cat(sprintf("lme4 installed: %s (from %s)\n",
             as.character(packageVersion("lme4")),
             dirname(find.package("lme4"))))
 
-options(repos = c(CRAN = "https://cloud.r-project.org"),
+repos <- utils:::.expand_BioC_repository_URLs(
+    c("CRAN"     = "https://cloud.r-project.org",
+      "BioCsoft" = "%bm/packages/%v/bioc",
+      "BioCann"  = "%bm/packages/%v/data/annotation",
+      "BioCexp"  = "%bm/packages/%v/data/experiment"))
+options(repos = repos,
         install.packages.compile.from.source = TRUE,
         useFancyQuotes = FALSE)
 
@@ -75,7 +80,8 @@ out <- tools::check_packages_in_dir(
     outdir,
     pfiles = pfiles,
     check_args = "--as-cran",
-    check_env = c("_R_CHECK_FORCE_SUGGESTS_=false"),
+    check_env = c("_R_CHECK_FORCE_SUGGESTS_=false",
+                  "_R_CHECK_CRAN_INCOMING_=false"),
     Ncpus = Ncpus,
     clean = FALSE)
 
