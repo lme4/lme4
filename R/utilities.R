@@ -492,15 +492,6 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc, lme4conv=NULL) {
               nth = length(pp$theta),
               nAGQ= rho$nAGQ,
               compDev=rho$compDev,
-              ## disp_method/maxPhiIter/qEff (glmerControl(); NA for lmer/nlmer)
-              ## stored so refit() can recover the original fit's setting
-              ## rather than silently falling back to package defaults.
-              ## qEff (glmerControl(disp_dof_correction=)) is always
-              ## integer-valued when set (sum(q_k) - (K-1)), so it round-
-              ## trips through this integer-mode dims vector like the rest.
-              dispProfile = rho$dispProfile %||% NA,
-              maxPhiIter = rho$maxPhiIter %||% NA,
-              qEff = rho$qEff %||% NA,
               ## 'use scale' in the sense of whether dispersion parameter should
               ##  be reported/used (*not* whether theta should be scaled by sigma)
               useSc = !(isGLMM && hasNoScale(resp$family)),
@@ -509,7 +500,19 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc, lme4conv=NULL) {
               REML = if (rcl=="lmerResp") resp$REML else 0L,
               GLMM= isGLMM,
               NLMM= (rcl=="nlsResp"),
-              npar= length(reTrms$lower))
+              npar= length(reTrms$lower),
+              ## new entries go *after* the existing ones: downstream
+              ## packages index dims by position (e.g. merDeriv uses
+              ## dims[10] for REML), so inserting earlier breaks them.
+              ## disp_method/maxPhiIter/qEff (glmerControl(); NA for lmer/nlmer)
+              ## stored so refit() can recover the original fit's setting
+              ## rather than silently falling back to package defaults.
+              ## qEff (glmerControl(disp_dof_correction=)) is always
+              ## integer-valued when set (sum(q_k) - (K-1)), so it round-
+              ## trips through this integer-mode dims vector like the rest.
+              dispProfile = rho$dispProfile %||% NA,
+              maxPhiIter = rho$maxPhiIter %||% NA,
+              qEff = rho$qEff %||% NA)
     storage.mode(dims) <- "integer"
     fac     <- as.numeric(rcl != "nlsResp")
     if (trivial.y <- (length(resp$y)==0)) {
