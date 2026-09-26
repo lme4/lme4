@@ -24,6 +24,8 @@ namespace glm {
                                        *   component (?family, R >= 4.3.0)? */
         double d_dispersionField;    /**< its value, if present: NA_real_ (free) or
                                        *   a fixed numeric value; meaningless otherwise */
+        mutable bool d_warnedNoDispersion; /**< has the missing-$dispersion
+                                             *   warning been issued already? */
     public:
         glmDist(Rcpp::List&);
         virtual ~glmDist() {}
@@ -46,14 +48,22 @@ namespace glm {
          *   component (?family, R >= 4.3.0: NA_real_ if free, a fixed
          *   numeric value otherwise) rather than guessed; if that
          *   component is itself absent (pre-4.3.0-style or incomplete
-         *   custom family objects), there is no way to tell, so this
-         *   throws an error. */
+         *   custom family objects, e.g. mgcv::Tweedie), the dispersion
+         *   is assumed to be free, consistent with hasNoScale()'s
+         *   treatment of unrecognized family names, with a warning.
+         *   This is called at every deviance evaluation, so the warning
+         *   is issued only once per object. */
         virtual bool  hasFreeDispersion() const {
-            if (!d_hasDispersionField)
-                throw std::runtime_error(
-                    "can't tell if dispersion is fixed or free for family '" +
-                    d_familyName + "': it has no 'dispersion' component "
-                    "(see the 'dispersion' item under 'Value' in ?stats::family)");
+            if (!d_hasDispersionField) {
+                if (!d_warnedNoDispersion) {
+                    d_warnedNoDispersion = true;
+                    ::Rf_warning("family %s has no 'dispersion' component; "
+                                 "assuming that the dispersion is estimated "
+                                 "(free) rather than fixed",
+                                 d_familyName.c_str());
+                }
+                return true;
+            }
             return ISNA(d_dispersionField);
         }
     };

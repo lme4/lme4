@@ -382,7 +382,8 @@ namespace glm {
           d_familyName(as<std::string>(as<SEXP>(ll["family"]))),
           d_hasDispersionField(ll.containsElementNamed("dispersion")),
           d_dispersionField(d_hasDispersionField ?
-                             as<double>(ll["dispersion"]) : NA_REAL) {
+                             as<double>(ll["dispersion"]) : NA_REAL),
+          d_warnedNoDispersion(false) {
     }
 
     glmLink::glmLink(Rcpp::List& ll)

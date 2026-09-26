@@ -335,19 +335,26 @@ test_that("simulation complains appropriately about bad family", {
     expect_error(simulate(model_fit2),"simulation not implemented for family")
 })
 
-test_that("glmer complains appropriately about a family with no way to tell if dispersion is free", {
+test_that("glmer warns (once) about a family with no way to tell if dispersion is free", {
     ## unrecognized family *name*, and (unlike the "junk" case above) no
-    ## $dispersion component either -- lme4 has no way to tell whether
-    ## dispersion should be profiled, so this should fail at glmer() fit
-    ## time, not later at simulate() time
+    ## $dispersion component either -- lme4 can't tell whether dispersion
+    ## should be profiled, so it assumes free dispersion and warns
     badfam <- poisson()
     badfam$family <- "junk"
     badfam$dispersion <- NULL
-    expect_error(glmer(y ~ 1 + (1|id),
-                        family = badfam,
-                        data = df,
-                        control = glmerControl(check.conv.singular = "ignore")),
-                 "can't tell if dispersion is fixed or free for family 'junk'")
+    msgs <- character(0)
+    fit <- withCallingHandlers(
+        glmer(y ~ 1 + (1|id),
+              family = badfam,
+              data = df,
+              control = glmerControl(check.conv.singular = "ignore")),
+        warning = function(w) {
+            msgs <<- c(msgs, conditionMessage(w))
+            invokeRestart("muffleWarning")
+        })
+    nodisp <- grepl("family junk has no 'dispersion' component", msgs, fixed = TRUE)
+    expect_equal(sum(nodisp), 1L)
+    expect_s4_class(fit, "glmerMod")
 })
 
 test_that("unrecognized family name with a valid fixed $dispersion fits identically to the real family", {

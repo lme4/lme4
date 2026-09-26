@@ -37,9 +37,11 @@
       for back-compatibility. \code{maxPhiIter} caps the number of
       iterations of the nested fixed-point loop used by
       \code{disp_method="moment"}.
-      \item user-specified families now need to have the
+      \item user-specified families should have the
       \code{dispersion} component set (see \dQuote{Value} under
-      \code{?stats::family}).
+      \code{?stats::family}); for families without it (e.g.
+      \code{mgcv::Tweedie}), \code{glmer} warns and assumes the
+      dispersion is estimated rather than fixed.
     } % itemize
   } % user-visible changes
   \subsection{BUG FIXES}{
