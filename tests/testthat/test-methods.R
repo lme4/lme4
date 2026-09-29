@@ -771,7 +771,8 @@ test_that("profile with switched optimizer does not warn (GH #913)", {
     ## different optimizer must not pass nloptwrap's stored control args (e.g.
     ## 'print_level') to the new optimizer, which would warn "unused control
     ## arguments ignored".
-    expect_no_warning(profile(fm1, which = 1, optimizer = "bobyqa"))
+    expect_no_warning(profile(fm1, which = 1, optimizer = "bobyqa"),
+                      message = "unused control arguments")
 })
 
 
