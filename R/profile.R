@@ -966,8 +966,10 @@ splom.thpr <- function (x, data,
     x <- na.omit(x)
     stopifnot(1 <= (nptot <- length(nms <- names(attr(x, "forward")))))
     singfit <- FALSE
-    for (i in grep("^(\\.sig[0-9]+|sd_)", names(x)))
-        singfit <- singfit || any(x[,".zeta"] == 0  &  x[,i] == 0)
+    check_names <- grep("^(\\.sig[0-9]|sd_)", names(x))
+    if (length(check_names)) zero_zeta <- x[,".zeta"] == 0
+    for (i in check_names)
+        singfit <- singfit || any(zero_zeta  &  abs(x[,i]) <= getSingTol())
     if (singfit) warning("splom is unreliable for singular fits")
 
     nvp <- length(grep("^(\\.sig[0-9]+|.sigma|sd_|cor_)", nms))
