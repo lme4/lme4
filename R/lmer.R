@@ -2599,7 +2599,20 @@ optwrap <- function(optimizer, fn, par, lower = -Inf, upper = Inf,
                "'verbose' not yet passed to optimizer '%s'; consider fixing optwrap()",
                                         optName), domain = NA)
            )
-    arglist <- list(fn = fn, par = par, lower = lower, upper = upper, control = control)
+    ## record the last parameters evaluated, on the scale of 'par':
+    ## these can't be recovered from environment(fn)$pp$theta, since
+    ## the theta -> par mapping loses information (e.g. rho when sigma = 0)
+    last_par <- NULL
+    optwrap_env <- environment()
+    ## single argument: Nelder_Mead() requires length(formals(fn)) == 1
+    fn_opt <- if (use.last.params)
+                  function(par) {
+                      ## +0 forces a copy
+                      assign("last_par", par + 0, envir = optwrap_env)
+                      fn(par)
+                  }
+              else fn
+    arglist <- list(fn = fn_opt, par = par, lower = lower, upper = upper, control = control)
     ## optimx: must pass method in control (?) because 'method' was previously
     ## used in lme4 to specify REML vs ML
     if (optName == "optimx") {
@@ -2642,20 +2655,12 @@ optwrap <- function(optimizer, fn, par, lower = -Inf, upper = Inf,
 
     singular <- min(opt$par - lower, upper - opt$par) < getSingTol()
     if (force.calc.derivs || (calc.derivs && !singular)){
-        if (use.last.params) {
-            ## +0 tricks R into doing a deep copy ...
-            ## otherwise element of ref class changes!
-            ## FIXME:: clunky!!
-            orig_pars <- opt$par
-            orig_theta <- environment(fn)$pp$theta+0
-            orig_pars[seq_along(orig_theta)] <- orig_theta
-        }
         if (verbose > 10) cat("computing derivatives\n")
         derivs <- deriv12(fn, opt$par, fx = opt$value)
-        if (use.last.params) {
-            ## run one more evaluation of the function at the optimized
+        if (use.last.params && !is.null(last_par)) {
+            ## run one more evaluation of the function at the last evaluated
             ##  value, to reset the internal/environment variables in devfun ...
-            fn(orig_pars)
+            fn(last_par)
         }
     } else derivs <- NULL
 
@@ -2668,5 +2673,6 @@ optwrap <- function(optimizer, fn, par, lower = -Inf, upper = Inf,
               optimizer = optimizer,
               control   = control,
               warnings  = curWarnings,
-              derivs    = derivs)
+              derivs    = derivs,
+              last_par  = last_par)
 }

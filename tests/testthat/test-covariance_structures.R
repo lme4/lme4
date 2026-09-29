@@ -409,6 +409,35 @@ test_that("setTheta correlation fallback: cs and ar1 unidentifiable/degenerate r
   }
 })
 
+test_that("use.last.params restores the last evaluated par for structured covariances", {
+  ## stub optimizer: evaluates the deviance at 'p_last' after 'p_opt',
+  ## then reports 'p_opt' as the optimum
+  mkstub <- function(p_opt, p_last) {
+    function(fn, par, lower, upper, control) {
+      fval <- fn(p_opt)
+      fn(p_last)
+      list(par = p_opt, fval = fval, conv = 0, message = "stub")
+    }
+  }
+  ss <- subset(sleepstudy, Days < 3)
+  ss$fDays <- factor(ss$Days)
+  p_opt <- c(1, 0.3)
+  p_last <- c(0.8, 0.5)
+  fit_last <- function(optimizer, use.last.params) {
+    suppressWarnings(
+      lmer(Reaction ~ 1 + ar1(0 + fDays | Subject), data = ss,
+           control = lmerControl(optimizer = optimizer,
+                                 use.last.params = use.last.params,
+                                 calc.derivs = TRUE)))
+  }
+  ref_last <- fit_last(mkstub(p_last, p_last), FALSE)
+  ref_opt  <- fit_last(mkstub(p_opt, p_opt), FALSE)
+  expect_equal(getME(fit_last(mkstub(p_opt, p_last), TRUE), "theta"),
+               getME(ref_last, "theta"))
+  expect_equal(getME(fit_last(mkstub(p_opt, p_last), FALSE), "theta"),
+               getME(ref_opt, "theta"))
+})
+
 ## lme4 linear mixed models
 
 fm1 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy, REML = FALSE)
