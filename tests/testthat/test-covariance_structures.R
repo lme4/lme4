@@ -409,6 +409,27 @@ test_that("setTheta correlation fallback: cs and ar1 unidentifiable/degenerate r
   }
 })
 
+test_that("restart_edge check survives sigma = 0 with unidentifiable rho", {
+  ## stub optimizer returning all sigmas on their lower bound: theta is then
+  ## all zeros, so rho cannot be recovered from theta and must come from opt$par
+  stubopt <- function(fn, par, lower, upper, control) {
+    p <- c(rep(0, length(par) - 1L), 0.5)
+    list(par = p, fval = fn(p), conv = 0, message = "stub")
+  }
+  ss <- subset(sleepstudy, Days < 3)
+  ss$fDays <- factor(ss$Days)
+  forms <- list(ar1 = Reaction ~ 1 + ar1(0 + fDays | Subject),
+                cs  = Reaction ~ 1 + cs(0 + fDays | Subject))
+  for (form in forms) {
+    fit <- suppressWarnings(suppressMessages(
+      lmer(form, data = ss,
+           control = lmerControl(optimizer = stubopt, calc.derivs = FALSE))))
+    expect_false(anyNA(getME(fit, "theta")))
+    par <- getME(fit, "par")
+    expect_equal(unname(par[-length(par)]), rep(0, length(par) - 1L))
+  }
+})
+
 test_that("use.last.params restores the last evaluated par for structured covariances", {
   ## stub optimizer: evaluates the deviance at 'p_last' after 'p_opt',
   ## then reports 'p_opt' as the optimum

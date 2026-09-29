@@ -688,10 +688,10 @@ optimizeLmer <- function(devfun,
 
 
     if (restart_edge) {
-        ## FIXME: should we be looking at rho$pp$theta or opt$par
-        ##  at this point???  in koller example (for getData(13)) we have
-        ##   rho$pp$theta=0, opt$par=0.08
-        par0 <- rho$mkPar(rho$pp$theta)
+        ## check the parameters the model state will be left at: with
+        ## use.last.params = TRUE these are the last ones evaluated, which
+        ## may be on the boundary even when opt$par is not
+        par0 <- attr(opt, "last_par") %||% opt$par
         if (length(wl <- which(par0 == lower)) > 0L |
             length(wu <- which(par0 == upper)) > 0L) {
             ## *don't* use numDeriv -- cruder but fewer dependencies, no worries
@@ -706,7 +706,7 @@ optimizeLmer <- function(devfun,
             ## </MJ>
 
             d0 <- devfun(par0)
-            btol <- 1e-5  ## FIXME: make user-settable?
+            btol <- 1e-5  ## boundary tolerance. FIXME: make user-settable?
             bgrad <- mapply(function(i, bval, btol) {
                                 par <- par0
                                 par[i] <- bval + btol
