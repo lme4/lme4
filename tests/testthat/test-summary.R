@@ -38,9 +38,12 @@ test_that("lmer", {
   ##   out, and this test fails
   ## would like to sort this out but realistically not sure it's worth it?
   t1 <- tfun(cc1)
-  vv <- vcov(m1)
-  ss <- sessionInfo()
-  save(m1, vv, ss, file = sprintf("test-summary_testlevel_%d.rda", testLevel))
+  ## set LME4_SAVE_TEST_SUMMARY=true to save objects for debugging the above
+  if (isTRUE(as.logical(Sys.getenv("LME4_SAVE_TEST_SUMMARY")))) {
+      vv <- vcov(m1)
+      ss <- sessionInfo()
+      save(m1, vv, ss, file = sprintf("test-summary_testlevel_%d.rda", testLevel))
+  }
   expect_equal(t1,
                c("Fixed effects:",
                  "            Estimate Std. Error t value", 
