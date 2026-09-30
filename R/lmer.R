@@ -2270,6 +2270,7 @@ vcov.merMod <- function(object, correlation = TRUE, sigm = sigma(object),
     ## provided by fit (always the case for lmerMods)
     V <- sigm^2 * object@pp$unsc()
 
+    hess.msg <- "is\nnot positive definite or contains NA values"
     if (hess.avail) {
         V.hess <- calc.vcov.hess(h)
         bad.V.hess <- any(is.na(V.hess))
@@ -2277,6 +2278,25 @@ vcov.merMod <- function(object, correlation = TRUE, sigm = sigma(object),
             ## another 'bad var-cov' check: positive definite?
             e.hess <- eigen(V.hess,symmetric = TRUE,only.values = TRUE)$values
             if (min(e.hess) <= 0) bad.V.hess <- TRUE
+        }
+        if (!bad.V.hess) {
+            ## plausibility check: the finite-difference Hessian of the
+            ## PIRLS-evaluated deviance is occasionally far off (typically
+            ## on fits that also triggered a max|grad| convergence warning),
+            ## giving standard errors that are orders of magnitude too
+            ## small. Compare the implied standard errors with the RX-based
+            ## ones and treat the Hessian as bad when any of them differ by
+            ## more than a factor of getOption("lme4.vcov.hess.se.ratio")
+            ## (default 2; set to Inf to disable the check).
+            se.ratio <- sqrt(diag(as.matrix(V.hess)) / diag(as.matrix(V)))
+            max.ratio <- getOption("lme4.vcov.hess.se.ratio", 2)
+            if (any(!is.finite(se.ratio)) ||
+                any(se.ratio < 1/max.ratio | se.ratio > max.ratio)) {
+                bad.V.hess <- TRUE
+                hess.msg <- sprintf(paste0("gives standard errors that differ from the\n",
+                                           "RX-based ones by a factor of up to %.3g"),
+                                    max(exp(abs(log(se.ratio))), na.rm = TRUE))
+            }
         }
     }
     if (!use.hessian && hess.avail) {
@@ -2294,9 +2314,8 @@ vcov.merMod <- function(object, correlation = TRUE, sigm = sigma(object),
             V <- V.hess
         } else {
             warning("variance-covariance matrix computed ",
-                    "from finite-difference Hessian is\n",
-                    "not positive definite or contains NA values: falling back to ",
-                    "var-cov estimated from RX")
+                    "from finite-difference Hessian ", hess.msg,
+                    ": falling back to var-cov estimated from RX")
         }
     }
 
