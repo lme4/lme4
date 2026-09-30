@@ -44,10 +44,12 @@ set.seed(101)
 d <- data.frame(y=rbinom(10,size=1,prob=0.5),
                 x=1:10,
                 f=factor(rep(1:5,each=2)))
-gm1 <- glmer(y ~ poly(x,2) + (1|f), d, family=binomial)
-gm2 <- glmer(y ~ poly(x,2,raw=TRUE) + (1|f), d, family=binomial)
+## These polynomial bases represent the same model. Optimize accurately
+## enough that differences in convergence do not obscure prediction agreement.
+ctrl <- glmerControl(optimizer="bobyqa", optCtrl=list(rhoend=1e-8))
+gm1 <- glmer(y ~ poly(x,2) + (1|f), d, family=binomial, control=ctrl)
+gm2 <- glmer(y ~ poly(x,2,raw=TRUE) + (1|f), d, family=binomial, control=ctrl)
 
 newdat <- data.frame(x=c(1,4,6))
 stopifnot(all.equal(predict(gm1,newdat,re.form=NA),
                     predict(gm2,newdat,re.form=NA),tolerance=3e-6))
-

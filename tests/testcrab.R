@@ -25,9 +25,12 @@ g1 <- ggplot(randdata0,aes(x=snail.size,y=surv,colour=snail.size,fill=snail.size
 }
 
 if (.Platform$OS.type != "windows") {
+## Use a converged fit for the historical comparisons below; the default
+## Nelder-Mead fit can stop with a non-negligible gradient on this fixture.
+ctrl <- glmerControl(optimizer="bobyqa", tolPwrss=1e-11)
 t1 <- system.time(glmer1 <- glmer(fr2,weights=initial.snail.density,
-                                  family ="binomial", data=randdata))
-t1B <- system.time(glmer1B <- glmer(fr,family ="binomial", data=randdata))
+                                  family ="binomial", data=randdata, control=ctrl))
+t1B <- system.time(glmer1B <- glmer(fr,family ="binomial", data=randdata, control=ctrl))
 
 res1 <- c(fixef(glmer1),c(VarCorr(glmer1)$plot))
 res1B <- c(fixef(glmer1B),c(VarCorr(glmer1B)$plot))

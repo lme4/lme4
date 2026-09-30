@@ -34,16 +34,15 @@ test_that("glmer", {
     gm1.old <- update(gm1,control=glmerControl(calc.derivs=FALSE,
                           use.last.params=TRUE))
     expect_equal(resid(gm1),resid(gm2))
-    ## y, wtres, mu change ??
-    ## FIX ME:: why does turning on derivative calculation make these tests fail???
-    expect_equal(range(resid(gm1.old)), c(-3.197512,2.356677), tolerance=1e-6)
-    expect_equal(range(resid(gm1)), c(-3.1975034,2.35668826), tolerance=1e-6)
-    expect_equal(range(resid(gm1.old, "response")), c(-0.1946736,0.3184579), tolerance=1e-6)
-    expect_equal(range(resid(gm1,"response")),c(-0.194674747774946, 0.318458889275477))
-    expect_equal(range(resid(gm1.old, "pearson")),  c(-2.381643,2.879069),tolerance=1e-5)
-    expect_equal(range(resid(gm1,"pearson")), c(-2.38163599828335, 2.87908806084918))
-    expect_equal(range(resid(gm1.old, "working")),  c(-1.241733,5.410587),tolerance=1e-5)
-    expect_equal(range(resid(gm1, "working")),    c(-1.24173431447365, 5.41064465283686))
+    ## Reference values use the factorization at the accepted PIRLS mean (GH #998).
+    expect_equal(range(resid(gm1.old)), c(-3.19768734334282, 2.35698728407442), tolerance=1e-6)
+    expect_equal(range(resid(gm1)), c(-3.19768734334282, 2.35698728407442), tolerance=1e-6)
+    expect_equal(range(resid(gm1.old, "response")), c(-0.194642013418991, 0.318485961516536), tolerance=1e-6)
+    expect_equal(range(resid(gm1,"response")),c(-0.194642013418991, 0.318485961516536))
+    expect_equal(range(resid(gm1.old, "pearson")),  c(-2.38178751224499, 2.87959762644642),tolerance=1e-5)
+    expect_equal(range(resid(gm1,"pearson")), c(-2.38178751224499, 2.87959762644642))
+    expect_equal(range(resid(gm1.old, "working")),  c(-1.24168384328726, 5.4136064619901),tolerance=1e-5)
+    expect_equal(range(resid(gm1, "working")),    c(-1.24168384328726, 5.4136064619901))
     expect_equal(resid(gm1),resid(gm1,scaled=TRUE))  ## since sigma==1
 
     expect_error(resid(gm1,"partial"),
@@ -79,7 +78,7 @@ test_that("weighted residuals", {
     gm1 <- glmer(round(Reaction) ~ 1 + (1|Subject), ss, na.action = na.exclude,
                  family = poisson)
     expect_equal(head(weighted.residuals(gm1), 3),
-                 structure(c(NA, -4.9271857060919, -5.35397661950064), names = c(NA, "2", "3")))
+                 structure(c(NA, -4.92718365355386, -5.35397459386427), names = c(NA, "2", "3")))
 
 
 })

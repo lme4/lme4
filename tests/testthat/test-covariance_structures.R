@@ -529,15 +529,15 @@ test_that("integration tests for coef and fixef", {
   expected_sum2 <- c("Fixed effects:",                                             
                      "            Estimate Std. Error z value Pr(>|z|)    ",       
                      "(Intercept)   -0.720      0.103      -7    3e-12 ***",       
-                     "age            0.009      0.005       2     0.09 .  ",       
+                     "age            0.009      0.006       2     0.09 .  ",
                      "urbanY         0.742      0.169       4    1e-05 ***",       
                      "---",      
                      "Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1",
                      "",                                  
                      "Correlation of Fixed Effects:",      
                      "       (Intr) age   ",            
-                     "age    -0.022       ",      
-                     "urbanY -0.648  0.006")
+                     "age    -0.023       ",
+                     "urbanY -0.649  0.006")
   expect_equal(tfun(tmpf(gm.us)), expected_sum2)
   options(opt)
 })

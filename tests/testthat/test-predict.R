@@ -612,8 +612,8 @@ test_that("predictions work with se.fit and subset of grouping variable levels",
                   grp = factor(c("a","b"), levels = letters[1:4]))
   
   pp <- suppressWarnings(predict(m1, newdata = d, se.fit = TRUE))
-  expect_equal(pp, list(fit = c(`1` = -0.4338277, `2` = -0.5993396),
-                        se.fit = c(`1` = 0.4255397, `2` = 0.2779372)), 
+  expect_equal(pp, list(fit = c(`1` = -0.433821571187245, `2` = -0.599345208646073),
+                        se.fit = c(`1` = 0.425542869767524, `2` = 0.277942375835559)),
                tol = 1e-6)
   
   d2 <- dat[sample(1:nrow(dat), size = 20),]
@@ -623,8 +623,8 @@ test_that("predictions work with se.fit and subset of grouping variable levels",
   expect_identical(lengths(pp2), c(fit=16L, se.fit=16L))
 
   expect_equal(lapply(pp2, head, 2),
-               list(fit = c(`37` = -0.5109994, `29` = -0.5704263),
-                    se.fit = c(`37` = 0.5151070, `29` = 0.3258730)),
+               list(fit = c(`37` = -0.510995123191198, `29` = -0.570421417853284),
+                    se.fit = c(`37` = 0.515109410757795, `29` = 0.325875971363831)),
                tol = 1e-7)
 
   set.seed(123)

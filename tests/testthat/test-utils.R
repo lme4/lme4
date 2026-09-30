@@ -50,5 +50,5 @@ test_that("getData", {
     expect_error(getData(m1), "is not a data frame or matrix.*masked by a built-in", perl = TRUE)
     p1 <- suppressMessages(predict(m1, newparams = list(beta = 5, theta = 1), type = "response",
             re.form = ~ 1|Subject))
-    expect_equal(unname(head(p1, 2)), c(444.407382298401, 444.407382298401))
+    expect_equal(unname(head(p1, 2)), c(444.409398315779, 444.409398315779))
 })
