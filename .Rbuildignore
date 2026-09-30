@@ -39,7 +39,7 @@ src/mcmcsamp\.cpp$
 revdep/
 Rplots.pdf
 R/scaleX.R
-\.Rout
+\.Rout$
 .vscode
 ^docs/
 Sweave.sty
