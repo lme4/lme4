@@ -490,6 +490,12 @@ extern "C" {
             // compatibility -- see glmerControl(disp_method=).
             pwrssUpdate(rp, pp, uOnly, tol, maxit, verb);
         }
+        // PIRLS updates mu after forming the working factorization. Rebuild
+        // it at the accepted mean and final phi before Laplace or AGQ uses it.
+        // Do not solve again: that would change the accepted coefficients and
+        // leave the factorization one iteration behind again.
+        pp->updateXwts(rp->sqrtWrkWt());
+        pp->updateDecomp();
         return true;
     }
 
