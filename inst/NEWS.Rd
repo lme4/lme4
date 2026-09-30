@@ -4,6 +4,17 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
+\section{CHANGES IN VERSION 2.1-0.9000}{
+  \subsection{Bugfixes}{
+    \itemize{
+      \item \code{glmer()} refreshes the working weights and factorization
+      at the accepted PIRLS mean before computing the Laplace approximation
+      or adaptive quadrature, removing a stale-factor contribution to
+      numerical Hessian error (GH #998).
+    }
+  }
+}
+
 \section{CHANGES IN VERSION 2.1-0}{
   \subsection{USER-VISIBLE CHANGES}{
     \itemize{
