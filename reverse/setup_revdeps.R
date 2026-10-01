@@ -157,41 +157,40 @@ if (!batch_ok) {
     )
 }
 
-## Pass 2: parallel source compilation for packages bspm could not supply
-install_failed <- character(0)
+## Pass 2: parallel source compilation for packages bspm could not supply.
+## install.packages() only warns (does not error) when an individual package
+## fails to install, so failures are detected by checking what is actually
+## installed afterwards, not by catching errors.
 still_needed <- setdiff(to_install, rownames(installed.packages()))
 if (length(still_needed) > 0L) {
     cat(sprintf("\n--- Pass 2: source compilation for %d package(s) (Ncpus=%d) ---\n",
                 length(still_needed), NCPUS))
     bspm::disable()
-    src_ok <- tryCatch({
+    tryCatch(
         install.packages(still_needed,
                          configure.vars = configure.vars,
                          dependencies   = FALSE,
-                         Ncpus          = NCPUS)
-        TRUE
-    }, error = function(e) {
-        message("Pass 2 parallel install failed: ", conditionMessage(e))
-        FALSE
-    })
-    bspm::enable()
-    if (!src_ok) {
-        still_needed2 <- setdiff(still_needed, rownames(installed.packages()))
+                         Ncpus          = NCPUS),
+        error = function(e) message("Pass 2 parallel install failed: ", conditionMessage(e))
+    )
+    still_needed2 <- setdiff(still_needed, rownames(installed.packages()))
+    if (length(still_needed2) > 0L) {
         cat(sprintf("Retrying %d package(s) individually ...\n", length(still_needed2)))
         for (pkg in still_needed2) {
             tryCatch(
-                install.packages(pkg, dependencies = FALSE, Ncpus = NCPUS),
-                error = function(e) {
+                install.packages(pkg, configure.vars = configure.vars,
+                                 dependencies = FALSE, Ncpus = NCPUS),
+                error = function(e)
                     message(sprintf("  SKIP %s: %s", pkg, conditionMessage(e)))
-                    install_failed <<- c(install_failed, pkg)
-                }
             )
         }
     }
+    bspm::enable()
 } else {
     cat("Pass 2: no source-only packages remaining.\n")
 }
 
+install_failed <- setdiff(to_install, rownames(installed.packages()))
 if (length(install_failed) > 0L) {
     warning(sprintf("%d package(s) could not be installed: %s",
                     length(install_failed),
@@ -218,8 +217,10 @@ summary_lines <- c(
     sprintf("new lme4       : %s  -> %s", basename(lme4_new), LIB_NEW),
     sprintf("Revdeps found  : %d", length(rdeps)),
     sprintf("Tarballs saved : %d  (see %s)", n_check, PKG_LIST_FILE),
-    sprintf("Install failures: %s",
+    sprintf("Download failures: %s",
             if (length(failed)) paste(failed, collapse = ", ") else "none"),
+    sprintf("Install failures: %s",
+            if (length(install_failed)) paste(install_failed, collapse = ", ") else "none"),
     sprintf("R library      : %s", .libPaths()[[1L]])
 )
 writeLines(summary_lines, file.path(REVDEP_DIR, "setup_summary.txt"))

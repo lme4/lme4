@@ -1,0 +1,20 @@
+## Dockerfile.patch -- add packages that failed during the main build, as one
+## extra layer on top of an existing image (see docker-patch).
+##
+## Build (from reverse/):
+##   docker build --build-arg BASE=lme4-revdep:OLD_vs_NEW \
+##       -t lme4-revdep:OLD_vs_NEW-patched -f Dockerfile.patch .
+##
+## RBioFormats downloads a ~45 MB Java library into
+## tools::R_user_dir("RBioFormats", "cache") the first time it is loaded
+## (including during its own installation), which can exceed the default
+## download timeout. R_USER_CACHE_DIR puts that cache at a fixed path inside
+## the image; check_one.R points R_USER_CACHE_DIR at a writable per-job copy
+## of /opt/revdep/Rcache, since $HOME is not usable under singularity --no-home.
+## scider imports RBioFormats, and OSTA imports scider.
+
+ARG BASE
+FROM ${BASE}
+
+RUN R_DEFAULT_INTERNET_TIMEOUT=1200 R_USER_CACHE_DIR=/opt/revdep/Rcache \
+    Rscript -e 'bspm::disable(); install.packages(c("RBioFormats", "scider", "OSTA"), repos = BiocManager::repositories(), dependencies = FALSE); stopifnot(all(c("RBioFormats", "scider", "OSTA") %in% rownames(installed.packages())))'

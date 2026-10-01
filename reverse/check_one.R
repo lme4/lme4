@@ -30,6 +30,22 @@ cat(sprintf("lme4 version   : %s  (library: %s)\n", lme4_ver, lme4_lib))
 cat(sprintf("lme4 installed : %s\n",
             as.character(packageVersion("lme4"))))
 
+## ---- Per-package user cache -----------------------------------------------
+## Some packages (e.g. RBioFormats) download files into
+## tools::R_user_dir(pkg, "cache") on first load. Under singularity --no-home
+## that is not a usable location and the image itself is read-only, so link
+## the copies pre-downloaded at build time (/opt/revdep/Rcache) into a
+## writable per-job directory; R CMD check inherits R_USER_CACHE_DIR.
+cache_seed <- "/opt/revdep/Rcache"
+cache_dir  <- file.path(tempdir(), "Rcache")
+dir.create(cache_dir, showWarnings = FALSE)
+for (f in list.files(cache_seed, recursive = TRUE)) {
+    dir.create(dirname(file.path(cache_dir, f)), recursive = TRUE,
+               showWarnings = FALSE)
+    file.symlink(file.path(cache_seed, f), file.path(cache_dir, f))
+}
+Sys.setenv(R_USER_CACHE_DIR = cache_dir)
+
 ## ---- Identify the tarball -------------------------------------------------
 PKG_LIST_FILE <- "/opt/revdep/pkgs_to_check.txt"
 pkg_list      <- readLines(PKG_LIST_FILE)
