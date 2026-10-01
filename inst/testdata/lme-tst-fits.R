@@ -53,7 +53,9 @@ fit_Pix.full <- lmer(pixel ~ day + I(day^2) + (day | Dog) + (1 | Side/Dog),
                      data = Pixel)
 fit_Pix.1Dog <- lmer(pixel ~ day + I(day^2) +   (1 | Dog) + (1 | Side/Dog),
                      data = Pixel)
-fit_Pix.noD  <- update(fit_Pix.1Dog, .~. - (1 | Dog))
+## Keep the optimizer used by the original stored boundary fit.
+fit_Pix.noD  <- update(fit_Pix.1Dog, .~. - (1 | Dog),
+                       control = lmerControl(optimizer = "bobyqa"))
 anova(fit_Pix.full,
       fit_Pix.1Dog,
       fit_Pix.noD)

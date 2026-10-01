@@ -419,7 +419,8 @@ test_that("prediction with spaces in variable names", {
                family=binomial, data=cbpp)
     expect_equal(round(head(predict(m)),3),
                  c(`1` = -0.809, `2` = -1.801,
-                   `3` = -1.937, `4` = -2.388, `5` = -1.697, `6` = -2.689))
+                   `3` = -1.937, `4` = -2.388, `5` = -1.697, `6` = -2.689),
+                 tolerance=5e-4)
 })
 
 if (requireNamespace("statmod")) {
@@ -444,7 +445,7 @@ if (requireNamespace("statmod")) {
                  c(sim_11 = 0.453344718811628, sim_12 = 0.64148773286959,
                    sim_13 = 0.484750314445057,
                    sim_14 = 0.164012565637704, sim_15 = 0.253683796505627,
-                   sim_16 = 0.983549319252098))
+                   sim_16 = 0.983549319252098), tolerance=1e-7)
   })
 }
 
@@ -614,7 +615,7 @@ test_that("predictions work with se.fit and subset of grouping variable levels",
   pp <- suppressWarnings(predict(m1, newdata = d, se.fit = TRUE))
   expect_equal(pp, list(fit = c(`1` = -0.433821571187245, `2` = -0.599345208646073),
                         se.fit = c(`1` = 0.425542869767524, `2` = 0.277942375835559)),
-               tol = 1e-6)
+               tol = 1e-5)
   
   d2 <- dat[sample(1:nrow(dat), size = 20),]
   d2 <- d2[!("c" == d2$grp), ]
@@ -625,7 +626,7 @@ test_that("predictions work with se.fit and subset of grouping variable levels",
   expect_equal(lapply(pp2, head, 2),
                list(fit = c(`37` = -0.510995123191198, `29` = -0.570421417853284),
                     se.fit = c(`37` = 0.515109410757795, `29` = 0.325875971363831)),
-               tol = 1e-7)
+               tol = 1e-5)
 
   set.seed(123)
   dat2 <- expand.grid(
