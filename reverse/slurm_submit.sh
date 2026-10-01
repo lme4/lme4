@@ -81,10 +81,10 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ## 'both' mode runs two R CMD check invocations per task instead of one, so
 ## give it double the wall-clock budget.
 if [[ "$LME4_VER" == "both" ]]; then
-    JOBTIME=8:00:00
+    JOBTIME=4:00:00
     EXPORT_VARS="ALL,CONTAINER=${CONTAINER},RESULTS_DIR_OLD=${RESULTS_DIR_OLD},RESULTS_DIR_NEW=${RESULTS_DIR_NEW},REVDEP_LME4=${LME4_VER},CHECK_ONE_R=${SCRIPT_DIR}/check_one.R"
 else
-    JOBTIME=4:00:00
+    JOBTIME=2:00:00
     EXPORT_VARS="ALL,CONTAINER=${CONTAINER},RESULTS_DIR=${RESULTS_DIR},REVDEP_LME4=${LME4_VER},CHECK_ONE_R=${SCRIPT_DIR}/check_one.R"
 fi
 
