@@ -485,6 +485,10 @@ glmerPwrssUpdate <- function(pp, resp, tol, GQmat, compDev=TRUE, grpFac=NULL, ma
         oldpdev <- pdev
         i <- i+1
     }
+    ## Match the compiled path: use the accepted mean, without taking
+    ## another PIRLS step, to form the factorization used by Laplace.
+    pp$updateXwts(resp$sqrtWrkWt())
+    pp$updateDecomp()
     resp$Laplace(pp$ldL2(), 0., pp$sqrL(1))  ## FIXME: should 0. be pp$ldRX2 ?
 }
 

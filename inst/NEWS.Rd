@@ -46,6 +46,13 @@
   } % user-visible changes
   \subsection{BUG FIXES}{
     \itemize{
+      \item \code{glmer()} refreshes the working weights and factorization
+      at the accepted PIRLS mean before computing the Laplace approximation
+      or adaptive quadrature, removing a stale-factor contribution to
+      numerical Hessian error. Parameter estimates and estimated parameter 
+	  covariance matrices (and hence standard errors) will generally change slightly. 
+	  Large changes in standard errors are likely to be improvements 
+	  (GH #998, #289, @tylermorganwall).
       \item \code{ar1} and \code{cs} covariance structures with zero
       variances (making correlation unidentifiable) now return
       \code{NA} with a warning rather than throwing an error;
