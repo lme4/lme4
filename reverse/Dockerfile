@@ -22,10 +22,14 @@ ENV DEBIAN_FRONTEND=noninteractive
 ##   texlive-*          : LaTeX-based vignettes
 ##   texinfo            : provides texi2dvi (required by some vignettes)
 ##   pandoc             : Rmarkdown vignettes
+##   libgsl-dev         : GSL headers/gsl-config for reverse dependencies that
+##                        compile against GSL at check time (e.g. abn); binary
+##                        r2u installs only pull in the runtime library
 ## r2u's bspm layer handles additional system-library deps for R packages
 ## automatically when install.packages() is called in setup_revdeps.R.
 RUN apt-get update && apt-get install -y --no-install-recommends \
         qpdf \
+        libgsl-dev \
         ghostscript \
         pandoc \
         texlive-latex-base \
