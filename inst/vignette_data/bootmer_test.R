@@ -49,7 +49,7 @@ for (i in names(mforms)) {
                               data = cbpp2,
                               family = binomial,
                               weights = size,
-                              control = cc0),
+                              control = cc0)
   cbpp_mod_list2[[i]] <- glmer(mforms[[i]],
                               data = cbpp2,
                               family = binomial,
