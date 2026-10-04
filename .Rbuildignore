@@ -45,6 +45,7 @@ R/scaleX.R
 Sweave.sty
 ^reverse$
 tests/testthat/test-summary_testlevel.*
+^tests/[^/]*\.pdf$
 ^vignettes/glmer_old\.Rnw$
 ^vignettes/glmer_diff.pdf
 ^vignettes/latexdiff_commit\.sh$
