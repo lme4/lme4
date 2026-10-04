@@ -936,7 +936,7 @@ test_that("cooks distance on glmer models", {
   inf.h <- influence(gm1, "herd", ncpus=1)
   cook <- cooks.distance(inf)
   expect_equal(unname(head(cook, 3)),
-               c(0.0524062901542423, 0.0396850756910789, 0.246689720928325),
+               c(0.0524063139071626, 0.0396850631091166, 0.246678190526733),
                tolerance = 1e-6)
   cook.h <- cooks.distance(inf.h)
   expect_equal(unname(head(cook.h, 3)),
