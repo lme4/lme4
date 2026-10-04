@@ -102,6 +102,7 @@ dofTestData <- local({
 })
 
 test_that("disp_dof_correction moves sigma by the expected factor", {
+    skip_on_cran()
     for (nm in names(dofTestData)) {
         entry <- dofTestData[[nm]]
         checkDofRatio(entry$formula, entry$data)
@@ -109,6 +110,7 @@ test_that("disp_dof_correction moves sigma by the expected factor", {
 })
 
 test_that("disp_dof_correction accounts for fixed/random redundancy (rank of combined [X,Z])", {
+    skip_on_cran()
     ## Add poly(x,3) to the FIXED effects on top of each RE structure
     ## above (not part of the true generating model -- this is purely a
     ## mechanism check, not testing recovery of a real fixed effect).

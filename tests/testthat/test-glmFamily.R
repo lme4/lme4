@@ -162,6 +162,7 @@ test_that("estimated Gamma shape is correct", {
 })
 
 test_that("glmer works for Gamma with small shape parameter", {
+  skip_on_cran()
   ## shape=0.1 previously caused PIRLS divergence
   ## we are also testing for different values of Gamma to be safe
   shape_vec <- c(0.1,0.5,1,2,5)
@@ -221,6 +222,7 @@ test_that("simulated Inverse Gaussian data matches with simulate()", {
 })
 
 test_that("estimated Inverse Gaussian shape is correct", {
+  skip_on_cran()
   m1 <- glmer(y ~ 1 + (1 | group), family = inverse.gaussian(link = "1/mu^2"), 
               data = ddig2)
   shape_val <- 1/sigma(m1)^2

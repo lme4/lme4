@@ -41,6 +41,7 @@ test_that("checking singular fit for covariance", {
 })
 
 test_that("checking singular fit for merMod", {
+  skip_on_cran()
 
   set.seed(101)
   
