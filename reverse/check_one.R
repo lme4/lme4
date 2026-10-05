@@ -26,6 +26,11 @@ lme4_ver <- Sys.getenv("REVDEP_LME4", unset = "new")
 stopifnot("REVDEP_LME4 must be 'old' or 'new'" = lme4_ver %in% c("old", "new"))
 lme4_lib <- file.path("/opt/revdep", paste0("Library_", lme4_ver))
 .libPaths(c(lme4_lib, .libPaths()))
+## R CMD check runs in child R processes (system2() below), which do not
+## inherit .libPaths(); without R_LIBS they find the r2u-installed lme4 in
+## /usr/lib/R/site-library (pulled in as an apt dependency) instead, so
+## 'old' and 'new' would both silently check against that version.
+Sys.setenv(R_LIBS = paste(.libPaths(), collapse = .Platform$path.sep))
 cat(sprintf("lme4 version   : %s  (library: %s)\n", lme4_ver, lme4_lib))
 cat(sprintf("lme4 installed : %s\n",
             as.character(packageVersion("lme4"))))
