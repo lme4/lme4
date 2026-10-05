@@ -1,9 +1,17 @@
-## Dockerfile.patch -- add packages that failed during the main build, as one
-## extra layer on top of an existing image (see docker-patch).
+## Dockerfile.patch -- update an existing image with one extra layer instead
+## of a full rebuild (see README.md, "Updating an existing image"): add
+## system libraries and packages that failed during the main build, and
+## reinstall the dev lme4 into Library_new/ (Library_old/ is untouched).
 ##
-## Build (from reverse/):
+## Build (from a minimal context containing only this file and the new
+## lme4 tarball, as build.sh does):
 ##   docker build --build-arg BASE=lme4-revdep:OLD_vs_NEW \
-##       -t lme4-revdep:OLD_vs_NEW-patched -f Dockerfile.patch .
+##       --build-arg NEW_TGZ=lme4_NEW.tar.gz \
+##       --build-arg LME4_SHA=$(git rev-parse --short HEAD) \
+##       -t lme4-revdep:OLD_vs_NEW-patchYYYYMMDD -f Dockerfile.patch CONTEXT
+##
+## libgsl-dev: GSL headers/gsl-config, as in Dockerfile (for images built
+## before it was added there).
 ##
 ## RBioFormats downloads a ~45 MB Java library into
 ## tools::R_user_dir("RBioFormats", "cache") the first time it is loaded
@@ -18,3 +26,16 @@ FROM ${BASE}
 
 RUN R_DEFAULT_INTERNET_TIMEOUT=1200 R_USER_CACHE_DIR=/opt/revdep/Rcache \
     Rscript -e 'bspm::disable(); install.packages(c("RBioFormats", "scider", "OSTA"), repos = BiocManager::repositories(), dependencies = FALSE); stopifnot(all(c("RBioFormats", "scider", "OSTA") %in% rownames(installed.packages())))'
+
+RUN apt-get update && apt-get install -y --no-install-recommends libgsl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+## Replace the dev lme4 in Library_new/ and record which commit it came from,
+## since successive builds of the same version are otherwise indistinguishable.
+ARG NEW_TGZ
+ARG LME4_SHA=unknown
+COPY ${NEW_TGZ} /opt/revdep/
+RUN rm -rf /opt/revdep/Library_new/lme4 && \
+    R CMD INSTALL -l /opt/revdep/Library_new /opt/revdep/${NEW_TGZ} && \
+    echo "patched        : $(date -u +%Y-%m-%d) new lme4 from ${NEW_TGZ} (git ${LME4_SHA})" \
+        >> /opt/revdep/setup_summary.txt
