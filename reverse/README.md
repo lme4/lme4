@@ -148,6 +148,36 @@ The error output (e.g. `hdf5.h: No such file or directory`) maps directly to
 an apt package (e.g. `libhdf5-dev`).  Add it to the `apt-get install` block in
 the Dockerfile and rebuild.
 
+#### Updating an existing image (patch layer)
+
+If the version pair is unchanged but the dev lme4 has moved on (or a system
+library/package is missing), `Dockerfile.patch` adds one layer on top of the
+existing image instead of a full rebuild: it reinstalls the new tarball into
+`Library_new/` (leaving `Library_old/` alone), installs extra system
+libraries/packages, and appends the lme4 git SHA to
+`/opt/revdep/setup_summary.txt`. The revdep list and all other packages stay
+as they were at the original build -- do a full rebuild if those need
+refreshing.
+
+Build the tarball from a clean checkout (e.g. a `git worktree`) so untracked
+files in the working tree don't end up in it, then use a minimal build
+context (as `build.sh` does) rather than `reverse/` itself:
+
+```bash
+export TAG=${OLD}_vs_${NEW}-patch$(date +%Y%m%d)
+CTX=$(mktemp -d)
+cp Dockerfile.patch lme4_${NEW}.tar.gz "$CTX"/
+docker build --build-arg BASE=lme4-revdep:${OLD}_vs_${NEW} \
+    --build-arg NEW_TGZ=lme4_${NEW}.tar.gz \
+    --build-arg LME4_SHA=$(git rev-parse --short HEAD) \
+    -t lme4-revdep:${TAG} -f "$CTX"/Dockerfile.patch "$CTX"
+docker run --rm lme4-revdep:${TAG} cat /opt/revdep/setup_summary.txt
+```
+
+Push/pull it as in step 2 (with `${TAG}` in place of `${OLD}_vs_${NEW}`), and
+pull it into a new, dated `$SIF` path rather than over the old one (see the
+note about stale images above).
+
 ### 2. Transfer the image to Compute Canada
 
 **Option A: direct file transfer via scp**
