@@ -8,6 +8,9 @@
 ## Usage:
 ##   bash grep_problems.sh RESULTS_DIR [extra grep -E pattern to OR in]
 ##
+## For 'both'-mode results (RESULTS_DIR/old/ and RESULTS_DIR/new/, with no
+## .Rcheck dirs at the top level), each subdirectory is scanned in turn.
+##
 ## Two passes:
 ##   1. grep 00install.out and 00check.log in each *.Rcheck dir for common
 ##      missing-system-library/header/configure-failure signatures.
@@ -21,6 +24,24 @@ set -euo pipefail
 
 RESULTS_DIR="${1:?Usage: $0 RESULTS_DIR [extra grep -E pattern]}"
 EXTRA_PATTERN="${2:-}"
+
+## 'both' mode: recurse into old/ and new/
+if ! compgen -G "$RESULTS_DIR/rdepends_*.Rcheck" >/dev/null; then
+    found_sub=0
+    for v in old new; do
+        if [ -d "$RESULTS_DIR/$v" ]; then
+            found_sub=1
+            echo "################ $v ($RESULTS_DIR/$v) ################"
+            bash "$0" "$RESULTS_DIR/$v" "$EXTRA_PATTERN"
+            echo ""
+        fi
+    done
+    if [ "$found_sub" -eq 0 ]; then
+        echo "No rdepends_*.Rcheck dirs or old/, new/ subdirs in $RESULTS_DIR" >&2
+        exit 1
+    fi
+    exit 0
+fi
 
 PATTERN='cannot find -l|\.h(pp)?: No such file or directory|configure: error|unable to load shared object|error while loading shared librar|ld: cannot find|ERROR: dependency|ERROR: compilation failed|ERROR: configuration failed'
 [ -n "$EXTRA_PATTERN" ] && PATTERN="${PATTERN}|${EXTRA_PATTERN}"
