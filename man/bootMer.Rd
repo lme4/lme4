@@ -64,10 +64,13 @@ bootMer(x, FUN, nsim = 1, seed = NULL, use.u = FALSE, re.form=NA,
     the \code{control} argument stored in the model's call
     (\code{x@call$control}), which is passed on to \code{\link{refit}}.
     A list is searched first, then the frame \code{bootMer} was called
-    from.  The default evaluates it in that frame, which fails when the
-    model was fitted inside a function with, e.g., \code{control = ctrl}
-    and \code{ctrl} is local to that function; supply it with
-    \code{call.env = list(ctrl = ctrl)}.
+    from.  If evaluation there fails, the environment of the model's
+    formula is tried next, as in \code{\link{update.merMod}}; that is
+    usually the frame the model was fitted in, so a model fitted inside
+    a function with, e.g., \code{control = ctrl} is handled without this
+    argument when the formula was written in the same function.  When it
+    was not (e.g., the formula was passed in as an argument), supply the
+    object with \code{call.env = list(ctrl = ctrl)}.
     \code{\link{confint.merMod}(*, method = "boot")} passes it on via \code{...}.}
 }
 \value{
@@ -157,14 +160,22 @@ bootMer(x, FUN, nsim = 1, seed = NULL, use.u = FALSE, re.form=NA,
   }
 }
 \examples{
-## a model fitted inside a function, with a 'control' object local to it
+## models fitted inside a function, with a 'control' object local to it
 fitDyestuff <- function() {
     ctrl <- lmerControl(optimizer = "bobyqa")
     lmer(Yield ~ 1|Batch, Dyestuff, control = ctrl)
 }
 fmF <- fitDyestuff()
-## 'ctrl' is not visible here, so say where to find it:
-booF <- bootMer(fmF, fixef, nsim = 2, seed = 101,
+## 'ctrl' is found in the formula's environment:
+booF <- bootMer(fmF, fixef, nsim = 2, seed = 101)
+fitWith <- function(form) {
+    ctrl <- lmerControl(optimizer = "bobyqa")
+    lmer(form, Dyestuff, control = ctrl)
+}
+fmG <- fitWith(Yield ~ 1|Batch)
+## the formula was written out here, where 'ctrl' does not exist,
+## so say where to find it:
+booG <- bootMer(fmG, fixef, nsim = 2, seed = 101,
                 call.env = list(ctrl = lmerControl(optimizer = "bobyqa")))
 
 if (interactive()) {

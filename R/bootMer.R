@@ -98,9 +98,19 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL,
     ## FIXME:: use getCall(x) ? check for existence of slot?
     ##  is control used except for merMod?
     ## 'call.env' may be a list: eval() then looks there first and in
-    ## the caller's frame for anything the list does not contain
+    ## the caller's frame for anything the list does not contain.
+    ## If that fails, try the formula's environment, as update.merMod()
+    ## does; it is usually the frame the model was fitted in.  If both
+    ## fail, report the first error.
+    pf <- parent.frame()
     control <- if (!is(x, "merMod")) NULL else
-        eval(x@call$control, envir = call.env, enclos = parent.frame())
+        tryCatch(eval(x@call$control, envir = call.env, enclos = pf),
+                 error = function(e) {
+                     fenv <- environment(formula(x))
+                     if (!is.environment(fenv)) stop(e)
+                     tryCatch(eval(x@call$control, envir = fenv),
+                              error = function(e2) stop(e))
+                 })
 
     # define ffun as a closure containing the referenced variables
     # in its scope to avoid explicit clusterExport statement

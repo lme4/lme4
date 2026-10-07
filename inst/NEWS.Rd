@@ -97,8 +97,11 @@
       environment or a list, in which the \code{control} argument stored
       in the model's call is evaluated.  A model fitted inside a function
       with \code{control = ctrl} could not be bootstrapped from outside
-      it, because \code{ctrl} was looked up only in the caller's frame;
-      \code{call.env = list(ctrl = ctrl)} now supplies it
+      it, because \code{ctrl} was looked up only in the caller's frame.
+      When that lookup fails, \code{bootMer()} now tries the formula's
+      environment, as \code{update()} does, which finds \code{ctrl}
+      whenever the formula was written in the fitting function; otherwise
+      \code{call.env = list(ctrl = ctrl)} supplies it
       (GH #1007, @billdenney).
     } % itemize
   } % new features
