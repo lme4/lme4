@@ -6,7 +6,8 @@ bootMer(x, FUN, nsim = 1, seed = NULL, use.u = FALSE, re.form=NA,
 	type = c("parametric", "semiparametric"),
 	verbose = FALSE, .progress = "none", PBargs = list(),
 	parallel = c("no", "multicore", "snow", "future"),
-	ncpus = getOption("boot.ncpus", 1L), cl = NULL)
+	ncpus = getOption("boot.ncpus", 1L), cl = NULL,
+	call.env = parent.frame())
 }
 \arguments{
   \item{x}{a fitted \code{merMod} object: see
@@ -59,6 +60,15 @@ bootMer(x, FUN, nsim = 1, seed = NULL, use.u = FALSE, re.form=NA,
     arguments \code{parallel} and \code{ncpus} are ignored.
     If not supplied and \code{parallel = "snow"}, a temporary cluster with
     \code{ncpus} nodes is created for the duration of the call.}
+  \item{call.env}{an environment, or a named list, in which to evaluate
+    the \code{control} argument stored in the model's call
+    (\code{x@call$control}), which is passed on to \code{\link{refit}}.
+    A list is searched first, then the frame \code{bootMer} was called
+    from.  The default evaluates it in that frame, which fails when the
+    model was fitted inside a function with, e.g., \code{control = ctrl}
+    and \code{ctrl} is local to that function; supply it with
+    \code{call.env = list(ctrl = ctrl)}.
+    \code{\link{confint.merMod}(*, method = "boot")} passes it on via \code{...}.}
 }
 \value{
   an object of S3 \code{\link{class}} \code{"boot"},
@@ -147,6 +157,16 @@ bootMer(x, FUN, nsim = 1, seed = NULL, use.u = FALSE, re.form=NA,
   }
 }
 \examples{
+## a model fitted inside a function, with a 'control' object local to it
+fitDyestuff <- function() {
+    ctrl <- lmerControl(optimizer = "bobyqa")
+    lmer(Yield ~ 1|Batch, Dyestuff, control = ctrl)
+}
+fmF <- fitDyestuff()
+## 'ctrl' is not visible here, so say where to find it:
+booF <- bootMer(fmF, fixef, nsim = 2, seed = 101,
+                call.env = list(ctrl = lmerControl(optimizer = "bobyqa")))
+
 if (interactive()) {
 fm01ML <- lmer(Yield ~ 1|Batch, Dyestuff, REML = FALSE)
 ## see ?"profile-methods"
