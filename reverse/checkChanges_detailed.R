@@ -17,7 +17,8 @@
 ##
 ## Before comparing, outputs are normalized to drop run-to-run noise:
 ## fancy quotes, timings such as [35s/39s], the "Examples with CPU ... > 5s"
-## timing tables, R temp-file names, and the .Rcheck directory prefix.
+## timing tables, R temp-file and temp-library names, hex-prefixed cache
+## files, date-time stamps, and the .Rcheck directory prefix.
 ## Other numbers are kept, so changed numerical test results still show up.
 ##
 ## USAGE IN A SHELL
@@ -73,7 +74,15 @@ normalize_output <- function(x) {
             grepl("^\\s*\\S+\\s+[0-9.]+\\s+[0-9.]+\\s+[0-9.]+\\s*$", lines)
         lines <- lines[!drop]
         lines <- gsub("/tmp/Rtmp[[:alnum:]]+", "<TMPDIR>", lines)
+        lines <- gsub("\\bRtmp[[:alnum:]]{6}\\b", "<RTMP>", lines)
         lines <- gsub("\\bfile[0-9a-f]{6,}\\b", "<FILE>", lines)
+        ## temp library dirs, e.g. RLIBS_1c3435555ad611
+        lines <- gsub("\\bRLIBS_[0-9a-f]+\\b", "RLIBS_<HEX>", lines)
+        ## hex-prefixed cache files, e.g. 1ed76227913c83_experimenthub.sqlite3
+        lines <- gsub("\\b[0-9a-f]{10,}_", "<HEX>_", lines)
+        ## date-times, e.g. log timestamps
+        lines <- gsub("[0-9]{4}-[0-9]{2}-[0-9]{2}[ T][0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?",
+                      "<DATETIME>", lines)
         lines <- gsub("\\S*/([^/[:space:]]+\\.Rcheck)/", "\\1/", lines)
         lines <- sub("\\s+$", "", lines)
         paste(lines[nzchar(lines)], collapse = "\n")
