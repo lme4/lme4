@@ -280,6 +280,14 @@ profile.merMod <- function(fitted,
         ## assign one row, determined by inc. sign, from a small shift
         ## FIXME:: do something if pw==0 ???
         shiftpar <- if (pw==0) 1e-3 else pw*1.01
+        ## pw*1.01 can fall outside the bounds (e.g. a correlation
+        ## estimate above 1/1.01), where zeta is NA and the profile
+        ## collapses: step halfway to the bound instead, or away from
+        ## the bound if pw is on it
+        if (shiftpar >= upcut)
+            shiftpar <- if (pw < upcut) (pw + upcut)/2 else 2*pw - shiftpar
+        else if (shiftpar <= lowcut)
+            shiftpar <- if (pw > lowcut) (pw + lowcut)/2 else 2*pw - shiftpar
         ## Since both the pos- and neg-increment matrices are already
         ## filled with the opt. par. results, this sets the first
         ## two rows of the positive-increment matrix

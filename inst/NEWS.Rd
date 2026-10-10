@@ -67,7 +67,9 @@
       spline through a monotone likelihood profile was itself
       non-monotone; such profiles now use monotone (Hermite) splines
       for \code{confint()} and the \code{xyplot()} profile plot.
-      Results for well-behaved profiles are unchanged (GH #834,
+      Results for well-behaved profiles are unchanged.
+      Additionally fixed long-standing edge-case and indexing bugs in
+      \code{profile.merMod} and \code{confint.thpr} (GH #834,
       @meierluk, @yasrey10).
       \item fixed a long-standing bug for GLMMs with estimated dispersion
       parameters (Gamma, inverse Gaussian, and Gaussian families fitted

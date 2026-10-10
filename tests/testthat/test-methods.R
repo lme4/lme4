@@ -438,6 +438,41 @@ test_that("confint.thpr uses the right bounds for a subset of parameters", {
   expect_equal(confint(p, parm = 2, level = lev), ci_cor)
 })
 
+test_that("profiling correlations near or on the boundary", {
+  ctrl <- lmerControl(check.conv.singular = "ignore")
+  ## estimate above 1/1.01, so the default first step (1.01 times the
+  ## estimate) would fall outside [-1, 1]
+  set.seed(20261010)
+  dd <- data.frame(g = factor(rep(1:30, each = 20)), x = rnorm(600))
+  dd$y <- simulate(~ x + (x | g), newdata = dd, family = gaussian,
+                   newparams = list(beta = c(0, 1),
+                                    theta = c(1, 0.995, 0.05), sigma = 1),
+                   seed = 3)[[1]]
+  fit <- lmer(y ~ x + (x | g), dd, control = ctrl)
+  expect_gt(attr(VarCorr(fit)$g, "correlation")[1, 2], 1/1.01)
+  p <- profile(fit, which = 3)
+  pts <- p$.sig03[p$.par == ".sig03"]
+  expect_gt(length(pts), 5)
+  expect_true(all(abs(pts) <= 1))
+  ci <- confint(p)
+  expect_true(ci[1, 1] > 0.85 && ci[1, 1] < 0.97)
+  expect_equal(ci[1, 2], 1)
+
+  ## estimate exactly on the boundary, with both sds positive
+  set.seed(101)
+  d2 <- data.frame(g = factor(rep(1:6, each = 5)), x = rnorm(30))
+  d2$y <- rnorm(30) + rep(rnorm(6), each = 5) * (1 + d2$x)
+  f2 <- lmer(y ~ x + (x | g), d2, control = ctrl)
+  th <- getME(f2, "theta")
+  skip_if_not(th[3] == 0 && th[2] != 0, "correlation estimate not on boundary")
+  ## the profile is flat for strongly negative correlations, so it is not
+  ## strictly monotone and confint() falls back to linear interpolation
+  expect_warning(p2 <- profile(f2, which = 3), "non-monotonic profile")
+  ci2 <- suppressWarnings(confint(p2))
+  expect_true(ci2[1, 1] > 0 && ci2[1, 1] < 1)
+  expect_equal(ci2[1, 2], 1)
+})
+
 test_that("refit", {
   s1 <- simulate(fm1)
   expect_is(refit(fm1,s1), "merMod")
