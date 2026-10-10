@@ -62,6 +62,13 @@
       @jphughes9)
       \item \code{vcov()} would fail for GLMMs using structured
       covariance matrices under some circumstances (GH #996, @jphughes9)
+      \item profile confidence intervals could fall outside a
+      parameter's bounds (e.g. correlations > 1) when the interpolating
+      spline through a monotone likelihood profile was itself
+      non-monotone; such profiles now use monotone (Hermite) splines
+      for \code{confint()} and the \code{xyplot()} profile plot.
+      Results for well-behaved profiles are unchanged (GH #834,
+      @meierluk, @yasrey10).
       \item fixed a long-standing bug for GLMMs with estimated dispersion
       parameters (Gamma, inverse Gaussian, and Gaussian families fitted
       via \code{glmer}); log-likelihood was too large by an additive
