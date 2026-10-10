@@ -425,6 +425,19 @@ test_that("monotone profile splines (GH #834)", {
   expect_s3_class(attr(p0, "forward")[[1]], "npolySpline")
 })
 
+test_that("confint.thpr uses the right bounds for a subset of parameters", {
+  ## sd (lower 0, upper Inf) and correlation (lower -1, upper 1);
+  ## a very high level runs past the profile, so NA limits are
+  ## replaced by the parameter's bounds
+  p <- profile(fm2, which = c(1, 3))
+  lev <- 0.99999
+  ci_all <- confint(p, level = lev)
+  ci_cor <- confint(p, parm = ".sig03", level = lev)
+  expect_equal(ci_cor[".sig03", 2], 1)
+  expect_equal(ci_cor[".sig03", ], ci_all[".sig03", ])
+  expect_equal(confint(p, parm = 2, level = lev), ci_cor)
+})
+
 test_that("refit", {
   s1 <- simulate(fm1)
   expect_is(refit(fm1,s1), "merMod")

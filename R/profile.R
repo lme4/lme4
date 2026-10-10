@@ -810,15 +810,20 @@ confint.thpr <- function(object, parm, level = 0.95, zeta,
                          ...)
 {
     bak <- attr(object, "backward")
-    ## fallback strategy for old profiles that don't have a lower/upper
-    ##  attribute saved ...
-    if (is.null(lower <- attr(object,"lower")))
-        lower <- rep(NA_real_,length(parm))
-    if (is.null(upper <- attr(object,"upper")))
-        upper <- rep(NA_real_,length(parm))
+    bnms <- names(bak)
+    ## the "lower"/"upper" attributes hold bounds for the first
+    ## length(lower) profiled parameters (the variance parameters), in the
+    ## order of names(bak); name them so they can be looked up for any
+    ## subset of 'parm'. Old profiles may lack these attributes.
     ## FIXME: work a little harder to add -Inf/Inf for fixed effect
     ##  parameters?  (Should only matter for really messed-up profiles)
-    bnms <- names(bak)
+    nameBnds <- function(b) {
+        v <- setNames(rep(NA_real_, length(bnms)), bnms)
+        if (!is.null(b)) v[seq_along(b)] <- b
+        v
+    }
+    lower <- nameBnds(attr(object, "lower"))
+    upper <- nameBnds(attr(object, "upper"))
     parm <- if (missing(parm))
                 bnms
             else if(is.numeric(parm)) # e.g., when called from confint.merMod()
@@ -864,8 +869,8 @@ confint.thpr <- function(object, parm, level = 0.95, zeta,
             }
         }
         if (!badprof) {
-            if (is.na(p[1])) p[1] <- lower[i]
-            if (is.na(p[2])) p[2] <- upper[i]
+            if (is.na(p[1])) p[1] <- lower[[parm[i]]]
+            if (is.na(p[2])) p[2] <- upper[[parm[i]]]
         }
         ci[i,] <- p
     }
