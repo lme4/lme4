@@ -102,6 +102,20 @@
       \code{glmerControl(disp_dof_correction = FALSE)}.
     } % itemize
   } % bug fixes
+  \subsection{NEW FEATURES}{
+    \itemize{
+      \item \code{bootMer()} gains a \code{call.env} argument, an
+      environment or a list, in which the \code{control} argument stored
+      in the model's call is evaluated.  A model fitted inside a function
+      with \code{control = ctrl} could not be bootstrapped from outside
+      it, because \code{ctrl} was looked up only in the caller's frame.
+      When that lookup fails, \code{bootMer()} now tries the formula's
+      environment, as \code{update()} does, which finds \code{ctrl}
+      whenever the formula was written in the fitting function; otherwise
+      \code{call.env = list(ctrl = ctrl)} supplies it
+      (GH #1007, @billdenney).
+    } % itemize
+  } % new features
 } % 2.1-0 (devel)
 
 \section{CHANGES IN VERSION 2.0-6 (2026-07-16)}{

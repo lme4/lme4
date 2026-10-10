@@ -6,7 +6,8 @@ bootMer(x, FUN, nsim = 1, seed = NULL, use.u = FALSE, re.form=NA,
 	type = c("parametric", "semiparametric"),
 	verbose = FALSE, .progress = "none", PBargs = list(),
 	parallel = c("no", "multicore", "snow", "future"),
-	ncpus = getOption("boot.ncpus", 1L), cl = NULL)
+	ncpus = getOption("boot.ncpus", 1L), cl = NULL,
+	call.env = parent.frame())
 }
 \arguments{
   \item{x}{a fitted \code{merMod} object: see
@@ -59,6 +60,18 @@ bootMer(x, FUN, nsim = 1, seed = NULL, use.u = FALSE, re.form=NA,
     arguments \code{parallel} and \code{ncpus} are ignored.
     If not supplied and \code{parallel = "snow"}, a temporary cluster with
     \code{ncpus} nodes is created for the duration of the call.}
+  \item{call.env}{an environment, or a named list, in which to evaluate
+    the \code{control} argument stored in the model's call
+    (\code{x@call$control}), which is passed on to \code{\link{refit}}.
+    A list is searched first, then the frame \code{bootMer} was called
+    from.  If evaluation there fails, the environment of the model's
+    formula is tried next, as in \code{\link{update.merMod}}; that is
+    usually the frame the model was fitted in, so a model fitted inside
+    a function with, e.g., \code{control = ctrl} is handled without this
+    argument when the formula was written in the same function.  When it
+    was not (e.g., the formula was passed in as an argument), supply the
+    object with \code{call.env = list(ctrl = ctrl)}.
+    \code{\link{confint.merMod}(*, method = "boot")} passes it on via \code{...}.}
 }
 \value{
   an object of S3 \code{\link{class}} \code{"boot"},
@@ -147,6 +160,24 @@ bootMer(x, FUN, nsim = 1, seed = NULL, use.u = FALSE, re.form=NA,
   }
 }
 \examples{
+## models fitted inside a function, with a 'control' object local to it
+fitDyestuff <- function() {
+    ctrl <- lmerControl(optimizer = "bobyqa")
+    lmer(Yield ~ 1|Batch, Dyestuff, control = ctrl)
+}
+fmF <- fitDyestuff()
+## 'ctrl' is found in the formula's environment:
+booF <- bootMer(fmF, fixef, nsim = 2, seed = 101)
+fitWith <- function(form) {
+    ctrl <- lmerControl(optimizer = "bobyqa")
+    lmer(form, Dyestuff, control = ctrl)
+}
+fmG <- fitWith(Yield ~ 1|Batch)
+## the formula was written out here, where 'ctrl' does not exist,
+## so say where to find it:
+booG <- bootMer(fmG, fixef, nsim = 2, seed = 101,
+                call.env = list(ctrl = lmerControl(optimizer = "bobyqa")))
+
 if (interactive()) {
 fm01ML <- lmer(Yield ~ 1|Batch, Dyestuff, REML = FALSE)
 ## see ?"profile-methods"
