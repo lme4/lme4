@@ -566,9 +566,10 @@ getStart <- function(start, rho, nAGQ) {
 }
 
 updateStart <- function(start, par) {
-    if (is.null(start))
-        start
-    else if (is.numeric(start))
+    ## use 'par' itself rather than letting getStart() recompute it from
+    ## theta: the theta -> par map loses information at the boundary
+    ## (e.g., 'rho' is NA for an ar1() or cs() term with zero variance)
+    if (is.null(start) || is.numeric(start))
         par
     else if (is.list(start)) {
         if (!is.null(start[["par"]]))

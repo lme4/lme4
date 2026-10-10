@@ -55,7 +55,9 @@
 	  (GH #998, #289, @tylermorganwall).
       \item \code{ar1} and \code{cs} covariance structures with zero
       variances (making correlation unidentifiable) now return
-      \code{NA} with a warning rather than throwing an error;
+      \code{NA} with a warning rather than throwing an error, including
+      when the first (\code{nAGQ = 0}) stage of \code{glmer} fitting
+      ends at zero variance;
       correlation calculations are more robust (GH #967, #999,
       @jphughes9)
       \item \code{vcov()} would fail for GLMMs using structured
