@@ -391,6 +391,40 @@ test_that("confint with bad profile", {
                tolerance=1e-3)
 })
 
+test_that("monotone profile splines (GH #834)", {
+  ## profile points for a correlation parameter: monotone, but the
+  ## natural interpolating spline has a negative slope at one knot
+  pp <- data.frame(
+    .sig03 = c(-1, -0.9419788, -0.7712586, -0.5406735, -0.283924, -0.03107754,
+               0.1966026, 0.4020445, 0.4467161, 0.4511833, 0.4958549,
+               0.6916766, 0.8531035, 0.9558708, 1),
+    .zeta = c(-5.537997, -3.829926, -2.803105, -2.110852, -1.540167, -1.03543,
+              -0.5739137, -0.1114451, 0, 0.01221793, 0.1291381, 0.7508699,
+              1.55595, 2.642026, 4.739299))
+  form <- .zeta ~ .sig03
+  isp <- splines::interpSpline(form, pp)
+  expect_false(lme4:::isMonotoneSpline(isp))
+  ## exact check agrees with a fine grid
+  xx <- seq(-1, 1, length.out = 10001)
+  expect_true(any(predict(isp, xx, deriv = 1)$y < 0))
+
+  spl <- lme4:::profSplines(form, pp)
+  expect_true(lme4:::isMonotoneSpline(spl$forward))
+  expect_true(lme4:::isMonotoneSpline(spl$backward))
+  expect_true(all(predict(spl$forward, xx, deriv = 1)$y >= 0))
+  ## both splines interpolate the profile points
+  expect_equal(lme4:::predy(spl$forward, pp$.sig03), pp$.zeta)
+  expect_equal(lme4:::predy(spl$backward, pp$.zeta), pp$.sig03)
+  ## CI stays inside [-1, 1]; backSpline() gave (-0.491, 1.172)
+  ci <- lme4:::predy(spl$backward, qnorm(c(0.025, 0.975)))
+  expect_equal(ci, c(-0.4788, 0.9026), tolerance = 1e-3)
+  expect_true(all(abs(ci) < 1))
+
+  ## well-behaved profiles keep the natural spline
+  p0 <- profile(fm1, which = 1)
+  expect_s3_class(attr(p0, "forward")[[1]], "npolySpline")
+})
+
 test_that("refit", {
   s1 <- simulate(fm1)
   expect_is(refit(fm1,s1), "merMod")

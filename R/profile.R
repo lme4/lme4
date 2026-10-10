@@ -14,7 +14,7 @@ profnames <- function(object, signames=TRUE,
   res
 }
 
-##' @importFrom splines backSpline interpSpline periodicSpline
+##' @importFrom splines backSpline interpSpline periodicSpline splineKnots
 ##' @importFrom stats profile
 ##' @method profile merMod
 ##' @export
@@ -305,12 +305,9 @@ profile.merMod <- function(fitted,
 
         ## FIXME: test for bad things here??
         form[[3]] <- as.name(pname)
-        forspl <- NULL # (in case of error)
-        ## bakspl
-        bakspl <-
-            tryCatch(backSpline(
-                forspl <- interpSpline(form, bres, na.action=na.omit)),
-                     error=function(e)e)
+        spl <- profSplines(form, bres)
+        forspl <- spl$forward
+        bakspl <- spl$backward
         if (inherits(bakspl, "error"))
             warning("non-monotonic profile for ",pname)
         ## return:
@@ -398,9 +395,9 @@ profile.merMod <- function(fitted,
             bres$.par <- n.j <- names(fe.orig)[j]
             ans[[n.j]] <- bres[order(bres[, poff]), ]
             form[[3]] <- as.name(n.j)
-            bakspl[[n.j]] <-
-                tryCatch(backSpline(forspl[[n.j]] <- interpSpline(form, bres)),
-                         error=function(e)e)
+            spl <- profSplines(form, bres)
+            forspl[[n.j]] <- spl$forward
+            bakspl[[n.j]] <- spl$backward
             if (inherits(bakspl[[n.j]], "error"))
                 warning("non-monotonic profile for ", n.j)
         } ## for(j in 1..p)
@@ -566,6 +563,89 @@ devfun2 <- function(fm,
 predy <- function(sp, vv) {
     if (inherits(sp, "error") || is.null(sp)) return(rep(NA_real_, length(vv)))
     predict(sp, vv)$y
+}
+
+## exact range of the first derivative of a cubic polySpline on each
+## interval between knots: row i of coef(sp) holds the polynomial
+## c0 + c1*d + c2*d^2 + c3*d^3 in d = x - knot[i], so the derivative is a
+## quadratic whose extremes lie at the interval ends or its turning point
+splineDerivRange <- function(sp) {
+    kn <- splineKnots(sp)
+    cf <- coef(sp)
+    h <- diff(kn)
+    i <- seq_along(h)
+    c1 <- cf[i, 2L]; c2 <- cf[i, 3L]; c3 <- cf[i, 4L]
+    qh <- c1 + 2 * c2 * h + 3 * c3 * h^2
+    lo <- pmin(c1, qh)
+    hi <- pmax(c1, qh)
+    ds <- -c2 / (3 * c3)
+    inside <- c3 != 0 & ds > 0 & ds < h
+    qs <- (c1 - c2^2 / (3 * c3))[inside]
+    lo[inside] <- pmin(lo[inside], qs)
+    hi[inside] <- pmax(hi[inside], qs)
+    cbind(lo = lo, hi = hi)
+}
+
+isMonotoneSpline <- function(sp) {
+    if (inherits(sp, "error") || is.null(sp)) return(FALSE)
+    r <- splineDerivRange(sp)
+    all(r[, "lo"] >= 0) || all(r[, "hi"] <= 0)
+}
+
+## monotone cubic Hermite interpolant through strictly monotone (x, y),
+## returned as a polySpline so that predict()/predy() work as for
+## interpSpline() results; slopes are the shape-preserving (Fritsch-Butland)
+## weighted harmonic means of adjacent secants used by PCHIP
+monoHermiteSpline <- function(x, y, formula) {
+    o <- order(x)
+    x <- x[o]; y <- y[o]
+    n <- length(x)
+    h <- diff(x)
+    s <- diff(y) / h
+    m <- numeric(n)
+    m[1L] <- s[1L]
+    m[n] <- s[n - 1L]
+    if (n > 2L) {
+        k <- 2:(n - 1L)
+        w1 <- 2 * h[k] + h[k - 1L]
+        w2 <- h[k] + 2 * h[k - 1L]
+        m[k] <- (w1 + w2) / (w1 / s[k - 1L] + w2 / s[k])
+    }
+    i <- seq_len(n - 1L)
+    coeff <- cbind(y, m,
+                   c((3 * s - 2 * m[i] - m[i + 1L]) / h, 0),
+                   c((m[i] + m[i + 1L] - 2 * s) / h^2, 0),
+                   deparse.level = 0L)
+    structure(list(knots = x, coefficients = coeff),
+              formula = formula,
+              class = c("polySpline", "spline"))
+}
+
+## forward (zeta as a function of the parameter) and backward (inverse)
+## splines for one profiled parameter. backSpline() only checks that the
+## values at the knots are monotone: an interpolating spline through
+## monotone points can still have a negative slope at a knot, which
+## backSpline() inverts into a wildly wrong backward spline (GH #834).
+## When the natural splines aren't monotone but the profile points are,
+## use monotone Hermite splines instead.
+profSplines <- function(form, data) {
+    forspl <- NULL
+    bakspl <- tryCatch(backSpline(
+        forspl <- interpSpline(form, data, na.action = na.omit)),
+        error = function(e) e)
+    if (!(isMonotoneSpline(forspl) && isMonotoneSpline(bakspl))) {
+        pname <- as.character(form[[3L]])
+        d <- na.omit(data[, c(pname, ".zeta")])
+        d <- d[order(d[[pname]]), ]
+        dz <- diff(d$.zeta)
+        if (nrow(d) >= 2L && !anyDuplicated(d[[pname]]) &&
+            (all(dz > 0) || all(dz < 0))) {
+            forspl <- monoHermiteSpline(d[[pname]], d$.zeta, form)
+            bakspl <- monoHermiteSpline(d$.zeta, d[[pname]],
+                                        do.call("~", as.list(form)[3:2]))
+        }
+    }
+    list(forward = forspl, backward = bakspl)
 }
 
 stripExpr <- function(ll, nms) {
@@ -1166,8 +1246,9 @@ logProf <- function (x, base = exp(1), ranef=TRUE,
             x[[nm]] <- log(x[[nm]], base = base)
             fr <- x[x[[".par"]] == nm & is.finite(x[[nm]]), TRUE, drop=FALSE]
             form <- eval(substitute(.zeta ~ nm, list(nm = as.name(nm))))
-            attr(x,  "forward")[[nm]] <- isp <- interpSpline(form, fr)
-            attr(x, "backward")[[nm]] <- backSpline(isp)
+            spl <- profSplines(form, fr)
+            attr(x,  "forward")[[nm]] <- spl$forward
+            attr(x, "backward")[[nm]] <- spl$backward
         }
         ## eliminate rows that produced non-finite logs
         x <- x[apply(is.finite(as.matrix(x[, sigs])), 1, all), , drop=FALSE]
@@ -1281,8 +1362,9 @@ varianceProf <- function(x, ranef=TRUE) {
             ## select rows (and currently drop extra attributes)
             fr <- x[x[[".par"]] == nm, TRUE, drop=FALSE]
             form <- eval(substitute(.zeta ~ nm, list(nm = as.name(nm))))
-            attr(x, "forward")[[nm]] <- isp <- interpSpline(form, fr)
-            attr(x, "backward")[[nm]] <- backSpline(isp)
+            spl <- profSplines(form, fr)
+            attr(x,  "forward")[[nm]] <- spl$forward
+            attr(x, "backward")[[nm]] <- spl$backward
         }
     }
     x
