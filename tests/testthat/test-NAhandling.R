@@ -57,6 +57,9 @@ test_that("naming", {
     expect_equal(fixef(refit(fms, simulate(fms, seed = 1)[[1]])),
                  fixef(refit(fms, simulate(fms, seed = 1))))
     expect_error(refit(fms, sleepstudyNA$Reaction), "'newresp' has 180 rows")
+    ## without missing values, only one expected length is reported
+    expect_error(refit(fm1, sleepst.a$Reaction[-1]),
+                 "has 179 rows: expected 180 \\(the number of observations used in the fit\\)$")
     ## issue #197, 18 new subjects; some with NA in y
     d2 <- sleepstudyNA[c(1:180, 1:180),]
     d2[,"Subject"] <- factor(rep(1:36, each=10))

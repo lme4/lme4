@@ -1452,9 +1452,13 @@ refit.merMod <- function(object,
             else newresp[-na.act]
         }
         if (NROW(newresp) != nrow(object@frame))
-            stop(gettextf("'newresp' has %d rows: expected %d (the number of observations used in the fit), or %d (also including rows dropped because of missing values)",
-                          NROW(newresp), nrow(object@frame),
-                          nrow(object@frame) + length(na.act)),
+            stop(if (length(na.act) > 0)
+                     gettextf("'newresp' has %d rows: expected %d (the number of observations used in the fit), or %d (also including rows dropped because of missing values)",
+                              NROW(newresp), nrow(object@frame),
+                              nrow(object@frame) + length(na.act))
+                 else
+                     gettextf("'newresp' has %d rows: expected %d (the number of observations used in the fit)",
+                              NROW(newresp), nrow(object@frame)),
                  domain = NA)
         object@frame[[rcol]] <- newresp
     }
