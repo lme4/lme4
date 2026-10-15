@@ -46,6 +46,13 @@
   } % user-visible changes
   \subsection{BUG FIXES}{
     \itemize{
+      \item \code{refit()} now works when incomplete cases in the
+      original data were excluded by \code{na.action} and
+      \code{newresp} (or \code{newweights}) has one value per
+      observation used in the fit but no \code{na.action} attribute
+      (e.g. \code{refit(m, simulate(m)[[1]])} previously failed in
+      this case). A \code{newresp} of the wrong length now gives an
+      informative error.
       \item \code{glmer()} refreshes the working weights and factorization
       at the accepted PIRLS mean before computing the Laplace approximation
       or adaptive quadrature, removing a stale-factor contribution to
