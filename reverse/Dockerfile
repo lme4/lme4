@@ -67,6 +67,16 @@ RUN WITH_SUGGESTS=${WITH_SUGGESTS} WITH_BIOC=${WITH_BIOC} Rscript /opt/revdep/se
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
+## RBioFormats downloads a ~45 MB Java library into
+## tools::R_user_dir("RBioFormats", "cache") the first time it is loaded
+## (including during its own installation), which can exceed the default
+## download timeout. R_USER_CACHE_DIR puts that cache at a fixed path inside
+## the image; check_one.R points R_USER_CACHE_DIR at a writable per-job copy
+## of /opt/revdep/Rcache, since $HOME is not usable under singularity --no-home.
+## scider imports RBioFormats, and OSTA imports scider.
+RUN R_DEFAULT_INTERNET_TIMEOUT=1200 R_USER_CACHE_DIR=/opt/revdep/Rcache \
+    Rscript -e 'bspm::disable(); install.packages(c("RBioFormats", "scider", "OSTA"), repos = BiocManager::repositories(), dependencies = FALSE); stopifnot(all(c("RBioFormats", "scider", "OSTA") %in% rownames(installed.packages())))'
+
 ## Extra R packages needed to build certain vignettes but not declared as
 ## reverse dependencies (add to this list as needed).
 RUN Rscript -e 'install.packages(c("fpc", "lmPerm"))'
