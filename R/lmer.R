@@ -1441,21 +1441,33 @@ refit.merMod <- function(object,
             names(object@frame)[rcol] <- deparse(newrespSub)
         }
         if (!is.null(na.act <- attr(object@frame,"na.action")) &&
-            is.null(attr(newresp,"na.action"))) {
-            ## will only get here if na.action is 'na.omit' or 'na.exclude'
-            ## *and* newresp does not have an 'na.action' attribute
-            ## indicating that NAs have already been filtered
+            is.null(attr(newresp,"na.action")) &&
+            NROW(newresp) == nrow(object@frame) + length(na.act)) {
+            ## will only get here if na.action is 'na.omit' or 'na.exclude',
+            ## newresp does not have an 'na.action' attribute
+            ## indicating that NAs have already been filtered, *and*
+            ## newresp has one value per row of the original data
             newresp <- if (is.matrix(newresp))
                 newresp[-na.act, ]
             else newresp[-na.act]
         }
+        if (NROW(newresp) != nrow(object@frame))
+            stop(if (length(na.act) > 0)
+                     gettextf("'newresp' has %d rows: expected %d (the number of observations used in the fit), or %d (also including rows dropped because of missing values)",
+                              NROW(newresp), nrow(object@frame),
+                              nrow(object@frame) + length(na.act))
+                 else
+                     gettextf("'newresp' has %d rows: expected %d (the number of observations used in the fit)",
+                              NROW(newresp), nrow(object@frame)),
+                 domain = NA)
         object@frame[[rcol]] <- newresp
     }
 
     if (!is.null(newweights)) {
         ## DRY ...
         if (!is.null(na.act <- attr(object@frame,"na.action")) &&
-            is.null(attr(newweights, "na.action"))) {
+            is.null(attr(newweights, "na.action")) &&
+            length(newweights) == nrow(object@frame) + length(na.act)) {
             newweights <- newweights[-na.act]
         }
         object@frame[["(weights)"]] <- newweights

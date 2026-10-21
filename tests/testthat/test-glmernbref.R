@@ -4,6 +4,8 @@
 ##  (lme4 is not really detached)
 ## see tests/test-glmernbref.R for working test ...
 
+lme4_attached <- "package:lme4" %in% search()
+
 test_that("glmer.nb ref to glmer", {
   set.seed(101)
   dd <- data.frame(x=runif(200), f= rep(1:20, each=10))
@@ -14,3 +16,8 @@ test_that("glmer.nb ref to glmer", {
   g <- lme4::glmer.nb(y~x + (1|f), data = dd)
   expect_is(g, "glmerMod")
 })
+
+## later test files use lme4 functions and datasets (sleepstudy, cbpp)
+## without lme4::, so lme4 must be attached again
+if (lme4_attached && !"package:lme4" %in% search())
+  suppressPackageStartupMessages(library(lme4))

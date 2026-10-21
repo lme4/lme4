@@ -391,6 +391,88 @@ test_that("confint with bad profile", {
                tolerance=1e-3)
 })
 
+test_that("monotone profile splines (GH #834)", {
+  ## profile points for a correlation parameter: monotone, but the
+  ## natural interpolating spline has a negative slope at one knot
+  pp <- data.frame(
+    .sig03 = c(-1, -0.9419788, -0.7712586, -0.5406735, -0.283924, -0.03107754,
+               0.1966026, 0.4020445, 0.4467161, 0.4511833, 0.4958549,
+               0.6916766, 0.8531035, 0.9558708, 1),
+    .zeta = c(-5.537997, -3.829926, -2.803105, -2.110852, -1.540167, -1.03543,
+              -0.5739137, -0.1114451, 0, 0.01221793, 0.1291381, 0.7508699,
+              1.55595, 2.642026, 4.739299))
+  form <- .zeta ~ .sig03
+  isp <- splines::interpSpline(form, pp)
+  expect_false(lme4:::isMonotoneSpline(isp))
+  ## exact check agrees with a fine grid
+  xx <- seq(-1, 1, length.out = 10001)
+  expect_true(any(predict(isp, xx, deriv = 1)$y < 0))
+
+  spl <- lme4:::profSplines(form, pp)
+  expect_true(lme4:::isMonotoneSpline(spl$forward))
+  expect_true(lme4:::isMonotoneSpline(spl$backward))
+  expect_true(all(predict(spl$forward, xx, deriv = 1)$y >= 0))
+  ## both splines interpolate the profile points
+  expect_equal(lme4:::predy(spl$forward, pp$.sig03), pp$.zeta)
+  expect_equal(lme4:::predy(spl$backward, pp$.zeta), pp$.sig03)
+  ## CI stays inside [-1, 1]; backSpline() gave (-0.491, 1.172)
+  ci <- lme4:::predy(spl$backward, qnorm(c(0.025, 0.975)))
+  expect_equal(ci, c(-0.4788, 0.9026), tolerance = 1e-3)
+  expect_true(all(abs(ci) < 1))
+
+  ## well-behaved profiles keep the natural spline
+  p0 <- profile(fm1, which = 1)
+  expect_s3_class(attr(p0, "forward")[[1]], "npolySpline")
+})
+
+test_that("confint.thpr uses the right bounds for a subset of parameters", {
+  ## sd (lower 0, upper Inf) and correlation (lower -1, upper 1);
+  ## a very high level runs past the profile, so NA limits are
+  ## replaced by the parameter's bounds
+  p <- profile(fm2, which = c(1, 3))
+  lev <- 0.99999
+  ci_all <- confint(p, level = lev)
+  ci_cor <- confint(p, parm = ".sig03", level = lev)
+  expect_equal(ci_cor[".sig03", 2], 1)
+  expect_equal(ci_cor[".sig03", ], ci_all[".sig03", ])
+  expect_equal(confint(p, parm = 2, level = lev), ci_cor)
+})
+
+test_that("profiling correlations near or on the boundary", {
+  ctrl <- lmerControl(check.conv.singular = "ignore")
+  ## estimate above 1/1.01, so the default first step (1.01 times the
+  ## estimate) would fall outside [-1, 1]
+  set.seed(20261010)
+  dd <- data.frame(g = factor(rep(1:30, each = 20)), x = rnorm(600))
+  dd$y <- simulate(~ x + (x | g), newdata = dd, family = gaussian,
+                   newparams = list(beta = c(0, 1),
+                                    theta = c(1, 0.995, 0.05), sigma = 1),
+                   seed = 3)[[1]]
+  fit <- lmer(y ~ x + (x | g), dd, control = ctrl)
+  expect_gt(attr(VarCorr(fit)$g, "correlation")[1, 2], 1/1.01)
+  p <- profile(fit, which = 3)
+  pts <- p$.sig03[p$.par == ".sig03"]
+  expect_gt(length(pts), 5)
+  expect_true(all(abs(pts) <= 1))
+  ci <- confint(p)
+  expect_true(ci[1, 1] > 0.85 && ci[1, 1] < 0.97)
+  expect_equal(ci[1, 2], 1)
+
+  ## estimate exactly on the boundary, with both sds positive
+  set.seed(101)
+  d2 <- data.frame(g = factor(rep(1:6, each = 5)), x = rnorm(30))
+  d2$y <- rnorm(30) + rep(rnorm(6), each = 5) * (1 + d2$x)
+  f2 <- lmer(y ~ x + (x | g), d2, control = ctrl)
+  th <- getME(f2, "theta")
+  skip_if_not(th[3] == 0 && th[2] != 0, "correlation estimate not on boundary")
+  ## the profile is flat for strongly negative correlations, so it is not
+  ## strictly monotone and confint() falls back to linear interpolation
+  expect_warning(p2 <- profile(f2, which = 3), "non-monotonic profile")
+  ci2 <- suppressWarnings(confint(p2))
+  expect_true(ci2[1, 1] > 0 && ci2[1, 1] < 1)
+  expect_equal(ci2[1, 2], 1)
+})
+
 test_that("refit", {
   s1 <- simulate(fm1)
   expect_is(refit(fm1,s1), "merMod")

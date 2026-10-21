@@ -327,7 +327,7 @@ plot.allFit <- function(x, abbr=16, ...) {
      ff <- stack(as.data.frame(ss$fixef))
      ff$opt <- rep(rownames(ss$fixef),length.out=nrow(ff))
      if (!is.null(abbr)) ff$opt <- abbreviate(ff$opt, minlength=abbr)
-     (ggplot2::ggplot(ff, aes(values, opt, colour=opt))
+     (ggplot2::ggplot(ff, ggplot2::aes(values, opt, colour=opt))
          + ggplot2::geom_point()
          + ggplot2::facet_wrap(~ind,scale="free")
          + ggplot2::theme(legend.position="none")

@@ -46,6 +46,13 @@
   } % user-visible changes
   \subsection{BUG FIXES}{
     \itemize{
+      \item \code{refit()} now works when incomplete cases in the
+      original data were excluded by \code{na.action} and
+      \code{newresp} (or \code{newweights}) has one value per
+      observation used in the fit but no \code{na.action} attribute
+      (e.g. \code{refit(m, simulate(m)[[1]])} previously failed in
+      this case). A \code{newresp} of the wrong length now gives an
+      informative error.
       \item \code{glmer()} refreshes the working weights and factorization
       at the accepted PIRLS mean before computing the Laplace approximation
       or adaptive quadrature, removing a stale-factor contribution to
@@ -55,11 +62,22 @@
 	  (GH #998, #289, @tylermorganwall).
       \item \code{ar1} and \code{cs} covariance structures with zero
       variances (making correlation unidentifiable) now return
-      \code{NA} with a warning rather than throwing an error;
+      \code{NA} with a warning rather than throwing an error, including
+      when the first (\code{nAGQ = 0}) stage of \code{glmer} fitting
+      ends at zero variance;
       correlation calculations are more robust (GH #967, #999,
       @jphughes9)
       \item \code{vcov()} would fail for GLMMs using structured
       covariance matrices under some circumstances (GH #996, @jphughes9)
+      \item profile confidence intervals could fall outside a
+      parameter's bounds (e.g. correlations > 1) when the interpolating
+      spline through a monotone likelihood profile was itself
+      non-monotone; such profiles now use monotone (Hermite) splines
+      for \code{confint()} and the \code{xyplot()} profile plot.
+      Results for well-behaved profiles are unchanged.
+      Additionally fixed long-standing edge-case and indexing bugs in
+      \code{profile.merMod} and \code{confint.thpr} (GH #834,
+      @meierluk, @yasrey10).
       \item fixed a long-standing bug for GLMMs with estimated dispersion
       parameters (Gamma, inverse Gaussian, and Gaussian families fitted
       via \code{glmer}); log-likelihood was too large by an additive
@@ -91,6 +109,20 @@
       \code{glmerControl(disp_dof_correction = FALSE)}.
     } % itemize
   } % bug fixes
+  \subsection{NEW FEATURES}{
+    \itemize{
+      \item \code{bootMer()} gains a \code{call.env} argument, an
+      environment or a list, in which the \code{control} argument stored
+      in the model's call is evaluated.  A model fitted inside a function
+      with \code{control = ctrl} could not be bootstrapped from outside
+      it, because \code{ctrl} was looked up only in the caller's frame.
+      When that lookup fails, \code{bootMer()} now tries the formula's
+      environment, as \code{update()} does, which finds \code{ctrl}
+      whenever the formula was written in the fitting function; otherwise
+      \code{call.env = list(ctrl = ctrl)} supplies it
+      (GH #1007, @billdenney).
+    } % itemize
+  } % new features
 } % 2.1-0 (devel)
 
 \section{CHANGES IN VERSION 2.0-6 (2026-07-16)}{

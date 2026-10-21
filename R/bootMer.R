@@ -34,9 +34,12 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL,
                     verbose = FALSE,
                     .progress = "none", PBargs=list(),
                     parallel = c("no", "multicore", "snow", "future"),
-                    ncpus = getOption("boot.ncpus", 1L), cl = NULL)
+                    ncpus = getOption("boot.ncpus", 1L), cl = NULL,
+                    call.env = parent.frame())
 {
     stopifnot((nsim <- as.integer(nsim[1])) > 0)
+    if (!(is.environment(call.env) || is.list(call.env)))
+        stop(sQuote("call.env"), " must be an environment or a list")
     if (.progress!="none") { ## progress bar
         pbfun <- get(paste0(.progress,"ProgressBar"))
         setpbfun <- get(paste0("set",.simpleCap(.progress),"ProgressBar"))
@@ -94,7 +97,20 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL,
 
     ## FIXME:: use getCall(x) ? check for existence of slot?
     ##  is control used except for merMod?
-    control <- if (!is(x, "merMod")) NULL else eval.parent(x@call$control)
+    ## 'call.env' may be a list: eval() then looks there first and in
+    ## the caller's frame for anything the list does not contain.
+    ## If that fails, try the formula's environment, as update.merMod()
+    ## does; it is usually the frame the model was fitted in.  If both
+    ## fail, report the first error.
+    pf <- parent.frame()
+    control <- if (!is(x, "merMod")) NULL else
+        tryCatch(eval(x@call$control, envir = call.env, enclos = pf),
+                 error = function(e) {
+                     fenv <- environment(formula(x))
+                     if (!is.environment(fenv)) stop(e)
+                     tryCatch(eval(x@call$control, envir = fenv),
+                              error = function(e2) stop(e))
+                 })
 
     # define ffun as a closure containing the referenced variables
     # in its scope to avoid explicit clusterExport statement

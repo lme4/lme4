@@ -430,6 +430,27 @@ test_that("restart_edge check survives sigma = 0 with unidentifiable rho", {
   }
 })
 
+test_that("glmer stage 2 starts from stage-1 par when rho is unidentifiable (GH #999)", {
+  ## stub stage-1 optimizer returning sigma = 0: theta is then all zeros,
+  ## so the stage-2 starting value of rho must come from opt$par
+  stubopt <- function(fn, par, lower, upper, control) {
+    p <- c(rep(0, length(par) - 1L), 0.5)
+    list(par = p, fval = fn(p), conv = 0, message = "stub")
+  }
+  forms <- list(ar1 = cbind(incidence, size - incidence) ~ period +
+                  ar1(0 + period | herd),
+                cs  = cbind(incidence, size - incidence) ~ period +
+                  cs(0 + period | herd))
+  for (form in forms) {
+    fit <- suppressWarnings(
+      glmer(form, family = binomial, data = cbpp,
+            control = glmerControl(optimizer = list(stubopt, "bobyqa"),
+                                   calc.derivs = FALSE)))
+    expect_false(anyNA(getME(fit, "theta")))
+    expect_false(anyNA(fixef(fit)))
+  }
+})
+
 test_that("use.last.params restores the last evaluated par for structured covariances", {
   ## stub optimizer: evaluates the deviance at 'p_last' after 'p_opt',
   ## then reports 'p_opt' as the optimum

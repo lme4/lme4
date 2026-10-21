@@ -43,6 +43,23 @@ test_that("naming", {
     fm2ex <- update(fm2, na.action=na.exclude)
     expect_equal(nrow(ss2 <- simulate(fm2ex)),180)
     expect_is(refit(fm2,ss2[[1]]),"merMod")
+    ## response with one value per observation used in the fit, with no
+    ## 'na.action' attribute (e.g. simulate(.)[[1]]) is used as-is
+    s2v <- s2[[1]]
+    expect_null(attr(s2v, "na.action"))
+    expect_equal(fixef(refit(fm2, s2v)), fixef(refit(fm2, s2)))
+    ## same for weights
+    w <- rep(2, nobs(fm2))
+    expect_equal(weights(refit(fm2, newweights = w)), w,
+                 ignore_attr = TRUE)
+    ## subset, with NAs inside the subset
+    fms <- update(fm2, subset = Days > 1)
+    expect_equal(fixef(refit(fms, simulate(fms, seed = 1)[[1]])),
+                 fixef(refit(fms, simulate(fms, seed = 1))))
+    expect_error(refit(fms, sleepstudyNA$Reaction), "'newresp' has 180 rows")
+    ## without missing values, only one expected length is reported
+    expect_error(refit(fm1, sleepst.a$Reaction[-1]),
+                 "has 179 rows: expected 180 \\(the number of observations used in the fit\\)$")
     ## issue #197, 18 new subjects; some with NA in y
     d2 <- sleepstudyNA[c(1:180, 1:180),]
     d2[,"Subject"] <- factor(rep(1:36, each=10))
