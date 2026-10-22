@@ -1,3 +1,4 @@
+testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1
 eps <- .Machine$double.eps
 oneMeps <- 1 - eps
 set.seed(1)
@@ -148,6 +149,8 @@ test_that("simulated Gamma data matches with simulate()", {
   expect_equal(dd1$y, dd2$y)
 })
 
+if (testLevel>1) {
+## slow (~10 s)
 test_that("estimated Gamma shape is correct", {
   m1 <- glmer(y ~ 1 + (1|group), family = Gamma(link = "log"), data = dd2)
   shape_val <- 1/sigma(m1)^2
@@ -160,6 +163,7 @@ test_that("estimated Gamma shape is correct", {
   expect_equal(shape_val, 2.0, tolerance = 0.2)
   expect_equal(shape_val, 1.81329428217158, tolerance = 1e-6)
 })
+} ## testLevel>1
 
 test_that("glmer works for Gamma with small shape parameter", {
   skip_on_cran()

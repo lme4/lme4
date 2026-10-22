@@ -425,6 +425,8 @@ test_that("monotone profile splines (GH #834)", {
   expect_s3_class(attr(p0, "forward")[[1]], "npolySpline")
 })
 
+if (testLevel>1) {
+## slow (~40 s): profiling the correlation
 test_that("confint.thpr uses the right bounds for a subset of parameters", {
   ## sd (lower 0, upper Inf) and correlation (lower -1, upper 1);
   ## a very high level runs past the profile, so NA limits are
@@ -437,6 +439,7 @@ test_that("confint.thpr uses the right bounds for a subset of parameters", {
   expect_equal(ci_cor[".sig03", ], ci_all[".sig03", ])
   expect_equal(confint(p, parm = 2, level = lev), ci_cor)
 })
+} ## testLevel>1
 
 test_that("profiling correlations near or on the boundary", {
   ctrl <- lmerControl(check.conv.singular = "ignore")
