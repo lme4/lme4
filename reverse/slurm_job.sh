@@ -28,6 +28,13 @@
 
 module load apptainer
 
+## Compute Canada's default environment sets MKLROOT, and Apptainer passes
+## host environment variables into the container. Packages that enable MKL
+## when it is set (e.g. ngme2: Makevars adds -DUSEMKL, which pulls in
+## Eigen/PardisoSupport) then fail to compile, since the image has no MKL
+## headers ("mkl_pardiso.h: No such file or directory").
+unset MKLROOT
+
 ## CHECK_ONE_R is passed via --export in slurm_submit.sh (absolute path on the
 ## host filesystem).  We bind-mount it over the baked-in copy so that script
 ## changes take effect without rebuilding the .sif image.
