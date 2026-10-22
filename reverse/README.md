@@ -13,7 +13,9 @@ Singularity/Apptainer and SLURM (Docker-based workflow).
 | `check_one.R` | Per-SLURM-task: prepends the appropriate versioned library, runs `R CMD check --as-cran` on one tarball; names output `rdepends_PKG.Rcheck` for compatibility with `checkChanges.R` |
 | `slurm_submit.sh` | Queries the container for N packages, accepts `old`/`new` switch, submits an `sbatch --array=1-N%50` job |
 | `slurm_job.sh` | Individual SLURM task: loads Apptainer, bind-mounts the results dir, passes `REVDEP_LME4` env var, calls `check_one.R` |
-| `build.sh` | Convenience wrapper: copies both lme4 tarballs into build context, `docker build`, `singularity build` → single `lme4_revdep.sif` |
+| `build.sh` | Convenience wrapper: copies both lme4 tarballs into build context, `docker build`, `singularity build` → single `lme4_revdep.sif`; `--refresh BASE` updates an existing image instead |
+| `Dockerfile.refresh` | One layer on top of an existing image: runs `setup_revdeps.R` with `REFRESH=true` to bring revdeps and installed packages up to date |
+| `Dockerfile.patch` | One layer on top of an existing image: reinstalls only the dev lme4 (plus a few fixed-up packages) |
 | `checkReverse.R` | Original local workflow: installs deps and runs `R CMD check` via `tools::check_packages_in_dir` |
 | `checkChanges.R` | Compares two sets of check results (old vs new lme4) using `tools::check_packages_in_dir_changes` |
 
@@ -165,8 +167,8 @@ existing image instead of a full rebuild: it reinstalls the new tarball into
 `Library_new/` (leaving `Library_old/` alone), installs extra system
 libraries/packages, and appends the lme4 git SHA to
 `/opt/revdep/setup_summary.txt`. The revdep list and all other packages stay
-as they were at the original build -- do a full rebuild if those need
-refreshing.
+as they were at the original build -- refresh the image (next section) or
+do a full rebuild if those need updating.
 
 Build the tarball from a clean checkout (e.g. a `git worktree`) so untracked
 files in the working tree don't end up in it, then use a minimal build
@@ -184,6 +186,60 @@ docker run --rm lme4-revdep:${TAG} cat /opt/revdep/setup_summary.txt
 ```
 
 Push/pull it as in step 2.
+
+#### Refreshing an existing image (updated revdeps and packages)
+
+If the image is out of date with CRAN/Bioconductor (new reverse
+dependencies, new versions of existing ones or of their dependencies) but
+R itself hasn't changed minor version, `build.sh --refresh BASE` adds one
+layer (`Dockerfile.refresh`) on top of an existing image instead of
+rebuilding from scratch. It reruns `setup_revdeps.R` with `REFRESH=true`,
+which
+
+- re-discovers the reverse dependencies, keeps tarballs whose version is
+  still current, downloads new/updated ones, and deletes the rest;
+- holds `r-base-core` and runs `apt-get upgrade`, which updates only the
+  r2u binary packages that changed;
+- updates outdated packages in the source-built library
+  (`/usr/local/lib/R/site-library`, mostly Bioconductor) from source, and
+  reinstalls source-built packages whose `LinkingTo` dependencies (Rcpp,
+  RcppEigen, TMB, ...) were upgraded, since they were compiled against the
+  old headers;
+- installs newly needed packages with the usual two passes;
+- reinstalls both lme4 versions from the tarballs given to `build.sh`.
+
+```bash
+bash build.sh --docker-only --refresh lme4-revdep:${OLD}_vs_${NEW} \
+    lme4_${OLD}.tar.gz lme4_${NEW}.tar.gz
+# -> lme4-revdep:${OLD}_vs_${NEW}-refreshYYYYMMDD
+```
+
+Use the same `--full`/`--no-bioc` flags the base image was built with.
+`setup_summary.txt` gets a `refreshed` line with counts of tarballs
+downloaded/removed and packages upgraded/relinked.
+
+For comparison (2026-10-22, refreshing an image built 2026-08-20): the
+refresh took 19 min and added a 2.23 GB (uncompressed) layer, vs. ~50 min
+for a full rebuild; it downloaded 141 tarballs, removed 110, upgraded 309 R
+packages via apt and 3 from source, relinked 3, and installed 103 new ones.
+Revdep tarballs and installed package versions then matched a full build
+from the day before, apart from CRAN/r2u updates in between.
+
+Caveats:
+
+- Packages are never removed, so a refreshed image also contains packages
+  that are no longer needed (36 in the example above). If one is in a
+  reverse dependency's Suggests, that package's checks may run code a fresh
+  build would skip; this affects old and new alike, so it shouldn't change
+  the comparison.
+- Every upgraded package is stored again in the new layer (the old copy
+  stays in the base layers), so the image grows with each refresh. Do a
+  full rebuild from time to time, and whenever R's minor version changes.
+- The refresh reruns on every build (`REFRESH_STAMP` defeats the Docker
+  cache), so it always picks up the current state of the repositories.
+- Array task indices map to different packages than in the base image
+  (the package list changes), so start the check run with a fresh results
+  directory.
 
 ### 2. Transfer the image to Compute Canada
 
