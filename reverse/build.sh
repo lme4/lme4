@@ -33,9 +33,15 @@ PARENT_DIR="$(dirname "$SCRIPT_DIR")"
 ## --docker-only : build the Docker image but skip the singularity build step
 ##                 (useful when Singularity/Apptainer is not installed locally;
 ##                 convert later with: singularity build lme4_revdep.sif docker-daemon://IMAGE)
+## --refresh BASE : update the existing image BASE with Dockerfile.refresh
+##                 instead of building from scratch (image tagged with
+##                 -refreshYYYYMMDD suffix); use the same --full/--no-bioc
+##                 flags as BASE was built with
 WITH_SUGGESTS=false
 WITH_BIOC=true
 DOCKER_ONLY=false
+REFRESH_BASE=""
+REFRESH_TAG=""
 SUGGESTS_TAG=""
 BIOC_TAG=""
 
@@ -44,6 +50,7 @@ while [[ $# -gt 0 ]]; do
         --full)        WITH_SUGGESTS=true; SUGGESTS_TAG="-full";  shift ;;
         --no-bioc)     WITH_BIOC=false;    BIOC_TAG="-no_bioc";  shift ;;
         --docker-only) DOCKER_ONLY=true;                          shift ;;
+        --refresh)     REFRESH_BASE="$2"; REFRESH_TAG="-refresh$(date +%Y%m%d)"; shift 2 ;;
         --) shift; break ;;
         -*) echo "Unknown flag: $1"; exit 1 ;;
         *)  break ;;
@@ -63,7 +70,7 @@ fi
 
 VER1="$(basename "$TGZ1" .tar.gz | sed 's/^lme4_//')"
 VER2="$(basename "$TGZ2" .tar.gz | sed 's/^lme4_//')"
-IMAGE="lme4-revdep:${VER1}_vs_${VER2}${SUGGESTS_TAG}${BIOC_TAG}"
+IMAGE="lme4-revdep:${VER1}_vs_${VER2}${SUGGESTS_TAG}${BIOC_TAG}${REFRESH_TAG}"
 SIF="${SCRIPT_DIR}/lme4_revdep.sif"
 
 echo "lme4 tarball 1 : $TGZ1  ($VER1)"
@@ -73,6 +80,7 @@ echo "Singularity    : $SIF"
 echo "with Suggests  : $WITH_SUGGESTS"
 echo "with Bioc      : $WITH_BIOC"
 echo "docker only    : $DOCKER_ONLY"
+echo "refresh base   : ${REFRESH_BASE:-(none, full build)}"
 
 ## Assemble a minimal build context in a temp directory so that stray
 ## lme4_*.tar.gz files that accumulate in reverse/ from local workflow runs
@@ -82,6 +90,7 @@ trap 'rm -rf "$BUILDCTX"' EXIT
 
 cp "$TGZ1" "$TGZ2" "$BUILDCTX/"
 cp "$SCRIPT_DIR/Dockerfile" \
+   "$SCRIPT_DIR/Dockerfile.refresh" \
    "$SCRIPT_DIR/setup_revdeps.R" \
    "$SCRIPT_DIR/check_one.R" \
    "$SCRIPT_DIR/slurm_submit.sh" \
@@ -89,10 +98,19 @@ cp "$SCRIPT_DIR/Dockerfile" \
    "$BUILDCTX/"
 
 ## Build Docker image (setup_revdeps.R inside determines old vs new by version)
-docker build \
-    --build-arg WITH_SUGGESTS="${WITH_SUGGESTS}" \
-    --build-arg WITH_BIOC="${WITH_BIOC}" \
-    -t "$IMAGE" "$BUILDCTX"
+if [ -n "${REFRESH_BASE}" ]; then
+    docker build \
+        --build-arg BASE="${REFRESH_BASE}" \
+        --build-arg REFRESH_STAMP="$(date -u +%Y%m%dT%H%M%S)" \
+        --build-arg WITH_SUGGESTS="${WITH_SUGGESTS}" \
+        --build-arg WITH_BIOC="${WITH_BIOC}" \
+        -t "$IMAGE" -f "$BUILDCTX/Dockerfile.refresh" "$BUILDCTX"
+else
+    docker build \
+        --build-arg WITH_SUGGESTS="${WITH_SUGGESTS}" \
+        --build-arg WITH_BIOC="${WITH_BIOC}" \
+        -t "$IMAGE" "$BUILDCTX"
+fi
 
 ## Convert to Singularity .sif (skipped with --docker-only)
 if [ "${DOCKER_ONLY}" = "true" ]; then

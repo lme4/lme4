@@ -1,0 +1,38 @@
+## Dockerfile.refresh -- bring an existing revdep image up to date with one
+## extra layer instead of a full rebuild (see README.md, "Refreshing an
+## existing image"): re-discovers reverse dependencies, downloads only new or
+## updated tarballs, upgrades installed packages that changed, installs newly
+## needed ones, and reinstalls both lme4 versions.  Built by
+##   bash build.sh --refresh BASE_IMAGE lme4_OLD.tar.gz lme4_NEW.tar.gz
+## which supplies the build context (same files as for Dockerfile).
+##
+## Each refresh layer stores a second copy of every upgraded package (the old
+## one stays in the base layers), so the image grows with repeated refreshes;
+## do an occasional full rebuild.  Use the same --full/--no-bioc flags as
+## the base image was built with.
+
+ARG BASE
+FROM ${BASE}
+
+COPY setup_revdeps.R check_one.R slurm_submit.sh slurm_job.sh /opt/revdep/
+
+## replace the base image's lme4 tarballs (setup_revdeps.R expects exactly two)
+RUN rm -f /opt/revdep/lme4_*.tar.gz
+COPY lme4_*.tar.gz /opt/revdep/
+
+ARG WITH_SUGGESTS=false
+ARG WITH_BIOC=true
+## changes on every build, so that a rerun on the same base and files is not
+## served from the Docker build cache
+ARG REFRESH_STAMP
+
+## R_DEFAULT_INTERNET_TIMEOUT / R_USER_CACHE_DIR: in case RBioFormats is
+## updated (see Dockerfile)
+RUN echo "refresh ${REFRESH_STAMP}" && \
+    REFRESH=true WITH_SUGGESTS=${WITH_SUGGESTS} WITH_BIOC=${WITH_BIOC} \
+    R_DEFAULT_INTERNET_TIMEOUT=1200 R_USER_CACHE_DIR=/opt/revdep/Rcache \
+    Rscript /opt/revdep/setup_revdeps.R && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+CMD ["bash"]
