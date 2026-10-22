@@ -48,13 +48,22 @@ variable.
 
 (example, useful if we want to cut and paste code below)
 ```bash
-export NEW=2.0-3
-export OLD=2.0-1
+export NEW=2.1-0
+export OLD=2.0-6
 export CCUSER=bolker
 export CCACCOUNT=def-bolker
 export DOCKERUSER=bbolker
-export SIF=/scratch/$USER/lme4_revdep.sif
+export TAG=${OLD}_vs_${NEW}-$(date +%Y%m%d)
+export SIF=/scratch/$USER/lme4_revdep_${TAG}.sif
 ```
+
+`TAG` is the name the image is pushed under (step 2). Builds of the same
+`OLD`/`NEW` pair recur (the dev lme4 and the reverse dependencies keep
+changing), so a dated tag keeps a new push from silently replacing the
+Docker Hub image an earlier run used, and makes it obvious which image a
+given `.sif` came from. Set `TAG` (and hence `SIF`) once per build/push and
+reuse the same values on the cluster; `date` there will not necessarily
+give the same day.
 
 **Always refer to the `.sif` by this full absolute path (`$SIF`), never a bare
 relative `lme4_revdep.sif`.** This `reverse/` directory accumulates images
@@ -164,7 +173,7 @@ files in the working tree don't end up in it, then use a minimal build
 context (as `build.sh` does) rather than `reverse/` itself:
 
 ```bash
-export TAG=${OLD}_vs_${NEW}-patch$(date +%Y%m%d)
+export TAG=${OLD}_vs_${NEW}-patch$(date +%Y%m%d)   # overrides step 0's TAG
 CTX=$(mktemp -d)
 cp Dockerfile.patch lme4_${NEW}.tar.gz "$CTX"/
 docker build --build-arg BASE=lme4-revdep:${OLD}_vs_${NEW} \
@@ -174,9 +183,7 @@ docker build --build-arg BASE=lme4-revdep:${OLD}_vs_${NEW} \
 docker run --rm lme4-revdep:${TAG} cat /opt/revdep/setup_summary.txt
 ```
 
-Push/pull it as in step 2 (with `${TAG}` in place of `${OLD}_vs_${NEW}`), and
-pull it into a new, dated `$SIF` path rather than over the old one (see the
-note about stale images above).
+Push/pull it as in step 2.
 
 ### 2. Transfer the image to Compute Canada
 
@@ -189,16 +196,22 @@ scp lme4_revdep.sif username@cedar.computecanada.ca:$SIF
 **Option B: via Docker Hub**
 
 ```bash
-# Locally: log in, tag, and push
+# Locally: log in, tag, and push (the local image name is whatever
+# build.sh printed, e.g. lme4-revdep:${OLD}_vs_${NEW}, plus any -full etc.)
 docker login
-docker tag lme4-revdep:${OLD}_vs_${NEW} ${DOCKERUSER}/lme4-revdep:${OLD}_vs_${NEW}
-docker push ${DOCKERUSER}/lme4-revdep:${OLD}_vs_${NEW}
+docker tag lme4-revdep:${OLD}_vs_${NEW} ${DOCKERUSER}/lme4-revdep:${TAG}
+docker push ${DOCKERUSER}/lme4-revdep:${TAG}
 
-# On the Compute Canada login node: pull and convert
+# On the Compute Canada login node (with OLD/NEW/TAG/SIF set as above):
+# pull and convert, then check it's the image you meant to pull
 module load apptainer/1.4.5
 mkdir -p "$(dirname "$SIF")"
-singularity pull "$SIF" docker://${DOCKERUSER}/lme4-revdep:${OLD}_vs_${NEW}
+singularity pull "$SIF" docker://${DOCKERUSER}/lme4-revdep:${TAG}
+singularity exec "$SIF" cat /opt/revdep/setup_summary.txt
 ```
+
+`singularity pull` refuses to overwrite an existing file; `--force` makes it
+do so, but prefer a new `$SIF` name per `TAG` (see step 0).
 
 `singularity pull` caches downloaded Docker layers and conversion intermediates under
 `$HOME/.apptainer` (or `$APPTAINER_CACHEDIR` if set), which can easily reach tens of GB for
