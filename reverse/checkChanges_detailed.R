@@ -29,7 +29,9 @@
 ##
 ##     --old=DIR, --new=DIR : directories of rdepends_PKG.Rcheck outputs
 ##     --output=DIR         : where to write the results (default:
-##                            CHANGES_DETAILED_old=<old>_new=<new>)
+##                            CHANGES_DETAILED_old=<old>_new=<new> with
+##                            basenames, or CHANGES_DETAILED_<results> for
+##                            <results>/old and <results>/new)
 ##     --include-better     : also report checks whose status improved
 ##     --full               : print full old/new outputs, not just the
 ##                            lines that differ
@@ -219,9 +221,15 @@ function (args) {
                  domain = NA))
 
     stopifnot(!is.null(olddir), !is.null(newdir))
+    ## for slurm_submit.sh's 'both' layout (RESULTS/old, RESULTS/new), name
+    ## the default after RESULTS rather than "old=old_new=new"
     if (is.null(outdir))
-        outdir <- sprintf("CHANGES_DETAILED_old=%s_new=%s",
-                          basename(olddir), basename(newdir))
+        outdir <- if (identical(basename(c(olddir, newdir)), c("old", "new")) &&
+                      dirname(olddir) == dirname(newdir))
+                      sprintf("CHANGES_DETAILED_%s", basename(dirname(olddir)))
+                  else
+                      sprintf("CHANGES_DETAILED_old=%s_new=%s",
+                              basename(olddir), basename(newdir))
     if (!dir.exists(outdir))
         dir.create(outdir)
     else if (preclean)

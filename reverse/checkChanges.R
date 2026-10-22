@@ -50,8 +50,16 @@ function (args) {
                  domain = NA))
 
     stopifnot(!is.null(olddir), !is.null(newdir))
+    ## default name from the directories' basenames (full paths would put
+    ## '/' in it); for slurm_submit.sh's 'both' layout (RESULTS/old,
+    ## RESULTS/new) use RESULTS' name instead
     if (is.null(outdir))
-        outdir <- sprintf("CHANGES_old=%s_new=%s", olddir, newdir)
+        outdir <- if (identical(basename(c(olddir, newdir)), c("old", "new")) &&
+                      dirname(olddir) == dirname(newdir))
+                      sprintf("CHANGES_%s", basename(dirname(olddir)))
+                  else
+                      sprintf("CHANGES_old=%s_new=%s",
+                              basename(olddir), basename(newdir))
     if (!dir.exists(outdir))
         dir.create(outdir)
     else {
