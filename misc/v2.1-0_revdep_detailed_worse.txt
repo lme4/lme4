@@ -1,0 +1,497 @@
+Checks with changes: 17 worse, 5 changed messages, 0 better
+Packages: evolvability, glmertree, inferference, insight, nadir, ngme2, panelr, partR2, reportRmd, rptR, steppedwedge, autonomics, DHARMa, HSAUR2, mediation
+Results only in old: petersenlab
+
+Package: evolvability
+Check: re-building of vignette outputs
+Change: worse (OK -> ERROR)
+  + [... 16 earlier lines omitted]
+  +  7.     ├─stats::model.frame(...)
+  +  8.     └─stats::model.frame.default(...)
+  + ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  + Error: processing vignette 'Analyzing_rates_of_evolution.Rmd' failed with diagnostics:
+  + invalid type (closure) for variable '(weights)'
+  + --- failed re-building 'Analyzing_rates_of_evolution.Rmd'
+  + --- re-building 'Phylogenetic_mixed_model.Rmd' using rmarkdown
+  + Quitting from Phylogenetic_mixed_model.Rmd:57-60 [unnamed-chunk-6]
+  + ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  + <error/rlang_error>
+  + Error in `model.frame.default()`:
+  + ! invalid type (closure) for variable '(weights)'
+  + ---
+  + Backtrace:
+  +     ▆
+  +  1. └─evolvability::Almer(y ~ 1 + (1 | species), data = dt, A = list(species = A))
+  +  2.   ├─lme4::lFormula(...)
+  +  3.   │ └─lme4:::mkFormula(...)
+  +  4.   │   └─base::eval(mf, parent_env)
+  +  5.   │     └─base::eval(mf, parent_env)
+  +  6.   ├─stats::model.frame(...)
+  +  7.   └─stats::model.frame.default(...)
+  + ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  + Error: processing vignette 'Phylogenetic_mixed_model.Rmd' failed with diagnostics:
+  + invalid type (closure) for variable '(weights)'
+  + --- failed re-building 'Phylogenetic_mixed_model.Rmd'
+  + SUMMARY: processing the following files failed:
+  +   'Analyzing_rates_of_evolution.Rmd' 'Phylogenetic_mixed_model.Rmd'
+  + Error: Vignette re-building failed.
+  + Execution halted
+
+Package: glmertree
+Check: tests
+Change: worse (OK -> NOTE)
+  -   Comparing 'test_glmertree.Rout' to 'test_glmertree.Rout.save' ... OK
+  + [... 5 earlier lines omitted]
+  + 77,78c77,78
+  + < 1     -0.28672
+  + < 2     -0.27533
+  + ---
+  + > 1     -0.28669
+  + > 2     -0.27530
+  + 81,85c81,85
+  + < 5     -0.10328
+  + < 6     -0.18040
+  + < 7      0.26867
+  + < 8      0.23238
+  + < 9      0.04445
+  + ---
+  + > 5     -0.10327
+  + > 6     -0.18038
+  + > 7      0.26866
+  + > 8      0.23237
+  + > 9      0.04446
+  + 89c89
+  + < 0.83666 0.74182 0.08982 0.62160 0.67541 0.75538 0.74126
+  + ---
+  + > 0.83666 0.74181 0.08982 0.62160 0.67541 0.75537 0.74126
+  + 95c95
+  + <  0.5972  0.7728 -0.4338  0.9751  0.8859  0.7490  0.7738 -1.5001
+  + ---
+  + >  0.5972  0.7729 -0.4338  0.9751  0.8859  0.7491  0.7738 -1.5001
+  + 100c100
+  + < 0.83666 0.74182 0.08982 0.62160 0.67541 0.75538 0.74126 0.67541
+  + ---
+  + > 0.83666 0.74181 0.08982 0.62160 0.67541 0.75537 0.74126 0.67541
+
+Package: inferference
+Check: tests
+Change: worse (OK -> ERROR)
+  + Running the tests in 'tests/testthat.R' failed.
+  + Last 13 lines of output:
+  +   [3] 0.0239 - 0.024 == -3.80e-05
+  +   [4] 0.6030 - 0.603 ==  1.13e-04
+  +   ── Failure ('test_effects.R:33:3'): retrieval functions work ───────────────────
+  +   Expected `as.numeric(as.matrix(oe(test, 0.35, 0.4)[values]))` to equal `c(...)`.
+  +   Differences:
+  +   4/4 mismatches (average diff: 2.19e-05)
+  +   [1]  0.0944 -  0.0944 ==  1.13e-05
+  +   [2]  0.0715 -  0.0714 ==  1.55e-05
+  +   [3] -0.0457 - -0.0456 == -1.91e-05
+  +   [4]  0.2344 -  0.2344 ==  4.17e-05
+  +   [ FAIL 4 | WARN 1 | SKIP 0 | PASS 34 ]
+  +   Error:
+  +   ! Test failures.
+  +   Execution halted
+
+Package: insight
+Check: tests
+Change: worse (OK -> ERROR)
+  + Running the tests in 'tests/testthat.R' failed.
+  + Last 13 lines of output:
+  +     3. └─panelr::wbm(...)
+  +     4.   ├─lme4::lmer(...)
+  +     5.   │ └─base::eval(mc, parent.frame(1L))
+  +     6.   │   └─base::eval(mc, parent.frame(1L))
+  +     7.   ├─lme4::lFormula(...)
+  +     8.   │ └─lme4:::mkFormula(...)
+  +     9.   │   └─base::eval(mf, parent_env)
+  +    10.   │     └─base::eval(mf, parent_env)
+  +    11.   ├─stats::model.frame(...)
+  +    12.   └─stats::model.frame.default(...)
+  +   [ FAIL 3 | WARN 1 | SKIP 147 | PASS 3961 ]
+  +   Error:
+  +   ! Test failures.
+  +   Execution halted
+
+Package: nadir
+Check: examples
+Change: worse (OK -> ERROR)
+  + Running examples in 'nadir-Ex.R' failed
+  + The error most likely occurred in:
+  + > base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+  + > ### Name: lnr_glmer
+  + > ### Title: Generalized Linear Mixed-Effects ('lme4::glmer') Learner
+  + > ### Aliases: lnr_glmer
+  + >
+  + > ### ** Examples
+  + >
+  + > # random intercepts for each level of cyl column:
+  + > suppressMessages({
+  + + # singular fit, but that's ok if all you need is prediction:
+  + + lnr_glmer(mtcars, mpg ~ (1|cyl) + disp + wt, family = Gamma)(mtcars)
+  + + })
+  + Error in model.frame.default(data = data, weights = weights, drop.unused.levels = TRUE,  :
+  +   invalid type (closure) for variable '(weights)'
+  + Calls: suppressMessages ... mkFormula -> eval -> eval -> <Anonymous> -> model.frame.default
+  + Execution halted
+
+Package: nadir
+Check: tests
+Change: worse (OK -> ERROR)
+  + Running the tests in 'tests/testthat.R' failed.
+  + Last 13 lines of output:
+  +     1. └─nadir::lnr_glmer(...) at test-continuous-learners.R:67:3
+  +     2.   ├─lme4::glmer(...)
+  +     3.   │ └─base::eval(mc, parent.frame(1L))
+  +     4.   │   └─base::eval(mc, parent.frame(1L))
+  +     5.   ├─lme4::glFormula(...)
+  +     6.   │ └─lme4:::mkFormula(...)
+  +     7.   │   └─base::eval(mf, parent_env)
+  +     8.   │     └─base::eval(mf, parent_env)
+  +     9.   ├─stats::model.frame(...)
+  +    10.   └─stats::model.frame.default(...)
+  +   [ FAIL 2 | WARN 0 | SKIP 0 | PASS 32 ]
+  +   Error:
+  +   ! Test failures.
+  +   Execution halted
+
+Package: ngme2
+Check: tests
+Change: worse (ERROR -> FAILURE)
+  -   Running 'testthat.R'
+  - Running the tests in 'tests/testthat.R' failed.
+  - Last 13 lines of output:
+  -   1. test bv(ar1, ar1) with 2 noise ('test-compose-bv.R:72:3') - n_batch is deprecated and was IGNORED; the convergence checks now run every iters_per_check = 25 iterations regardless of `iterations`. Pass iters_per_check to choose the interval.
+  -   2. test on bv matern NIG ('test-compose-bv.R:295:3') - `start` was fitted under a different parameterization (12 parameters vs 16); its chains cannot be continued, so the chains are re-initialized from the fitted values.
+  -   ══ Failed ══════════════════════════════════════════════════════════════════════
+  -   ── 1. Error ('test-fit-matern-cv.R:3:3'): test fractional matern specification ─
+  -   Error in `matern(mesh, alpha = 2.01)`: For fixed alpha values not equal to 2 or 4, the 'rSPDE' package is required. Please install it with: install.packages('rSPDE')
+  -   Backtrace:
+  -       ▆
+  -    1. └─ngme2::matern(mesh, alpha = 2.01) at test-fit-matern-cv.R:3:3
+  -   ══ DONE ════════════════════════════════════════════════════════════════════════
+  -   Error:
+  -   ! Test failures.
+  -   Execution halted
+
+Package: ngme2
+Check: whether package can be installed
+Change: worse (OK -> ERROR)
+  - Used C++ compiler: 'x86_64-linux-gnu-g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0'
+  + Installation failed.
+  + See ngme2.Rcheck/00install.out' for details.
+
+Package: panelr
+Check: examples
+Change: worse (OK -> ERROR)
+  + Running examples in 'panelr-Ex.R' failed
+  + The error most likely occurred in:
+  + > base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+  + > ### Name: formula.wbm
+  + > ### Title: Retrieve model formulas from 'wbm' objects
+  + > ### Aliases: formula.wbm
+  + >
+  + > ### ** Examples
+  + >
+  + > data("WageData")
+  + > wages <- panel_data(WageData, id = id, wave = t)
+  + > model <- wbm(lwage ~ lag(union) + wks, data = wages)
+  + Error in model.frame.default(data = data, weights = weights, offset = offset,  :
+  +   invalid type (closure) for variable '(weights)'
+  + Calls: wbm ... mkFormula -> eval -> eval -> <Anonymous> -> model.frame.default
+  + Execution halted
+
+Package: panelr
+Check: re-building of vignette outputs
+Change: worse (OK -> ERROR)
+  + Error(s) in re-building vignettes:
+  + --- re-building 'reshape.Rmd' using rmarkdown
+  + --- finished re-building 'reshape.Rmd'
+  + --- re-building 'wbm.Rmd' using rmarkdown
+  + Quitting from wbm.Rmd:238-246 [unnamed-chunk-5]
+  + ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  + <error/rlang_error>
+  + Error in `model.frame.default()`:
+  + ! invalid type (closure) for variable '(weights)'
+  + ---
+  + Backtrace:
+  +      ▆
+  +   1. └─panelr::wbm(lwage ~ ns(exp, df = 3) | blk, data = wages)
+  +   2.   ├─lme4::lmer(...)
+  +   3.   │ └─base::eval(mc, parent.frame(1L))
+  +   4.   │   └─base::eval(mc, parent.frame(1L))
+  +   5.   ├─lme4::lFormula(...)
+  +   6.   │ └─lme4:::mkFormula(...)
+  +   7.   │   └─base::eval(mf, parent_env)
+  +   8.   │     └─base::eval(mf, parent_env)
+  +   9.   ├─stats::model.frame(...)
+  +  10.   └─stats::model.frame.default(...)
+  + ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  + Error: processing vignette 'wbm.Rmd' failed with diagnostics:
+  + invalid type (closure) for variable '(weights)'
+  + --- failed re-building 'wbm.Rmd'
+  + SUMMARY: processing the following file failed:
+  +   'wbm.Rmd'
+  + Error: Vignette re-building failed.
+  + Execution halted
+
+Package: panelr
+Check: tests
+Change: worse (OK -> ERROR)
+  + Running the tests in 'tests/testthat.R' failed.
+  + Last 13 lines of output:
+  +     1. └─panelr::wbm(lwage ~ union, data = w, pvals = FALSE) at test-utils.R:286:1
+  +     2.   ├─lme4::lmer(...)
+  +     3.   │ └─base::eval(mc, parent.frame(1L))
+  +     4.   │   └─base::eval(mc, parent.frame(1L))
+  +     5.   ├─lme4::lFormula(...)
+  +     6.   │ └─lme4:::mkFormula(...)
+  +     7.   │   └─base::eval(mf, parent_env)
+  +     8.   │     └─base::eval(mf, parent_env)
+  +     9.   ├─stats::model.frame(...)
+  +    10.   └─stats::model.frame.default(...)
+  +   [ FAIL 5 | WARN 0 | SKIP 0 | PASS 265 ]
+  +   Error:
+  +   ! Test failures.
+  +   Execution halted
+
+Package: partR2
+Check: tests
+Change: worse (OK -> ERROR)
+  + Running the tests in 'tests/testthat.R' failed.
+  + Last 13 lines of output:
+  +   ── Failure ('test_varcomps.R:186:3'): Binomial/proportion variance components are correct ──
+  +   Expected `var_comps4$var_ran` to equal 0.3827342.
+  +   Differences:
+  +   1/1 mismatches
+  +   [1] 0.383 - 0.383 == 0.000595
+  +   ── Failure ('test_varcomps.R:199:3'): Binomial/proportion variance components are correct ──
+  +   Expected `var_comps6$var_res` to equal 1.688004.
+  +   Differences:
+  +   1/1 mismatches
+  +   [1] 1.69 - 1.69 == 9.45e-05
+  +   [ FAIL 17 | WARN 7 | SKIP 0 | PASS 75 ]
+  +   Error:
+  +   ! Test failures.
+  +   Execution halted
+
+Package: reportRmd
+Check: tests
+Change: worse (OK -> ERROR)
+  + Running the tests in 'tests/testthat.R' failed.
+  + Last 13 lines of output:
+  +   ── Failure ('test_calculations.R:348:3'): rm_mvsum outputs glmer binomial model with ORs correctly ──
+  +   Expected `output[, 2]` to equal `est`.
+  +   Differences:
+  +       actual              | expected
+  +   [1] NA                  | NA                  [1]
+  +   [2] "Reference"         | "Reference"         [2]
+  +   [3] "0.37 (0.20, 0.68)" - "0.37 (0.20, 0.67)" [3]
+  +   [4] "0.32 (0.17, 0.61)" | "0.32 (0.17, 0.61)" [4]
+  +   [5] "0.21 (0.09, 0.48)" - "0.21 (0.09, 0.47)" [5]
+  +   [ FAIL 1 | WARN 1 | SKIP 0 | PASS 66 ]
+  +   Error:
+  +   ! Test failures.
+  +   Execution halted
+
+Package: rptR
+Check: tests
+Change: worse (OK -> ERROR)
+  + Running the tests in 'tests/testthat.R' failed.
+  + Last 13 lines of output:
+  +   ── Failure ('test-rptProportion.R:108:9'): rpt estimation works for two random effect, boot, no permut, no parallelisation, logit link ──
+  +   Expected `as.numeric(R_est_2$CI_emp$CI_org[1, "97.5%"])` to equal 0.006960535.
+  +   Differences:
+  +   1/1 mismatches
+  +   [1] 0.00426 - 0.00696 == -0.0027
+  +   ── Failure ('test-rptProportion.R:117:9'): rpt estimation works for two random effect, boot, no permut, no parallelisation, logit link ──
+  +   Expected `as.numeric(R_est_2$CI_emp$CI_link[1, "97.5%"])` to equal 0.006960535.
+  +   Differences:
+  +   1/1 mismatches
+  +   [1] 0.00426 - 0.00696 == -0.0027
+  +   [ FAIL 4 | WARN 0 | SKIP 0 | PASS 226 ]
+  +   Error:
+  +   ! Test failures.
+  +   Execution halted
+
+Package: steppedwedge
+Check: examples
+Change: worse (OK -> ERROR)
+  + Running examples in 'steppedwedge-Ex.R' failed
+  + The error most likely occurred in:
+  + > base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+  + > ### Name: analyze
+  + > ### Title: Analyze a stepped wedge dataset
+  + > ### Aliases: analyze
+  + >
+  + > ### ** Examples
+  + >
+  + > # Load data
+  + > test_data <- load_data(time ="period", cluster_id = "cluster", individual_id = NULL,
+  + + treatment = "trt", outcome = "outcome_cont", data = sw_data_example)
+  + Stepped wedge dataset loaded. Discrete time design with 15 clusters, 5 sequences, and 6 time points.
+  + >
+  + > # Analysis example 1: TATE estimand for exposure times 1 through 4
+  + > results_tate <- analyze(dat = test_data, method = "mixed", estimand_type = "TATE",
+  + + estimand_time = c(1, 4), exp_time = "ETI")
+  + Error in model.frame.default(data = dat, offset = offset, drop.unused.levels = TRUE,  :
+  +   invalid type (closure) for variable '(offset)'
+  + Calls: analyze ... mkFormula -> eval -> eval -> <Anonymous> -> model.frame.default
+  + Execution halted
+
+Package: steppedwedge
+Check: re-building of vignette outputs
+Change: worse (OK -> ERROR)
+  + Error(s) in re-building vignettes:
+  + --- re-building 'steppedwedge.Rmd' using rmarkdown
+  + Quitting from steppedwedge.Rmd:62-73 [unnamed-chunk-5]
+  + ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  + <error/rlang_error>
+  + Error in `model.frame.default()`:
+  + ! invalid type (closure) for variable '(offset)'
+  + ---
+  + Backtrace:
+  +      ▆
+  +   1. └─steppedwedge::analyze(...)
+  +   2.   ├─lme4::glmer(formula, family = family, data = dat, offset = offset)
+  +   3.   │ └─base::eval(mc, parent.frame(1L))
+  +   4.   │   └─base::eval(mc, parent.frame(1L))
+  +   5.   ├─lme4::glFormula(...)
+  +   6.   │ └─lme4:::mkFormula(...)
+  +   7.   │   └─base::eval(mf, parent_env)
+  +   8.   │     └─base::eval(mf, parent_env)
+  +   9.   ├─stats::model.frame(...)
+  +  10.   └─stats::model.frame.default(...)
+  + ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  + Error: processing vignette 'steppedwedge.Rmd' failed with diagnostics:
+  + invalid type (closure) for variable '(offset)'
+  + --- failed re-building 'steppedwedge.Rmd'
+  + SUMMARY: processing the following file failed:
+  +   'steppedwedge.Rmd'
+  + Error: Vignette re-building failed.
+  + Execution halted
+
+Package: steppedwedge
+Check: tests
+Change: worse (OK -> ERROR)
+  + Running the tests in 'tests/testthat.R' failed.
+  + Last 13 lines of output:
+  +     1. └─steppedwedge::analyze(...) at test-analyze_data.R:87:3
+  +     2.   ├─lme4::glmer(formula, family = family, data = dat, offset = offset)
+  +     3.   │ └─base::eval(mc, parent.frame(1L))
+  +     4.   │   └─base::eval(mc, parent.frame(1L))
+  +     5.   ├─lme4::glFormula(...)
+  +     6.   │ └─lme4:::mkFormula(...)
+  +     7.   │   └─base::eval(mf, parent_env)
+  +     8.   │     └─base::eval(mf, parent_env)
+  +     9.   ├─stats::model.frame(...)
+  +    10.   └─stats::model.frame.default(...)
+  +   [ FAIL 5 | WARN 0 | SKIP 0 | PASS 24 ]
+  +   Error:
+  +   ! Test failures.
+  +   Execution halted
+
+Package: autonomics
+Check: examples
+Change: changed (ERROR -> ERROR)
+  - > ### Name: annotate_uniprot_rest
+  - > ### Title: Annotate uniprot/ensp
+  - > ### Aliases: annotate_uniprot_rest
+  - > # works, but sometimes fails during check
+  - > annotate_uniprot_rest( x = c('P00761', 'Q32MB2') )
+  - 			Annotate 2 proteins through uniprot restapi
+  - 				P00761, Q32MB2
+  - Warning in download.file(file, tmpFile, method = method, mode = "wb", quiet = !showProgress) :
+  -   URL 'https://rest.uniprot.org/uniprotkb/search?query=P00761&format=tsv&fields=accession,reviewed,id,gene_primary,protein_existence': status was 'Problem with the SSL CA cert (path? access rights?)'
+  - Error in download.file(file, tmpFile, method = method, mode = "wb", quiet = !showProgress) :
+  -   cannot open URL 'https://rest.uniprot.org/uniprotkb/search?query=P00761&format=tsv&fields=accession,reviewed,id,gene_primary,protein_existence'
+  - Calls: annotate_uniprot_rest -> lapply -> FUN -> fread -> download.file
+  + [... 139 earlier lines omitted]
+  +                       t3-t0      -1   .   .   1
+  +               Keep 19/20 features: fullrank design AND residual dof
+  +               linmod_lme( ~subgroup, random = list(Subject = ~1), coding = 'code_control')
+  +                              coefficient    fit downfdr upfdr downp   upp
+  +                                   <fctr> <fctr>   <int> <int> <int> <int>
+  +                           1:       t1-t0    lme       8     1    10     1
+  +                           2:       t2-t0    lme       8     3     8     3
+  +                           3:       t3-t0    lme       2     1     4     2
+  + class: SummarizedExperiment
+  + dim: 20 67
+  + metadata(2): analysis file
+  + assays(2): log2metabolon is_imputed
+  + rownames(20): 10-nonadecenoate (19:1n9) 2-ethylhexanoate ... X - 21583
+  +   X - 22775
+  + rowData names(26): feature_id feature_name ... p~t2-t0~lme p~t3-t0~lme
+  + colnames(67): t0.C01 t0.C02 ... t3.D18 t3.D19
+  + colData names(12): sample_id SAMPLE_NAME ... Sample subgroup
+  + >   linmod_lmer(    object, ~subgroup, block =     'Subject'     )  # Yet more powerful random effects
+  +               Code `subgroup`
+  +                                level
+  +                     coefficient t0  t1  t2  t3
+  +                       Intercept 1/4 1/4 1/4 1/4
+  +                       t1-t0      -1   1   .   .
+  +                       t2-t0      -1   .   1   .
+  +                       t3-t0      -1   .   .   1
+  +               Keep 19/20 features: fullrank design AND residual dof
+  +               linmod_lmer( ~subgroup + (1 | Subject), coding = 'code_control')
+  + Error in model.frame.default(data = sd, weights = weights, na.action = stats::na.omit,  :
+  +   invalid type (closure) for variable '(weights)'
+  + Calls: linmod_lmer ... mkFormula -> eval -> eval -> <Anonymous> -> model.frame.default
+
+Package: autonomics
+Check: tests
+Change: changed (ERROR -> ERROR)
+  -   ══ Failed tests ════════════════════════════════════════════════════════════════
+  -   ── Error ('test-3.2_proteingroups.R:219:13'):  read_proteingroups: integer64  ──
+  -   <assertionError/assertionCondition/simpleError/error/condition>
+  -   Error in `.read_maxquant_proteingroups(file)`: is_maxquant_proteingroups : file does not exist
+  -   Backtrace:
+  -       ▆
+  -    1. └─autonomics::.read_maxquant_proteingroups(file) at test-3.2_proteingroups.R:219:13
+  -    2.   └─autonomics::assert_maxquant_proteingroups(file)
+  -    3.     └─autonomics:::assert_engine(is_maxquant_proteingroups, x, .xname = .xname)
+  -    4.       └─autonomics:::give_feedback(handler_type, msg, predicate_name)
+  -   [ FAIL 1 | WARN 14 | SKIP 5 | PASS 146 ]
+  +    12. └─autonomics (local) fitmethod(...)
+  +    13.   ├─lme4::lmer(...)
+  +    14.   │ └─base::eval(mc, parent.frame(1L))
+  +    15.   │   └─base::eval(mc, parent.frame(1L))
+  +    16.   ├─lme4::lFormula(...)
+  +    17.   │ └─lme4:::mkFormula(...)
+  +    18.   │   └─base::eval(mf, parent_env)
+  +    19.   │     └─base::eval(mf, parent_env)
+  +    20.   ├─stats::model.frame(...)
+  +    21.   └─stats::model.frame.default(...)
+  +   [ FAIL 5 | WARN 14 | SKIP 5 | PASS 136 ]
+
+Package: DHARMa
+Check: tests
+Change: changed (ERROR -> ERROR)
+  -   ══ Skipped tests (7) ═══════════════════════════════════════════════════════════
+  -   • {mgcViz} is not installed. (1): 'testSimulateResiduals.R:89:3'
+  -   • On CRAN (6): 'testModelTypes.R:2:1', 'testPlots.R:55:13', 'testTests.R:23:1',
+  -     'testTests.R:155:1', 'testTests.R:222:1', 'testTests.R:253:1'
+  -   ══ Failed tests ════════════════════════════════════════════════════════════════
+  -   [ FAIL 1 | WARN 0 | SKIP 7 | PASS 96 ]
+  +   ── Failure ('testNumericReproducibility.R:16:3'): residuals are numerically reproducible ──
+  +   Expected `referenceData$mod1$residuals` to equal `residuals(simulationOutput)`.
+  +   Differences:
+  +     `actual[2:8]`: 0.9095 0.7941 0.5206 0.5228 0.2312 0.0797 0.8859
+  +   `expected[2:8]`: 0.9095 0.7941 0.5206 0.5255 0.2312 0.0797 0.8859
+  +   [ FAIL 2 | WARN 0 | SKIP 7 | PASS 95 ]
+
+Package: HSAUR2
+Check: re-building of vignette outputs
+Change: changed (ERROR -> ERROR)
+  -   Model failed to converge with max|grad| = 0.197379 (tol = 0.002, component 1)
+  +   Model failed to converge with max|grad| = 0.246243 (tol = 0.002, component 1)
+
+Package: mediation
+Check: re-building of vignette outputs
+Change: changed (WARNING -> WARNING)
+  - Warning in checkConv(attr(opt, "derivs"), opt$par, ctrl = control$checkConv,  :
+  -   Model failed to converge with max|grad| = 0.00384852 (tol = 0.002, component 1)
+  -   See ?lme4::convergence and ?lme4::troubleshooting.
+  - Warning in checkConv(attr(opt, "derivs"), opt$par, ctrl = control$checkConv,  :
+  -   Model failed to converge with max|grad| = 0.0162888 (tol = 0.002, component 1)
+  -   See ?lme4::convergence and ?lme4::troubleshooting.
