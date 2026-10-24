@@ -48,10 +48,12 @@ jobs:
         if: runner.os != 'Linux'
       - name: Install LaTeX packages for vignettes
         if: runner.os != 'Linux'
-        # TinyTeX's tlmgr may be older than the repository it installs from
+        # TinyTeX's tlmgr may be older than the repository it installs from.
+        # Package list: TeX Live packages providing every file loaded by the
+        # preambles of the .Rnw vignettes (plus knitr's framed)
         run: |
           tlmgr update --self
-          tlmgr install adjustbox collectbox babel-english blkarray caption colortbl etoolbox fancyvrb framed hyperref lineno lm multirow natbib threeparttable thumbpdf tools upquote url wrapfig xcolor
+          tlmgr install amsfonts amsmath atbegshi atveryend babel babel-english bigintcalc bitset blkarray cm cm-super ec epstopdf-pkg etoolbox fancyvrb fontname framed gettitlestring graphics graphics-cfg graphics-def grfext hycolor hyperref iftex infwarerr intcalc kvdefinekeys kvoptions kvsetkeys l3kernel latex latexconfig lineno lm ltxcmds natbib pdfescape pdftexcmds refcount rerunfilecheck stringenc thumbpdf tools uniquecounter upquote url xcolor
 
       - uses: r-lib/actions/setup-r@v2
         with:
