@@ -237,6 +237,15 @@ mkRespMod <- function(fr, REML=NULL, family = NULL, nlenv = NULL, nlmod = NULL, 
         rho$nobs <- n
         ## allow trivial objects, e.g. for simulation
         if (length(y)>0) eval(family$initialize, rho)
+        ## binomial()$initialize warns (once) about non-integer counts, but
+        ## poisson()$initialize doesn't: glm() warns via dpois() in
+        ## poisson()$aic(), once per value. Our C++ aic() uses the continuous
+        ## extension (dpois_raw()) instead, so warn once here (same test as
+        ## stats:::binomInitialize()).
+        if (family$family == "poisson" && length(y) > 0 &&
+            any(abs(y - round(y)) > 1e-3))
+            warning("non-integer response values in a poisson model",
+                    call. = FALSE)
         ## ugh. this *is* necessary;
         ##  family$initialize *ignores* mustart in env, overwrites!
         ## see ll 180-182 of src/library/stats/R/glm.R
