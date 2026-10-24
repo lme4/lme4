@@ -89,31 +89,14 @@ jobs:
         with:
           job-config: ${{ matrix.config.job-config }}
           token: ${{ secrets.RHUB_TOKEN }}
-      - uses: teatimeguest/setup-texlive-action@v3
-        with:
-          packages: >-
-             scheme-basic
-             inputenc
-             graphicx
-             array
-             colortbl
-             multirow
-             hhline
-             calc
-             tabularx
-             threeparttable
-             wrapfig
-             url
-             hyperref
-             fancyvrb
-             natbib
-             xcolor
-             etoolbox
-             caption
-             adjustbox
-             thumbpdf
-             framed
-             blkarray
+      # teatimeguest/setup-texlive-action no longer exists (404)
+      - uses: r-lib/actions/setup-tinytex@v2
+      - name: Install LaTeX packages for vignettes
+        run: >-
+          tlmgr install
+          adjustbox collectbox babel-english blkarray caption colortbl
+          etoolbox fancyvrb framed hyperref lineno lm multirow natbib
+          threeparttable thumbpdf tools upquote url wrapfig xcolor
       - uses: r-hub/actions/run-check@v1
         with:
           job-config: ${{ matrix.config.job-config }}
