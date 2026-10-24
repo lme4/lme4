@@ -65,8 +65,11 @@ jobs:
           token: ${{ secrets.RHUB_TOKEN }}
           job-config: ${{ matrix.config.job-config }}
         env:
-          # as for CRAN submissions; else 'checking sizes of PDF files' warns
-          BUILD_ARGS: --compact-vignettes=both
+          # the containers lack the LaTeX packages the vignettes need; these
+          # platforms test compilers/sanitizers/BLAS, and the vignettes are
+          # checked on the other platforms
+          BUILD_ARGS: --no-build-vignettes
+          CHECK_ARGS: --ignore-vignettes
 
   other-platforms:
     needs: setup
