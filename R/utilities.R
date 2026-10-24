@@ -14,7 +14,7 @@ abbrDeparse <- function(x, width=60) {
     if(length(r) > 1) paste(r[1], "...") else r
 }
 
-##' @param bars result of findbars
+## @param bars result of findbars
 barnames <- function(bars) vapply(bars, function(x) deparse1(x[[3]]), "")
 
 makeFac <- function(x,char.only=FALSE) {
@@ -90,10 +90,10 @@ replaceTerm <- function(term,target,repl) {
     return(factor(f12, levels = (f12[u])[order(levs_rank)]))
 }
 
-##' @param x a language object of the form  effect | groupvar
-##' @param frloc model frame
-##' @param drop.unused.levels (logical)
-##' @return list containing grouping factor, sparse model matrix, number of levels, names
+## @param x a language object of the form  effect | groupvar
+## @param frloc model frame
+## @param drop.unused.levels (logical)
+## @return list containing grouping factor, sparse model matrix, number of levels, names
 mkBlist <- function(x,frloc, drop.unused.levels=TRUE,
                     reorder.vars=FALSE) {
     frloc <- factorize(x,frloc)
@@ -143,20 +143,19 @@ mkBlist <- function(x,frloc, drop.unused.levels=TRUE,
     list(ff = ff, sm = sm, nl = nl, cnms = colnames(mm))
 }
 
-##' Create an lmerResp, glmResp or nlsResp instance
-##'
-##' @title Create an lmerResp, glmResp or nlsResp instance
-##' @param fr a model frame
-##' @param REML logical scalar, value of REML for an lmerResp instance
-##' @param family the optional glm family (glmResp only)
-##' @param nlenv the nonlinear model evaluation environment (nlsResp only)
-##' @param nlmod the nonlinear model function (nlsResp only)
-##' @param ... where to look for response information if \code{fr} is missing.
-##'   Can contain a model response, \code{y}, offset, \code{offset}, and weights,
-##'   \code{weights}.
-##' @return an lmerResp or glmResp or nlsResp instance
-##' @family utilities
-##' @export
+## Create an lmerResp, glmResp or nlsResp instance
+##
+## @title Create an lmerResp, glmResp or nlsResp instance
+## @param fr a model frame
+## @param REML logical scalar, value of REML for an lmerResp instance
+## @param family the optional glm family (glmResp only)
+## @param nlenv the nonlinear model evaluation environment (nlsResp only)
+## @param nlmod the nonlinear model function (nlsResp only)
+## @param ... where to look for response information if \code{fr} is missing.
+##   Can contain a model response, \code{y}, offset, \code{offset}, and weights,
+##   \code{weights}.
+## @return an lmerResp or glmResp or nlsResp instance
+## @family utilities
 mkRespMod <- function(fr, REML=NULL, family = NULL, nlenv = NULL, nlmod = NULL, ...)
 {
     if(!missing(fr)) {
@@ -287,16 +286,16 @@ subnms <- function(form, nms) {
     sbnm(form)
 }
 
-##' Check for a constant term (a literal 1) in an expression
+## Check for a constant term (a literal 1) in an expression
 ##
-##' In the mixed-effects part of a nonlinear model formula, a constant
-##' term is not meaningful because every term must be relative to a
-##' nonlinear model parameter.  This function recursively checks the
-##' expressions in the formula for a a constant, calling stop() if
-##' such a term is encountered.
-##' @title Check for constant terms.
-##' @param expr an expression
-##' @return NULL.  The function is executed for its side effect.
+## In the mixed-effects part of a nonlinear model formula, a constant
+## term is not meaningful because every term must be relative to a
+## nonlinear model parameter.  This function recursively checks the
+## expressions in the formula for a a constant, calling stop() if
+## such a term is encountered.
+## @title Check for constant terms.
+## @param expr an expression
+## @return NULL.  The function is executed for its side effect.
 chck1 <- function(expr) {
     if ((le <- length(expr)) == 1) {
         if (is.numeric(expr) && expr == 1)
@@ -307,8 +306,8 @@ chck1 <- function(expr) {
 }
 
 ## ---> ../man/nlformula.Rd --- Manipulate a nonlinear model formula
-##' @param mc matched call from the caller, with arguments 'formula','start',...
-##' @return a list with components "respMod", "frame", "X", "reTrms"
+## @param mc matched call from the caller, with arguments 'formula','start',...
+## @return a list with components "respMod", "frame", "X", "reTrms"
 nlformula <- function(mc) {
   start <- eval(mc$start, parent.frame(2L))
   if (is.numeric(start)) start <- list(nlpars = start)
@@ -455,8 +454,8 @@ getMsg <- function(x) {
          warnings  = attr(opt, "warnings"),
          val       = opt$par)
 
-##' Potentially needed in more than one place, be sure to keep consistency!
-##' hack (NB families have weird names) from @aosmith16; then corrected
+## Potentially needed in more than one place, be sure to keep consistency!
+## hack (NB families have weird names) from @aosmith16; then corrected
 isNBfamily <- function(familyString)
     grepl("^Negative ?Binomial", familyString, ignore.case=TRUE)
 normalizeFamilyName <- function(family) { # such as  object@resp$family
@@ -465,7 +464,7 @@ normalizeFamilyName <- function(family) { # such as  object@resp$family
     family
 }
 
-##' Is it a family with no scale parameter
+## Is it a family with no scale parameter
 hasNoScale <- function(family)
     any(substr(family$family, 1L, 12L)
         == c("poisson", "binomial", "negative.bin", "Negative Bin"))
@@ -473,9 +472,9 @@ hasNoScale <- function(family)
 
 
 ##--> ../man/mkMerMod.Rd ---Create a merMod object
-##' @param rho the environment of the objective function
-##' @param opt the value returned by the optimizer
-##' @param reTrms reTrms list from the calling function
+## @param rho the environment of the objective function
+## @param opt the value returned by the optimizer
+## @param reTrms reTrms list from the calling function
 mkMerMod <- function(rho, opt, reTrms, fr, mc, lme4conv=NULL) {
     if(missing(mc)) mc <- match.call()
     stopifnot(is.environment(rho),
@@ -705,31 +704,31 @@ checkFormulaData <- function(formula, data, checkLHS=TRUE,
 ## }
 
 
-##' Not exported; for tests (and examples) that can be slow;
-##' Use   if(lme4:::testLevel() >= 1.) .....  see ../tests/README.md
+## Not exported; for tests (and examples) that can be slow;
+## Use   if(lme4:::testLevel() >= 1.) .....  see ../tests/README.md
 testLevel <- function()
     if(nzchar(s <- Sys.getenv("LME4_TEST_LEVEL")) &&
        is.finite(s <- as.numeric(s))) s else 1
 
-##' General conditional variance-covariance matrix
-##'
-##' Experimental function for estimating the variance-covariance
-##' matrix of the random effects, conditional on the observed data
-##' and at the (RE)ML estimate of the fixed effects and covariance
-##' parameters.  Applicable for any Lambda matrix, but slower than
-##' other block-by-block methods.
-##' Not exported.
-##'
-##' TODO:
-##' - Write up quick note on theory (e.g. Laplace approximation).
-##' - Test.  Speed? Correctness?
-##' - Do we need to think carefully about the differences
-##'     between REML and ML, beyond just multiplying by a different
-##'     sigma^2 estimate?
-##' - is it better to do this term-by-term as in C++ code?
-##'
-##' @param object \code{merMod} object
-##' @return Sparse covariance matrix
+## General conditional variance-covariance matrix
+##
+## Experimental function for estimating the variance-covariance
+## matrix of the random effects, conditional on the observed data
+## and at the (RE)ML estimate of the fixed effects and covariance
+## parameters.  Applicable for any Lambda matrix, but slower than
+## other block-by-block methods.
+## Not exported.
+##
+## TODO:
+## - Write up quick note on theory (e.g. Laplace approximation).
+## - Test.  Speed? Correctness?
+## - Do we need to think carefully about the differences
+##     between REML and ML, beyond just multiplying by a different
+##     sigma^2 estimate?
+## - is it better to do this term-by-term as in C++ code?
+##
+## @param object \code{merMod} object
+## @return Sparse covariance matrix
 condVar <- function(object, scaled=TRUE) {
   Lamt <- getME(object, "Lambdat")
   L <- getME(object, "L")
@@ -758,7 +757,7 @@ mkMinimalData <- function(formula) {
     setNames(data, vars)
 }
 
-##' Make template for mixed model parameters
+## Make template for mixed model parameters
 mkParsTemplate <- function(formula, data){
     if(missing(data)) data <- mkMinimalData(formula)
     mfRanef <- model.frame( reformulas::subbars(formula), data)
@@ -773,16 +772,16 @@ mkParsTemplate <- function(formula, data){
          sigma = 1)
 }
 
-##' Make template for mixed model data
-##'
-##' Useful for simulating balanced designs and for
-##' getting started on unbalanced simulations
-##'
-##' @param formula formula
-##' @param data data -- not necessary
-##' @param nGrps number of groups per grouping factor
-##' @param rfunc function for generating covariate data
-##' @param ... additional parameters for rfunc
+## Make template for mixed model data
+##
+## Useful for simulating balanced designs and for
+## getting started on unbalanced simulations
+##
+## @param formula formula
+## @param data data -- not necessary
+## @param nGrps number of groups per grouping factor
+## @param rfunc function for generating covariate data
+## @param ... additional parameters for rfunc
 mkDataTemplate <- function(formula, data,
                            nGrps = 2, nPerGrp = 1,
                            rfunc = NULL, ...){
@@ -804,10 +803,10 @@ mkDataTemplate <- function(formula, data,
     cbind(grpDat, covDat)
 }
 
-##' very flexible and convenient wrt formula,
-##' very unflexible wrt everything else
-##'
-##' starting to get a little too sugary?
+## very flexible and convenient wrt formula,
+## very unflexible wrt everything else
+##
+## starting to get a little too sugary?
 quickSimulate <- function(formula, nGrps, nPerGrp, family = gaussian) {
     pr <- mkParsTemplate(formula)
     dt <- mkDataTemplate(formula, nGrps = nGrps, nPerGrp = nPerGrp, rfunc = rnorm)
@@ -820,20 +819,20 @@ quickSimulate <- function(formula, nGrps, nPerGrp, family = gaussian) {
 # formula parsing sugar
 #----------------------------------------------------------------------
 
-##' these functions pick up where findbars leaves off, in terms of sugar
-##' @param REtrm an element of the result of findbars
-##' @param REtrms the result of findbars
-##' @return \code{reexpr} gives a one-sided formula with the linear
-##' model formula for the raw model matrix. \code{grpfact} gives an
-##' expression with the name of the grouping factor associated with
-##' the raw model matrix. \code{termnms} gives a character vector with
-##' the names of the random effects terms.
+## these functions pick up where findbars leaves off, in terms of sugar
+## @param REtrm an element of the result of findbars
+## @param REtrms the result of findbars
+## @return \code{reexpr} gives a one-sided formula with the linear
+## model formula for the raw model matrix. \code{grpfact} gives an
+## expression with the name of the grouping factor associated with
+## the raw model matrix. \code{termnms} gives a character vector with
+## the names of the random effects terms.
 reexpr <- function(REtrm) substitute( ~ foo, list(foo = REtrm[[2]]))
 grpfact <- function(REtrm) substitute(factor(fac), list(fac = REtrm[[3]]))
 termnms <- function(REtrms) vapply(REtrms, deparse1, "")
 
-##' mmList(): list of model matrices
-##' ------    called from getME() & model.matrix(*, "randomListRaw")
+## mmList(): list of model matrices
+## ------    called from getME() & model.matrix(*, "randomListRaw")
 mmList <- function(object, ...) UseMethod("mmList")
 mmList.merMod <- function(object, ...) mmList(formula(object), model.frame(object))
 mmList.formula <- function(object, frame, ...) {
@@ -847,7 +846,7 @@ mmList.formula <- function(object, frame, ...) {
     else
         mm
 }
-##' examples  ---FIXME?--- put in tests // or export + 'real examples'
+## examples  ---FIXME?--- put in tests // or export + 'real examples'
 if(FALSE) {
     library(lme4)
     m <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
@@ -924,15 +923,15 @@ bdiag_to_mlist <- function(m,n) {
     }
     return(mm)
 }
-##' convert a block-diagonal matrix to a pxpxn array
-##' @param m a block-diagonal matrix (typically sparse)
-##' @param n vector of block sizes (if length-1, will be replicated to be consistent
-##' with the matrix dimensions)
-##' @examples
-##' mm <- Matrix::bdiag(matrix(1:4,2,2),matrix(2:5,2,2),matrix(3:6,2,2))
-##' mm2 <- blkmatrix_to_matrixlist(mm,2)
-##' bdiag_to_array(mm,2)
-##' array_to_bdiag(bdiag_to_array(mm,2))
+## convert a block-diagonal matrix to a pxpxn array
+## @param m a block-diagonal matrix (typically sparse)
+## @param n vector of block sizes (if length-1, will be replicated to be consistent
+## with the matrix dimensions)
+## @examples
+## mm <- Matrix::bdiag(matrix(1:4,2,2),matrix(2:5,2,2),matrix(3:6,2,2))
+## mm2 <- blkmatrix_to_matrixlist(mm,2)
+## bdiag_to_array(mm,2)
+## array_to_bdiag(bdiag_to_array(mm,2))
 bdiag_to_array <- function(m,n) {
     mlist_to_array(
         bdiag_to_mlist(m,n))
@@ -1087,10 +1086,10 @@ quad.tdiag <- function(M, x) {
     rowSums(tcrossprod(x, M) * x)
 }
 
-##' attempt to modularize vcov scaling; more details in the autoscale vignette
-##' @param vv represents the variance-covariance matrix before modification
-##' @param sc represents the scale vector
-##' @param ce represents the center vector
+## attempt to modularize vcov scaling; more details in the autoscale vignette
+## @param vv represents the variance-covariance matrix before modification
+## @param sc represents the scale vector
+## @param ce represents the center vector
 scale_vcov <- function(vv, sc, ce) {
   other_vars <- setdiff(colnames(vv), "(Intercept)")
   ## 1. Modifying the intercept
@@ -1108,12 +1107,12 @@ scale_vcov <- function(vv, sc, ce) {
   vv <- as_dpoMatrix(vv)
 }
 
-##' Used for padding NAs to Cmat accordingly in predict.merMod
-##' @param mat represents the matrix that needs to be modified
-##' @param mat_names represents the names of the new modified matrix
-##' @param insert_after represents the placement before the zeros that need to 
-##' be added
-##' @param n_add represents the number rows/columns that will be padded with zeros
+## Used for padding NAs to Cmat accordingly in predict.merMod
+## @param mat represents the matrix that needs to be modified
+## @param mat_names represents the names of the new modified matrix
+## @param insert_after represents the placement before the zeros that need to
+## be added
+## @param n_add represents the number rows/columns that will be padded with zeros
 zero_padding <- function(mat, mat_names, insert_after, n_add = 1) {
   mat <- as.matrix(mat)
   old_dim <- nrow(mat)
@@ -1140,13 +1139,13 @@ zero_padding <- function(mat, mat_names, insert_after, n_add = 1) {
   m_pad
 }
 
-##' if allow.new.levels = TRUE, then adds 0 padding to Cmat for prediction
-##' @param Cmat represents Cmat that was computed prior to subsetting
-##' @param C_factors represents the factors explicitly shown in Cmat
-##' @param Z_factors represents the factors represented in the Z matrix, which
-##' includes only levels of groups that need to be predicted
-##' @param Cmat_names represents the names of the Cmat matrix
-##' @param cnms same as cnms from object
+## if allow.new.levels = TRUE, then adds 0 padding to Cmat for prediction
+## @param Cmat represents Cmat that was computed prior to subsetting
+## @param C_factors represents the factors explicitly shown in Cmat
+## @param Z_factors represents the factors represented in the Z matrix, which
+## includes only levels of groups that need to be predicted
+## @param Cmat_names represents the names of the Cmat matrix
+## @param cnms same as cnms from object
 pad_Cmat <- function(Cmat, C_factors, Z_factors, Cmat_names, cnms){
   n_padded = 0
   for (grp in intersect(names(C_factors), names(Z_factors))) {

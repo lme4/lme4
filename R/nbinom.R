@@ -1,5 +1,3 @@
-##' @importFrom MASS negative.binomial
-##' @importFrom MASS theta.ml
 
 ## ==> user should use  getME(object, "glmer.nb.theta")
 getNBdisp <- function(object) environment(object@resp$family$aic)[[".Theta"]]
@@ -14,8 +12,8 @@ getNBdisp.fam <- function(familyString)
 glmResp.f.nms <- names(glmResp$fields())
 glmNB.to.change <- setdiff(glmResp.f.nms, c("Ptr", "family"))
 
-##' setNBdisp(object,theta) :=
-##' NB-object with changed [DISP]ersion parameter 'theta' (and all that entails)
+## setNBdisp(object,theta) :=
+## NB-object with changed [DISP]ersion parameter 'theta' (and all that entails)
 setNBdisp <- function(object,theta) {
   ## assign(".Theta",theta,envir=environment(object@resp$family$aic))
   rr <- object@resp
@@ -32,13 +30,13 @@ refitNB <- function(object, theta, control = NULL) {
     refit(setNBdisp(object, theta), control = control)
 }
 
-##' @title Optimize over the Negative Binomial Parameter Theta
-##' @param object a "glmerMod" object, updated from poisson to negative.binomial()
-##' @param interval and
-##' @param tol      are both passed to \code{\link{optimize}()}.
-##' @param verbose  ## show our own progress
-##' @param control passed to \code{\link{refit}()}
-##' @return the last fit, an object like 'object'
+## @title Optimize over the Negative Binomial Parameter Theta
+## @param object a "glmerMod" object, updated from poisson to negative.binomial()
+## @param interval and
+## @param tol      are both passed to \code{\link{optimize}()}.
+## @param verbose  ## show our own progress
+## @param control passed to \code{\link{refit}()}
+## @return the last fit, an object like 'object'
 optTheta <- function(object,
                      interval = c(-5,5),
                      tol = .Machine$double.eps^0.25,
@@ -90,9 +88,9 @@ est_theta <- function(object, limit = 20,
 }
 
 ## -------> ../man/glmer.Rd
-##' glmer() for Negative Binomial
-##' @param ... formula, data, etc: the arguments for
-##' \code{\link{glmer}(..)} (apart from \code{family}!).
+## glmer() for Negative Binomial
+## @param ... formula, data, etc: the arguments for
+## \code{\link{glmer}(..)} (apart from \code{family}!).
 glmer.nb <- function(..., interval = log(th) + c(-3,3),
                      tol = 5e-5, verbose = FALSE, nb.control = NULL,
                      initCtrl = list(limit = 20, eps = 2*tol, trace = verbose,

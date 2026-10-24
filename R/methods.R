@@ -232,7 +232,6 @@ rstudent.glmerMod <- function(model, infl = influence(model, do.coef=FALSE), ...
 }
 
 
-##' @S3method sigma merMod
 sigma.merMod <- function(object, ...) {
     dc <- object@devcomp
     dd <- dc$dims
@@ -240,8 +239,6 @@ sigma.merMod <- function(object, ...) {
         dc$cmp[[if(dd[["REML"]]) "sigmaREML" else "sigmaML"]] else 1.
 }
 
-##' @importFrom stats terms
-##' @S3method terms merMod
 terms.merMod <- function(x, fixed.only=TRUE, random.only=FALSE, ...) {
     if (missing(fixed.only) && random.only) fixed.only <- FALSE
     if (fixed.only && random.only) stop("can't specify 'only fixed' and 'only random' terms")
@@ -260,8 +257,6 @@ terms.merMod <- function(x, fixed.only=TRUE, random.only=FALSE, ...) {
     tt
 }
 
-##' @importFrom stats update
-##' @S3method update merMod
 update.merMod <- function(object, formula., ..., evaluate = TRUE) {
     if (is.null(call <- getCall(object)))
         stop("object should contain a 'call' component")

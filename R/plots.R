@@ -1,7 +1,5 @@
 ### Plots for the ranef.mer class ----------------------------------------
 
-##' @importFrom lattice dotplot
-##' @S3method  dotplot ranef.mer
 dotplot.ranef.mer <- function(x, data, main = TRUE, transf=I, level = 0.95, ...)
 {
     rng <- qnorm((1+level)/2)
@@ -43,8 +41,6 @@ dotplot.ranef.mer <- function(x, data, main = TRUE, transf=I, level = 0.95, ...)
     setNames(lapply(names(x), f, ...), names(x))
 }
 
-##' @importFrom graphics plot
-##' @S3method plot ranef.mer
 plot.ranef.mer <- function(x, y, ...)
 {
     lapply(x, function(x) {
@@ -58,8 +54,6 @@ plot.ranef.mer <- function(x, y, ...)
     })
 }
 
-##' @importFrom lattice qqmath
-##' @S3method qqmath ranef.mer
 qqmath.ranef.mer <- function(x, data, main = TRUE, level = 0.95, ...)
 {
     rng <- qnorm((1+level)/2)
@@ -106,8 +100,6 @@ qqmath.ranef.mer <- function(x, data, main = TRUE, level = 0.95, ...)
     sapply(names(x), f, simplify = FALSE)
 }
 
-##' @importFrom graphics plot
-##' @S3method plot coef.mer
 plot.coef.mer <- function(x, y, ...)
 {
     ## remove non-varying columns from frames
@@ -116,8 +108,6 @@ plot.coef.mer <- function(x, y, ...)
     plot.ranef.mer(reduced, ...)
 }
 
-##' @importFrom lattice dotplot
-##' @S3method dotplot coef.mer
 dotplot.coef.mer <- function(x, data, ...) {
     mc <- match.call()
     mc[[1]] <- as.name("dotplot.ranef.mer")

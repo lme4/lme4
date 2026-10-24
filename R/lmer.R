@@ -1,7 +1,7 @@
 ## NB:  doc in ../man/*.Rd  ***not*** auto generated
 ## FIXME: need to document S3 methods better (can we pull from r-forge version?)
 
-##' Fit a linear mixed model (LMM)
+## Fit a linear mixed model (LMM)
 lmer <- function(formula, data=NULL, REML = TRUE,
                  control = lmerControl(), start = NULL
                , verbose = 0L
@@ -82,7 +82,7 @@ lmer <- function(formula, data=NULL, REML = TRUE,
 }## { lmer }
 
 
-##' Fit a generalized linear mixed model (GLMM)
+## Fit a generalized linear mixed model (GLMM)
 glmer <- function(formula, data=NULL
                 , family = gaussian
                 , control = glmerControl()
@@ -213,7 +213,7 @@ glmer <- function(formula, data=NULL
 
 }## {glmer}
 
-##' Fit a nonlinear mixed-effects model
+## Fit a nonlinear mixed-effects model
 nlmer <- function(formula, data=NULL, control = nlmerControl(), start = NULL, verbose = 0L,
                   nAGQ = 1L, subset, weights, na.action, offset,
                   contrasts = NULL, devFunOnly = FALSE)
@@ -299,12 +299,12 @@ if(getRversion() < "3.1.0") dontCheck <- identity
 
 ## *not* exported (had help page till early 2018)
 ## -> issue #92: -> also look at devfun2() in  ./profile.R (which returns class!)
-##' Create a deviance evaluation function from a predictor and a response module
-##' @param rho an `environment` already containing `verbose` and tolPwrss
-##' @param nAGQ for glmer/nlmer: #{AGQ steps}; 0 <==> Laplace
-##' @param maxit maximal number of PIRLS iterations
-##' @param verbose integer specifying if outputs should be produced
-##' @param control a list as from lmerControl() etc
+## Create a deviance evaluation function from a predictor and a response module
+## @param rho an `environment` already containing `verbose` and tolPwrss
+## @param nAGQ for glmer/nlmer: #{AGQ steps}; 0 <==> Laplace
+## @param maxit maximal number of PIRLS iterations
+## @param verbose integer specifying if outputs should be produced
+## @param control a list as from lmerControl() etc
 mkdevfun <- function(rho, nAGQ=1L, maxit = if(extends(rho.cld, "nlsResp")) 300L else 100L,
                      verbose=0, control=list()) {
     ## FIXME: should nAGQ be automatically embedded in rho?
@@ -427,23 +427,23 @@ RglmerWrkIter <- function(pp, resp, uOnly=FALSE) {
     resp$resDev() + pp$sqrL(1)
 }
 
-##' @param pp pred module
-##' @param resp resp module
-##' @param tol numeric tolerance
-##' @param GQmat matrix of Gauss-Hermite quad info
-##' @param compDev compute in C++ (as opposed to doing as much as possible in R)
-##' @param grpFac grouping factor (normally found in environment ..)
-##' @param verbose verbosity, of course
-##' @param dispProfile for families with a free dispersion parameter (e.g.
-##'     Gamma), profile it via a nested fixed-point loop around PIRLS
-##'     (\code{glmerControl(disp_method="moment")}, the default) rather
-##'     than leaving it fixed at 1 (\code{disp_method="old/buggy"},
-##'     back-compatible with pre-fix behaviour)
-##' @param maxPhiIter cap on the nested dispersion fixed-point loop
-##'     (only used when \code{dispProfile=TRUE})
-##' @param qEff degrees-of-freedom correction to the moment estimator's
-##'     denominator (\code{glmerControl(disp_dof_correction=TRUE)}; see
-##'     \code{\link{glmerControl}}), or \code{NA_real_} for none
+## @param pp pred module
+## @param resp resp module
+## @param tol numeric tolerance
+## @param GQmat matrix of Gauss-Hermite quad info
+## @param compDev compute in C++ (as opposed to doing as much as possible in R)
+## @param grpFac grouping factor (normally found in environment ..)
+## @param verbose verbosity, of course
+## @param dispProfile for families with a free dispersion parameter (e.g.
+##     Gamma), profile it via a nested fixed-point loop around PIRLS
+##     (\code{glmerControl(disp_method="moment")}, the default) rather
+##     than leaving it fixed at 1 (\code{disp_method="old/buggy"},
+##     back-compatible with pre-fix behaviour)
+## @param maxPhiIter cap on the nested dispersion fixed-point loop
+##     (only used when \code{dispProfile=TRUE})
+## @param qEff degrees-of-freedom correction to the moment estimator's
+##     denominator (\code{glmerControl(disp_dof_correction=TRUE)}; see
+##     \code{\link{glmerControl}}), or \code{NA_real_} for none
 glmerPwrssUpdate <- function(pp, resp, tol, GQmat, compDev=TRUE, grpFac=NULL, maxit = 70L, verbose=0,
                               dispProfile=TRUE, maxPhiIter=100L, qEff=NA_real_) {
     nAGQ <- nrow(GQmat)
@@ -655,11 +655,8 @@ anovaLmer <- function(object, ..., refit = TRUE, model.names=NULL) {
     }
 }## {anovaLmer}
 
-##' @importFrom stats anova
-##' @S3method anova merMod
 anova.merMod <- anovaLmer
 
-##' @S3method as.function merMod
 as.function.merMod <- function(x, ...) {
     reCovs <- getReCovs(x)
     rho <- list2env(list(resp  = x@resp$copy(),
@@ -703,14 +700,10 @@ coefMer <- function(object, ...)
     val
 } ##  {coefMer}
 
-##' @importFrom stats coef
-##' @S3method coef merMod
 coef.merMod <- coefMer
 
 ## FIXME: should these values (i.e. ML criterion for REML models
 ##  and vice versa) be computed and stored in the object in the first place?
-##' @importFrom stats deviance
-##' @S3method deviance merMod
 deviance.merMod <- function(object, REML = NULL, ...) {
                             ## type = c("conditional", "unconditional", "penalized"),
                             ## relative = TRUE, ...) {
@@ -812,8 +805,6 @@ safe_pchisq <- function (q, df, ...) {
     pchisq(q = q, df = df, ...)
 }
 
-##' @importFrom stats drop1
-##' @S3method drop1 merMod
 drop1.merMod <- function(object, scope, scale = 0, test = c("none", "Chisq", "user"),
                          k = 2, trace = FALSE,
                          sumFun=NULL, ...) {
@@ -915,19 +906,14 @@ drop1.merMod <- function(object, scope, scale = 0, test = c("none", "Chisq", "us
     structure(aod, heading = head, class = c("anova", "data.frame"))
 }
 
-##' @importFrom stats extractAIC
-##' @S3method extractAIC merMod
 extractAIC.merMod <- function(fit, scale = 0, k = 2, ...) {
     L <- logLik(refitML(fit))
     edf <- attr(L,"df")
     c(edf,-2*L + k*edf)
 }
 
-##' @importFrom stats family
-##' @S3method family merMod
 family.merMod <- function(object, ...) family(object@resp, ...)
 
-##' @S3method family glmResp
 family.glmResp <- function(object, ...) {
                                         # regenerate initialize
                                         # expression if necessary
@@ -941,14 +927,10 @@ family.glmResp <- function(object, ...) {
     object$family
 }
 
-##' @S3method family lmResp
 family.lmResp <- function(object, ...) gaussian()
 
-##' @S3method family nlsResp
 family.nlsResp <- function(object, ...) gaussian()
 
-##' @importFrom stats fitted
-##' @S3method fitted merMod
 fitted.merMod <- function(object, ...) {
     xx <- object@resp$mu
     if (length(xx)==0) {
@@ -963,26 +945,23 @@ fitted.merMod <- function(object, ...) {
         xx
 }
 
-##' Extract the fixed-effects estimates
-##'
-##' Extract the estimates of the fixed-effects parameters from a fitted model.
-##' @name fixef
-##' @title Extract fixed-effects estimates
-##' @aliases fixef fixed.effects fixef.merMod
-##' @docType methods
-##' @param object any fitted model object from which fixed effects estimates can
-##' be extracted.
-##' @param noScale logical; if TRUE, returns the non-scaled parameters
-##' @param \dots optional additional arguments. Currently none are used in any
-##' methods.
-##' @return a named, numeric vector of fixed-effects estimates.
-##' @keywords models
-##' @examples
-##' fixef(lmer(Reaction ~ Days + (1|Subject) + (0+Days|Subject), sleepstudy))
-##' @importFrom nlme fixef
-##' @export fixef
-##' @method fixef merMod
-##' @export
+## Extract the fixed-effects estimates
+##
+## Extract the estimates of the fixed-effects parameters from a fitted model.
+## @name fixef
+## @title Extract fixed-effects estimates
+## @aliases fixef fixed.effects fixef.merMod
+## @docType methods
+## @param object any fitted model object from which fixed effects estimates can
+## be extracted.
+## @param noScale logical; if TRUE, returns the non-scaled parameters
+## @param \dots optional additional arguments. Currently none are used in any
+## methods.
+## @return a named, numeric vector of fixed-effects estimates.
+## @keywords models
+## @examples
+## fixef(lmer(Reaction ~ Days + (1|Subject) + (0+Days|Subject), sleepstudy))
+## @method fixef merMod
 fixef.merMod <- function(object, add.dropped = FALSE, noScale = NULL, ...) {
     X <- getME(object,"X")
     ff <- structure(object@beta, names = dimnames(X)[[2]])
@@ -1022,8 +1001,6 @@ getFixedFormula <- function(form) {
     form
 }
 
-##' @importFrom stats formula
-##' @S3method formula merMod
 formula.merMod <- function(x, fixed.only=FALSE, random.only=FALSE, ...) {
     if (missing(fixed.only) && random.only) fixed.only <- FALSE
     if (fixed.only && random.only) stop("can't specify 'only fixed' and 'only random' terms")
@@ -1042,22 +1019,18 @@ formula.merMod <- function(x, fixed.only=FALSE, random.only=FALSE, ...) {
     form
 }
 
-##' @S3method isREML merMod
 isREML.merMod <- function(x, ...) as.logical(x@devcomp$dims[["REML"]])
 
-##' @S3method isGLMM merMod
 isGLMM.merMod <- function(x,...) {
   as.logical(x@devcomp$dims[["GLMM"]])
   ## or: is(x@resp,"glmResp")
 }
 
-##' @S3method isNLMM merMod
 isNLMM.merMod <- function(x,...) {
   as.logical(x@devcomp$dims[["NLMM"]])
   ## or: is(x@resp,"nlsResp")
 }
 
-##' @S3method isLMM merMod
 isLMM.merMod <- function(x,...) {
   !isGLMM(x) && !isNLMM(x)
   ## or: is(x@resp,"lmerResp") ?
@@ -1080,8 +1053,6 @@ npar.merMod <- function(object) {
     ## TODO: how do we feel about counting the scale parameter ???
 }
 
-##' @importFrom stats logLik
-##' @S3method logLik merMod
 logLik.merMod <- function(object, REML = NULL, ...) {
     if (is.null(REML) || is.na(REML[1]))
         REML <- isREML(object)
@@ -1096,8 +1067,6 @@ logLik.merMod <- function(object, REML = NULL, ...) {
               class = "logLik")
 }
 
-##' @importFrom stats df.residual
-##' @S3method df.residual merMod
 ##  TODO: not clear whether the residual df should be based
 ##  on p=length(beta) or p=length(c(theta,beta)) ... but
 ##  this is just to allow things like aods3::gof to work ...
@@ -1106,8 +1075,6 @@ df.residual.merMod <- function(object, ...) {
     nobs(object)-npar.merMod(object)
 }
 
-##' @importFrom stats logLik
-##' @S3method model.frame merMod
 model.frame.merMod <- function(formula, fixed.only=FALSE, ...) {
     fr <- formula@frame
     if (fixed.only) {
@@ -1125,9 +1092,7 @@ model.frame.merMod <- function(formula, fixed.only=FALSE, ...) {
     fr
 }
 
-##' @importFrom stats model.matrix
-##' @S3method model.matrix merMod
-##' @param noScale logical; if TRUE, returns the non-scaled parameters
+## @param noScale logical; if TRUE, returns the non-scaled parameters
 model.matrix.merMod <-
   function(object, type = c("fixed", "random", "randomListRaw"), 
            noScale = NULL,...) {
@@ -1148,11 +1113,11 @@ model.matrix.merMod <-
            "randomListRaw" = mmList(object))
   }
 
-##' Dummy variables (experimental)
-##'
-##' Largely a wrapper for \code{model.matrix} that
-##' accepts a factor, \code{f}, and returns a dummy
-##' matrix with \code{nlevels(f)-1} columns.
+## Dummy variables (experimental)
+##
+## Largely a wrapper for \code{model.matrix} that
+## accepts a factor, \code{f}, and returns a dummy
+## matrix with \code{nlevels(f)-1} columns.
 dummy <- function(f, levelsToKeep){
   f <- as.factor(f)
   if (all(is.na(f))) return(rep(NA_real_, length(f)))
@@ -1179,8 +1144,6 @@ dummy <- function(f, levelsToKeep){
 }
 
 
-##' @importFrom stats nobs
-##' @S3method nobs merMod
 nobs.merMod <- function(object, ...) nrow(object@frame)
 
 ## used in  summary.merMod():
@@ -1192,73 +1155,70 @@ ngrps.merMod <- function(object, ...) vapply(object@flist, nlevels, 1)
 
 ngrps.factor <- function(object, ...) nlevels(object)
 
-##' @importFrom nlme ranef
-##' @export ranef
 NULL
 
-##' Extract the modes of the random effects
-##'
-##' A generic function to extract the conditional modes of the random effects
-##' from a fitted model object.  For linear mixed models the conditional modes
-##' of the random effects are also the conditional means.
-##'
-##' If grouping factor i has k levels and j random effects per level the ith
-##' component of the list returned by \code{ranef} is a data frame with k rows
-##' and j columns.  If \code{condVar} is \code{TRUE} the \code{"postVar"}
-##' attribute is an array of dimension j by j by k.  The kth face of this array
-##' is a positive definite symmetric j by j matrix.  If there is only one
-##' grouping factor in the model the variance-covariance matrix for the entire
-##' random effects vector, conditional on the estimates of the model parameters
-##' and on the data will be block diagonal and this j by j matrix is the kth
-##' diagonal block.  With multiple grouping factors the faces of the
-##' \code{"postVar"} attributes are still the diagonal blocks of this
-##' conditional variance-covariance matrix but the matrix itself is no longer
-##' block diagonal.
-##' @name ranef
-##' @aliases ranef ranef.merMod
-##' @param object an object of a class of fitted models with random effects,
-##' typically an \code{"\linkS4class{merMod}"} object.
-##' @param condVar an optional logical argument indicating if the conditional
-##' variance-covariance matrices of the random effects should be added as an attribute.
-##' @param postVar a (deprecated) synonym for \code{condVar}
-##' @param drop an optional logical argument indicating components of the return
-##' value that would be data frames with a single column, usually a column
-##' called \sQuote{\code{(Intercept)}}, should be returned as named vectors.
-##' @param whichel an optional character vector of names of grouping factors for
-##' which the random effects should be returned.  Defaults to all the grouping
-##' factors.
-##' @param \dots some methods for this generic function require additional
-##' arguments.
-##' @return A list of data frames, one for each grouping factor for the random
-##' effects.  The number of rows in the data frame is the number of levels of
-##' the grouping factor.  The number of columns is the dimension of the random
-##' effect associated with each level of the factor.
-##'
-##' If \code{condVar} is \code{TRUE} each of the data frames has an attribute
-##' called \code{"postVar"} which is a three-dimensional array with symmetric
-##' faces.
-##'
-##' When \code{drop} is \code{TRUE} any components that would be data frames of
-##' a single column are converted to named numeric vectors.
-##' @note To produce a \dQuote{caterpillar plot} of the random effects apply
-##' \code{\link[lattice:xyplot]{dotplot}} to the result of a call to
-##' \code{ranef} with \code{condVar = TRUE}.
-##' @examples
-##' fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
-##' fm2 <- lmer(Reaction ~ Days + (1|Subject) + (0+Days|Subject), sleepstudy)
-##' fm3 <- lmer(diameter ~ (1|plate) + (1|sample), Penicillin)
-##' ranef(fm1)
-##' str(rr1 <- ranef(fm1, condVar = TRUE))
-##' dotplot(rr1)  ## default
-##' ## specify free scales in order to make Day effects more visible
-##' dotplot(rr1,scales = list(x = list(relation = 'free')))[["Subject"]]
-##' str(ranef(fm2, condVar = TRUE))
-##' op <- options(digits = 4)
-##' ranef(fm3, drop = TRUE)
-##' options(op)
-##' @keywords models methods
-##' @method ranef merMod
-##' @export
+## Extract the modes of the random effects
+##
+## A generic function to extract the conditional modes of the random effects
+## from a fitted model object.  For linear mixed models the conditional modes
+## of the random effects are also the conditional means.
+##
+## If grouping factor i has k levels and j random effects per level the ith
+## component of the list returned by \code{ranef} is a data frame with k rows
+## and j columns.  If \code{condVar} is \code{TRUE} the \code{"postVar"}
+## attribute is an array of dimension j by j by k.  The kth face of this array
+## is a positive definite symmetric j by j matrix.  If there is only one
+## grouping factor in the model the variance-covariance matrix for the entire
+## random effects vector, conditional on the estimates of the model parameters
+## and on the data will be block diagonal and this j by j matrix is the kth
+## diagonal block.  With multiple grouping factors the faces of the
+## \code{"postVar"} attributes are still the diagonal blocks of this
+## conditional variance-covariance matrix but the matrix itself is no longer
+## block diagonal.
+## @name ranef
+## @aliases ranef ranef.merMod
+## @param object an object of a class of fitted models with random effects,
+## typically an \code{"\linkS4class{merMod}"} object.
+## @param condVar an optional logical argument indicating if the conditional
+## variance-covariance matrices of the random effects should be added as an attribute.
+## @param postVar a (deprecated) synonym for \code{condVar}
+## @param drop an optional logical argument indicating components of the return
+## value that would be data frames with a single column, usually a column
+## called \sQuote{\code{(Intercept)}}, should be returned as named vectors.
+## @param whichel an optional character vector of names of grouping factors for
+## which the random effects should be returned.  Defaults to all the grouping
+## factors.
+## @param \dots some methods for this generic function require additional
+## arguments.
+## @return A list of data frames, one for each grouping factor for the random
+## effects.  The number of rows in the data frame is the number of levels of
+## the grouping factor.  The number of columns is the dimension of the random
+## effect associated with each level of the factor.
+##
+## If \code{condVar} is \code{TRUE} each of the data frames has an attribute
+## called \code{"postVar"} which is a three-dimensional array with symmetric
+## faces.
+##
+## When \code{drop} is \code{TRUE} any components that would be data frames of
+## a single column are converted to named numeric vectors.
+## @note To produce a \dQuote{caterpillar plot} of the random effects apply
+## \code{\link[lattice:xyplot]{dotplot}} to the result of a call to
+## \code{ranef} with \code{condVar = TRUE}.
+## @examples
+## fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
+## fm2 <- lmer(Reaction ~ Days + (1|Subject) + (0+Days|Subject), sleepstudy)
+## fm3 <- lmer(diameter ~ (1|plate) + (1|sample), Penicillin)
+## ranef(fm1)
+## str(rr1 <- ranef(fm1, condVar = TRUE))
+## dotplot(rr1)  ## default
+## ## specify free scales in order to make Day effects more visible
+## dotplot(rr1,scales = list(x = list(relation = 'free')))[["Subject"]]
+## str(ranef(fm2, condVar = TRUE))
+## op <- options(digits = 4)
+## ranef(fm3, drop = TRUE)
+## options(op)
+## @keywords models methods
+## @method ranef merMod
 ranef.merMod <- function(object, condVar = TRUE, drop = FALSE,
                          whichel = names(ans), postVar = FALSE, ...)
 {
@@ -1669,11 +1629,11 @@ refitML.merMod <- function (x, optimizer="bobyqa", ...) {
     ans
 }
 
-##' residuals of merMod objects                 --> ../man/residuals.merMod.Rd
-##' @param object a fitted [g]lmer (\code{merMod}) object
-##' @param type type of residuals
-##' @param scaled scale residuals by residual standard deviation (=scale parameter)?
-##' @param \dots additional arguments (ignored: for method compatibility)
+## residuals of merMod objects                 --> ../man/residuals.merMod.Rd
+## @param object a fitted [g]lmer (\code{merMod}) object
+## @param type type of residuals
+## @param scaled scale residuals by residual standard deviation (=scale parameter)?
+## @param \dots additional arguments (ignored: for method compatibility)
 residuals.merMod <- function(object,
                              type = if(isGLMM(object)) "deviance" else "response",
                              scaled = FALSE, ...) {
@@ -1688,9 +1648,8 @@ residuals.merMod <- function(object,
         r
 }
 
-##' @rdname residuals.merMod
-##' @S3method residuals lmResp
-##' @method residuals lmResp
+## @rdname residuals.merMod
+## @method residuals lmResp
 residuals.lmResp <- function(object,
                              type = c("working", "response", "deviance",
                                       "pearson", "partial"), ...) {
@@ -1707,9 +1666,8 @@ residuals.lmResp <- function(object,
            )
 }
 
-##' @rdname residuals.merMod
-##' @S3method residuals glmResp
-##' @method residuals glmResp
+## @rdname residuals.merMod
+## @method residuals glmResp
 residuals.glmResp <- function(object, type = c("deviance", "pearson",
                                       "working", "response", "partial"),
                               ...) {
@@ -1800,9 +1758,9 @@ famlink <- function(object, resp = object@resp) {
     else list(family = NULL, link = NULL)
 }
 
-##' @title print method title
-##' @param mtit the result of methTitle(obj)
-##' @param class typically class(obj)
+## @title print method title
+## @param mtit the result of methTitle(obj)
+## @param class typically class(obj)
 .prt.methTit <- function(mtit, class) {
     if(nchar(mtit) + 5 + nchar(class) > (w <- getOption("width"))) {
         ## wrap around
@@ -1845,12 +1803,12 @@ famlink <- function(object, resp = object@resp) {
         cat.f(" Subset:", deparse(cc))
 }
 
-##' @title Extract Log Likelihood, AIC, and related statics from a Fitted LMM
-##' @param object a LMM model fit
-##' @param devianceFUN the function to be used for computing the deviance; should not be changed for  \pkg{lme4} created objects.
-##' @param chkREML optional logical indicating \code{object} maybe a REML fit.
-##' @param devcomp
-##' @return a list with components \item{logLik} and \code{AICtab} where the first is \code{\link{logLik(object)}} and \code{AICtab} is a "table" of AIC, BIC, logLik, deviance, df.residual() values.
+## @title Extract Log Likelihood, AIC, and related statics from a Fitted LMM
+## @param object a LMM model fit
+## @param devianceFUN the function to be used for computing the deviance; should not be changed for  \pkg{lme4} created objects.
+## @param chkREML optional logical indicating \code{object} maybe a REML fit.
+## @param devcomp
+## @return a list with components \item{logLik} and \code{AICtab} where the first is \code{\link{logLik(object)}} and \code{AICtab} is a "table" of AIC, BIC, logLik, deviance, df.residual() values.
 llikAIC <- function(object, devianceFUN = devCrit, chkREML = TRUE, devcomp = object@devcomp) {
     llik <- logLik(object)   # returns NA for a REML fit - maybe change?
     AICstats <- {
@@ -1930,7 +1888,6 @@ llikAIC <- function(object, devianceFUN = devCrit, chkREML = TRUE, devcomp = obj
 
 ## This is modeled a bit after  print.summary.lm :
 ## Prints *both*  'mer' and 'merenv' - as it uses summary(x) mainly
-##' @S3method print summary.merMod
 print.summary.merMod <- function(x, digits = max(3, getOption("digits") - 3),
                                  correlation = NULL, symbolic.cor = FALSE,
                                  signif.stars = getOption("show.signif.stars"),
@@ -2021,7 +1978,6 @@ print.summary.merMod <- function(x, digits = max(3, getOption("digits") - 3),
 }## print.summary.merMod
 
 
-##' @S3method print merMod
 print.merMod <- function(x, digits = max(3, getOption("digits") - 3),
                          correlation = NULL, symbolic.cor = FALSE,
                          signif.stars = getOption("show.signif.stars"),
@@ -2054,23 +2010,21 @@ print.merMod <- function(x, digits = max(3, getOption("digits") - 3),
     invisible(x)
 }
 
-##' @exportMethod show
 setMethod("show",  "merMod", function(object) print.merMod(object))
 
-##' Return the deviance component list
+## Return the deviance component list
 devcomp <- function(x) {
     .Deprecated("getME(., \"devcomp\")")
     stopifnot(is(x, "merMod"))
     x@devcomp
 }
 
-##' @exportMethod getL
 setMethod("getL", "merMod", function(x) {
     .Deprecated("getME(., \"L\")")
     getME(x, "L")
 })
 
-##' used by tnames
+## used by tnames
 mkPfun <- function(diag.only = FALSE, old = TRUE, prefix = NULL){
     local({
         function(g,e) {
@@ -2094,7 +2048,7 @@ mkPfun <- function(diag.only = FALSE, old = TRUE, prefix = NULL){
 getME <- function(object, name, ...) UseMethod("getME")
 
 
-##' Extract or Get Generalized Components from a Fitted Mixed Effects Model
+## Extract or Get Generalized Components from a Fitted Mixed Effects Model
 getME.merMod <- function(object,
                   name = c("X", "Z","Zt", "Ztlist", "mmList",
                   "y", "mu", "u", "b",
@@ -2249,8 +2203,6 @@ getME.merMod <- function(object,
                         name, class(object))))
 }## {getME}
 
-##' @importMethodsFrom Matrix t %*% crossprod diag tcrossprod
-##' @importClassesFrom Matrix dgCMatrix dpoMatrix corMatrix
 NULL
 
 ## Extract the conditional variance-covariance matrix of the fixed-effects
@@ -2371,8 +2323,6 @@ vcov_full <- function(object, s = sigma(object)) {
     return(Cmat)
 }
 
-##' @importFrom stats vcov
-##' @S3method vcov summary.merMod
 vcov.summary.merMod <- function(object, ...) {
     if(is.null(object$vcov)) stop("logic error in summary of merMod object")
     object$vcov
@@ -2391,7 +2341,6 @@ unscaledVar <- function(object, ...) {
 }
 
 
-##' @S3method summary merMod
 summary.merMod <- function(object,
                            correlation = (p <= getOption("lme4.summary.cor.max")),
                            use.hessian = NULL,
@@ -2468,7 +2417,6 @@ summary.merMod <- function(object,
 }
 
 ## TODO: refactor? Why the hell do we need a summary method for summary.merMod?
-##' @S3method summary summary.merMod
 summary.summary.merMod <- function(object, varcov = TRUE, ...) {
     if(varcov && is.null(object$vcov))
         object$vcov <- vcov.merMod(object, correlation = TRUE, sigm = object$sigma)
@@ -2476,8 +2424,6 @@ summary.summary.merMod <- function(object, varcov = TRUE, ...) {
 }
 
 
-##' @importFrom stats weights
-##' @S3method weights merMod
 weights.merMod <- function(object, type = c("prior","working"), ...) {
     type <- match.arg(type)
     res <- if (type == "prior") object@resp$weights else object@pp$Xwts^2
@@ -2547,8 +2493,8 @@ dim.merMod <- function(x) {
 }
 
 ## Internal utility, only used in optwrap() :
-##' @title Get the optimizer function and check it minimally
-##' @param optimizer character string ( = function name) *or* function
+## @title Get the optimizer function and check it minimally
+## @param optimizer character string ( = function name) *or* function
 getOptfun <- function(optimizer) {
     if (((is.character(optimizer) && optimizer == "optimx") ||
          deparse(substitute(optimizer)) == "optimx")) {

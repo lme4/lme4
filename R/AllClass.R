@@ -1,10 +1,9 @@
 ### Class definitions for the package
 
-##' Class "lmList4" of 'lm' Objects on Common Model
-##'  --> ../man/lmList4-class.Rd
-##'      ~~~~~~~~~~~~~~~~~~~~~~~
-##' @keywords classes
-##' @export
+## Class "lmList4" of 'lm' Objects on Common Model
+##  --> ../man/lmList4-class.Rd
+##      ~~~~~~~~~~~~~~~~~~~~~~~
+## @keywords classes
 setClass("lmList4",
          representation(call = "call", pool = "logical",
                         groups = "ordered", # or "factor"?  nlme does use ordered()
@@ -364,7 +363,6 @@ lmerResp <-
 
 setOldClass("family")
 
-##' @export
 glmResp <-
     setRefClass("glmResp", contains = "lmResp",
                 fields = list(eta = "numeric", family = "family", n = "numeric"),
@@ -468,7 +466,6 @@ glmResp <-
 glmResp$lock("family", "n", "eta")
 
 
-##' @export
 nlsResp <-
     setRefClass("nlsResp", contains = "lmResp",
                 fields= list(gam   = "numeric",
@@ -513,21 +510,20 @@ nlsResp <-
 nlsResp$lock("nlmod", "nlenv", "pnames")
 
 
-##' Generator object for the \code{\linkS4class{glmFamily}} class
-##'
-##' The generator object for the \code{\linkS4class{glmFamily}} reference class.
-##' Such an object is primarily used through its \code{new} method.
-##'
-##'
-##' @param ... Named argument (see Note below)
-##' @note Arguments to the \code{new} method must be named arguments.
-##' @section Methods: \describe{
-##'     \item{\code{new(family=family)}}{Create a new
-##'        \code{\linkS4class{glmFamily}} object}
-##' }
-##' @seealso \code{\linkS4class{glmFamily}}
-##' @keywords classes
-##' @export
+## Generator object for the \code{\linkS4class{glmFamily}} class
+##
+## The generator object for the \code{\linkS4class{glmFamily}} reference class.
+## Such an object is primarily used through its \code{new} method.
+##
+##
+## @param ... Named argument (see Note below)
+## @note Arguments to the \code{new} method must be named arguments.
+## @section Methods: \describe{
+##     \item{\code{new(family=family)}}{Create a new
+##        \code{\linkS4class{glmFamily}} object}
+## }
+## @seealso \code{\linkS4class{glmFamily}}
+## @keywords classes
 glmFamily <-                            # used in tests of family definitions
     setRefClass("glmFamily",
                 fields=list(Ptr="externalptr", family="family"),
@@ -584,51 +580,50 @@ glmFamily <-                            # used in tests of family definitions
                          .Call(glmFamily_variance, ptr(), as.numeric(mu))
                      })
                 )
-##' Class \code{"glmFamily"} - a reference class for \code{\link{family}}
-##'
-##' This class is a wrapper class for \code{\link{family}} objects specifying a
-##' distibution family and link function for a generalized linear model
-##' (\code{\link{glm}}).  The reference class contains an external pointer to a
-##' C++ object representing the class.  For common families and link functions
-##' the functions in the family are implemented in compiled code so they can be
-##' accessed from other compiled code and for a speed boost.
-##'
-##'
-##' @name glmFamily-class
-##' @docType class
-##' @note Objects from this reference class correspond to objects in a C++
-##' class.  Methods are invoked on the C++ class using the external pointer in
-##' the \code{Ptr} field.  When saving such an object the external pointer is
-##' converted to a null pointer, which is why there is a redundant field
-##' \code{ptr} that is an active-binding function returning the external
-##' pointer.  If the \code{Ptr} field is a null pointer, the external pointer is
-##' regenerated for the stored \code{family} field.
-##' @section Extends: All reference classes extend and inherit methods from
-##' \code{"\linkS4class{envRefClass}"}.
-##' @seealso \code{\link{family}}, \code{\link{glmFamily}}
-##' @keywords classes
-##' @examples
-##'
-##' str(glmFamily$new(family=poisson()))
+## Class \code{"glmFamily"} - a reference class for \code{\link{family}}
+##
+## This class is a wrapper class for \code{\link{family}} objects specifying a
+## distibution family and link function for a generalized linear model
+## (\code{\link{glm}}).  The reference class contains an external pointer to a
+## C++ object representing the class.  For common families and link functions
+## the functions in the family are implemented in compiled code so they can be
+## accessed from other compiled code and for a speed boost.
+##
+##
+## @name glmFamily-class
+## @docType class
+## @note Objects from this reference class correspond to objects in a C++
+## class.  Methods are invoked on the C++ class using the external pointer in
+## the \code{Ptr} field.  When saving such an object the external pointer is
+## converted to a null pointer, which is why there is a redundant field
+## \code{ptr} that is an active-binding function returning the external
+## pointer.  If the \code{Ptr} field is a null pointer, the external pointer is
+## regenerated for the stored \code{family} field.
+## @section Extends: All reference classes extend and inherit methods from
+## \code{"\linkS4class{envRefClass}"}.
+## @seealso \code{\link{family}}, \code{\link{glmFamily}}
+## @keywords classes
+## @examples
+##
+## str(glmFamily$new(family=poisson()))
 NULL
 
-##' Generator object for the golden search optimizer class.
-##'
-##' The generator objects for the \code{\linkS4class{golden}} class of a scalar
-##' optimizer for a parameter within an interval.  The optimizer uses reverse
-##' communications.
-##'
-##' @param \dots additional, optional arguments.  None are used at present.
-##' @note Arguments to the \code{new} methods must be named arguments.
-##' \code{lower} and \code{upper} are the bounds for the scalar parameter; they must be finite.
-##' @section Methods:
-##' \describe{
-##'      \item{\code{new(lower=lower, upper=upper)}}{Create a new
-##'         \code{\linkS4class{golden}} object.}
-##' }
-##' @seealso \code{\linkS4class{golden}}
-##' @keywords classes
-##' @export
+## Generator object for the golden search optimizer class.
+##
+## The generator objects for the \code{\linkS4class{golden}} class of a scalar
+## optimizer for a parameter within an interval.  The optimizer uses reverse
+## communications.
+##
+## @param \dots additional, optional arguments.  None are used at present.
+## @note Arguments to the \code{new} methods must be named arguments.
+## \code{lower} and \code{upper} are the bounds for the scalar parameter; they must be finite.
+## @section Methods:
+## \describe{
+##      \item{\code{new(lower=lower, upper=upper)}}{Create a new
+##         \code{\linkS4class{golden}} object.}
+## }
+## @seealso \code{\linkS4class{golden}}
+## @keywords classes
 golden <-
     setRefClass("golden", # Reverse communication implementation of Golden Search
                 fields =
@@ -664,21 +659,20 @@ golden <-
                      xpos       = function() .Call(golden_xpos, ptr())
                      )
             )
-##' Class \code{"golden"}
-##'
-##' A reference class for a golden search scalar optimizer using reverse
-##' communication.
-##'
-##'
-##' @name golden-class
-##' @docType class
-##' @section Extends: All reference classes extend and inherit methods from
-##'    \code{"\linkS4class{envRefClass}"}.
-##' @keywords classes
-##' @examples
-##'
-##' showClass("golden")
-##'
+## Class \code{"golden"}
+##
+## A reference class for a golden search scalar optimizer using reverse
+## communication.
+##
+##
+## @name golden-class
+## @docType class
+## @section Extends: All reference classes extend and inherit methods from
+##    \code{"\linkS4class{envRefClass}"}.
+## @keywords classes
+## @examples
+##
+## showClass("golden")
 NULL
 
 ## Generator object for the Nelder-Mead optimizer class  "NelderMead"
@@ -738,37 +732,36 @@ NelderMead <-
             )
 
 
-##' Class "merMod" of Fitted Mixed-Effect Models
-##'
-##' A mixed-effects model is represented as a \code{\linkS4class{merPredD}} object
-##' and a response module of a class that inherits from class
-##' \code{\linkS4class{lmResp}}.  A model with a \code{\linkS4class{lmerResp}}
-##' response has class \code{lmerMod}; a \code{\linkS4class{glmResp}} response
-##' has class \code{glmerMod}; and a \code{\linkS4class{nlsResp}} response has
-##' class \code{nlmerMod}.
-##'
-##' @name merMod-class
-##' @aliases merMod-class lmerMod-class glmerMod-class nlmerMod-class merMod
-##' show,merMod-method
-##' anova.merMod coef.merMod deviance.merMod
-##' fitted.merMod formula.merMod logLik.merMod
-##' model.frame.merMod model.matrix.merMod print.merMod
-##' show.merMod summary.merMod
-##' terms.merMod update.merMod
-##' vcov.merMod print.summary.merMod show.summary.merMod
-##' summary.summary.merMod vcov.summary.merMod
-##' @docType class
-##' @section Objects from the Class: Objects are created by calls to
-##' \code{\link{lmer}}, \code{\link{glmer}} or \code{\link{nlmer}}.
-##' @seealso \code{\link{lmer}}, \code{\link{glmer}}, \code{\link{nlmer}},
-##' \code{\linkS4class{merPredD}}, \code{\linkS4class{lmerResp}},
-##' \code{\linkS4class{glmResp}}, \code{\linkS4class{nlsResp}}
-##' @keywords classes
-##' @examples
-##'
-##' showClass("merMod")
-##' methods(class="merMod")
-##' @export
+## Class "merMod" of Fitted Mixed-Effect Models
+##
+## A mixed-effects model is represented as a \code{\linkS4class{merPredD}} object
+## and a response module of a class that inherits from class
+## \code{\linkS4class{lmResp}}.  A model with a \code{\linkS4class{lmerResp}}
+## response has class \code{lmerMod}; a \code{\linkS4class{glmResp}} response
+## has class \code{glmerMod}; and a \code{\linkS4class{nlsResp}} response has
+## class \code{nlmerMod}.
+##
+## @name merMod-class
+## @aliases merMod-class lmerMod-class glmerMod-class nlmerMod-class merMod
+## show,merMod-method
+## anova.merMod coef.merMod deviance.merMod
+## fitted.merMod formula.merMod logLik.merMod
+## model.frame.merMod model.matrix.merMod print.merMod
+## show.merMod summary.merMod
+## terms.merMod update.merMod
+## vcov.merMod print.summary.merMod show.summary.merMod
+## summary.summary.merMod vcov.summary.merMod
+## @docType class
+## @section Objects from the Class: Objects are created by calls to
+## \code{\link{lmer}}, \code{\link{glmer}} or \code{\link{nlmer}}.
+## @seealso \code{\link{lmer}}, \code{\link{glmer}}, \code{\link{nlmer}},
+## \code{\linkS4class{merPredD}}, \code{\linkS4class{lmerResp}},
+## \code{\linkS4class{glmResp}}, \code{\linkS4class{nlsResp}}
+## @keywords classes
+## @examples
+##
+## showClass("merMod")
+## methods(class="merMod")
 setClass("merMod",
          representation(Gp      = "integer",
                         call    = "call",
@@ -783,32 +776,28 @@ setClass("merMod",
                         pp      = "merPredD",
                         optinfo = "list"))
 
-##' @export
 setClass("lmerMod", representation(resp="lmerResp"), contains="merMod")
 
-##' @export
 setClass("glmerMod", representation(resp="glmResp"), contains="merMod")
 
-##' @export
 setClass("nlmerMod", representation(resp="nlsResp"), contains="merMod")
 
-##' Generator object for the rePos (random-effects positions) class
-##'
-##' The generator object for the \code{\linkS4class{rePos}} class used
-##' to determine the positions and orders of random effects associated
-##' with particular random-effects terms in the model.
-##' @param \dots Argument list (see Note).
-##' @note Arguments to the \code{new} methods must be named arguments.
-##' \code{mer}, an object of class \code{"\linkS4class{merMod}"}, is
-##' the only required/expected argument.
-##' @section Methods:
-##' \describe{
-##'      \item{\code{new(mer=mer)}}{Create a new
-##'         \code{\linkS4class{rePos}} object.}
-##' }
-##' @seealso \code{\linkS4class{rePos}}
-##' @keywords classes
-##' @export
+## Generator object for the rePos (random-effects positions) class
+##
+## The generator object for the \code{\linkS4class{rePos}} class used
+## to determine the positions and orders of random effects associated
+## with particular random-effects terms in the model.
+## @param \dots Argument list (see Note).
+## @note Arguments to the \code{new} methods must be named arguments.
+## \code{mer}, an object of class \code{"\linkS4class{merMod}"}, is
+## the only required/expected argument.
+## @section Methods:
+## \describe{
+##      \item{\code{new(mer=mer)}}{Create a new
+##         \code{\linkS4class{rePos}} object.}
+## }
+## @seealso \code{\linkS4class{rePos}}
+## @keywords classes
 rePos <-
     setRefClass("rePos",
                 fields =
@@ -824,8 +813,7 @@ rePos <-
                 methods =
                 list(
                      initialize = function(mer, ...) {
-                         ##' asgn indicates unique elements of flist
-                         ##'
+                         ## asgn indicates unique elements of flist
                          stopifnot((ntrms <- length(Cnms <- mer@cnms)) > 0L,
                                    (length(Flist <- mer@flist)) > 0L,
                                    length(asgn  <- as.integer(attr(Flist, "assign"))) == ntrms)
@@ -841,20 +829,19 @@ rePos <-
                      }
                      )
             )
-##' Class \code{"rePos"}
-##'
-##' A reference class for determining the positions in the random-effects vector
-##' that correspond to particular random-effects terms in the model formula
-##'
-##' @name rePos-class
-##' @docType class
-##' @section Extends: All reference classes extend and inherit methods from
-##'    \code{"\linkS4class{envRefClass}"}.
-##' @keywords classes
-##' @examples
-##'
-##' showClass("rePos")
-##'
+## Class \code{"rePos"}
+##
+## A reference class for determining the positions in the random-effects vector
+## that correspond to particular random-effects terms in the model formula
+##
+## @name rePos-class
+## @docType class
+## @section Extends: All reference classes extend and inherit methods from
+##    \code{"\linkS4class{envRefClass}"}.
+## @keywords classes
+## @examples
+##
+## showClass("rePos")
 rePos$lock("cnms", "flist", "ncols", "nctot", "nlevs", "terms")
 
 vcRep <-

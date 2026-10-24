@@ -1,5 +1,5 @@
-##' test for no-random-effect specification: TRUE if NA or ~0, other
-##' possibilities are NULL or a non-trivial formula
+## test for no-random-effect specification: TRUE if NA or ~0, other
+## possibilities are NULL or a non-trivial formula
 isRE <- function(re.form) {
     isForm <- inherits(re.form, "formula")
     (is.null(re.form) || isForm || !is.na(re.form)) &&
@@ -41,9 +41,8 @@ my_reOnly <- function(f, response=FALSE, bracket=TRUE, doublevert_split = TRUE, 
     return(form)
 }
   
-##' Random Effects formula only
-##' wrapper for reformulas (next version should handle environment protection properly ...
-##'
+## Random Effects formula only
+## wrapper for reformulas (next version should handle environment protection properly ...
 lme4_reOnly <- function(form, ...) {
   my_reOnly(form, ..., specials = lme4_specials, doublevert_split = (getDoublevertDefault()=="split"))
 }
@@ -71,35 +70,35 @@ get.orig.levs <- function(object, FUN=levels, newdata=NULL, sparse = FALSE, ...)
 }
 
 
-##' Force new parameters into a merMod object
-##' (should this be an S3 method?):   params(object) <- newvalue
-##' @param object
-##' @param params a list of the form specified by \code{start} in
-##' \code{\link{lmer}} or \code{\link{glmer}} (i.e. a list containing
-##' theta and/or beta; maybe eventually further parameters ...
-##' What updating do we have to do in order to make the resulting object
-##' consistent/safe?
-##' TODO: What kind of checking of input do we have to do?  (Abstract from
-##' lmer/glmer code ...)
-##' TODO: make sure this gets updated when the parameter structure changes
-##' from (theta, beta) to alpha=(theta, beta, phi)
-##' @param inplace logical specifying if object should be modified in place; not yet
-##' @param subset logical; needs to be true, if only parts of params are to be reset
-##' @param requireSigma logical; if TRUE, error if \code{object} has an
-##' estimated scale/dispersion parameter and \code{params$sigma} is not
-##' specified, rather than silently retaining \code{object}'s existing
-##' sigma. Used for "de novo" simulation from a formula (where there is no
-##' meaningful existing sigma to fall back on); left \code{FALSE} for
-##' \code{predict()}/\code{simulate()} on an already-fitted object, where
-##' silently keeping the existing sigma is the correct (and relied-upon,
-##' e.g. by \pkg{glmertree}'s internal backfitting) behavior.
-##' @examples
-##' fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
-##' fm1M <- setParams(fm1,list(theta=rep(1,3)))
-##' getME(fm1M,"theta")
-##' getME(fm1,"theta") ## check that original didn't get messed up
-##' ## check that @resp and @pp are the only reference class slots ...
-##' sapply(slotNames(fm1),function(x) class(slot(fm1,x)))
+## Force new parameters into a merMod object
+## (should this be an S3 method?):   params(object) <- newvalue
+## @param object
+## @param params a list of the form specified by \code{start} in
+## \code{\link{lmer}} or \code{\link{glmer}} (i.e. a list containing
+## theta and/or beta; maybe eventually further parameters ...
+## What updating do we have to do in order to make the resulting object
+## consistent/safe?
+## TODO: What kind of checking of input do we have to do?  (Abstract from
+## lmer/glmer code ...)
+## TODO: make sure this gets updated when the parameter structure changes
+## from (theta, beta) to alpha=(theta, beta, phi)
+## @param inplace logical specifying if object should be modified in place; not yet
+## @param subset logical; needs to be true, if only parts of params are to be reset
+## @param requireSigma logical; if TRUE, error if \code{object} has an
+## estimated scale/dispersion parameter and \code{params$sigma} is not
+## specified, rather than silently retaining \code{object}'s existing
+## sigma. Used for "de novo" simulation from a formula (where there is no
+## meaningful existing sigma to fall back on); left \code{FALSE} for
+## \code{predict()}/\code{simulate()} on an already-fitted object, where
+## silently keeping the existing sigma is the correct (and relied-upon,
+## e.g. by \pkg{glmertree}'s internal backfitting) behavior.
+## @examples
+## fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
+## fm1M <- setParams(fm1,list(theta=rep(1,3)))
+## getME(fm1M,"theta")
+## getME(fm1,"theta") ## check that original didn't get messed up
+## ## check that @resp and @pp are the only reference class slots ...
+## sapply(slotNames(fm1),function(x) class(slot(fm1,x)))
 setParams <- function(object, params, inplace=FALSE, subset=FALSE, requireSigma=FALSE) {
     pNames <- c("beta", "theta", "par")
     if (object@devcomp$dims[["useSc"]]) {
@@ -183,14 +182,14 @@ setParams <- function(object, params, inplace=FALSE, subset=FALSE, requireSigma=
 }
 
 
-##' Make new random effect terms from specified object and new data,
-##' possibly omitting some random effect terms
-##' @param object fitted model object
-##' @param newdata (optional) data frame containing new data
-##' @param re.form formula specifying random effect terms to include (NULL=all, ~0)
-##' @param na.action
-##'
-##' @note Hidden; _only_ used (twice) in this file
+## Make new random effect terms from specified object and new data,
+## possibly omitting some random effect terms
+## @param object fitted model object
+## @param newdata (optional) data frame containing new data
+## @param re.form formula specifying random effect terms to include (NULL=all, ~0)
+## @param na.action
+##
+## @note Hidden; _only_ used (twice) in this file
 mkNewReTrms <- function(object, newdata,
                         re.form=NULL,
                         na.action=na.pass,
@@ -344,8 +343,8 @@ mkNewReTrms <- function(object, newdata,
     list(Zt=Zt, b=re_new, Lambdat = reTrms$Lambdat, flist = reTrms$flist)
 }
 
-##' @param x a random effect (i.e., data frame with rows equal to levels, columns equal to terms
-##' @param n vector of new levels
+## @param x a random effect (i.e., data frame with rows equal to levels, columns equal to terms
+## @param n vector of new levels
 levelfun <- function(x, nl.n, allow.new.levels=FALSE) {
     ## 1. find and deal with new levels
 
@@ -377,38 +376,36 @@ levelfun <- function(x, nl.n, allow.new.levels=FALSE) {
     return(x)
 }
 
-##'
-##' \code{\link{predict}} method for \code{\linkS4class{merMod}} objects
-##'
-##' @title Predictions from a model at new data values
-##' @param object a fitted model object
-##' @param newdata data frame for which to evaluate predictions
-##' @param newparams new parameters to use in evaluating predictions
-##' @param re.form formula for random effects to condition on.  If \code{NULL},
-##' include all random effects; if \code{NA} or \code{~0},
-##' include no random effects
-##' @param terms a \code{\link{terms}} object - not used at present
-##' @param type character string - either \code{"link"}, the default,
-##'    or \code{"response"} indicating the type of prediction object returned
-##' @param allow.new.levels (logical) if FALSE (default), then any new levels
-##'    (or NA values) detected in \code{newdata} will trigger an error; if TRUE, then
-##'    the prediction will use the unconditional (population-level)
-##'    values for data with previously unobserved levels (or \code{NA}s)
-##' @param na.action function determining what should be done with missing values for fixed effects in \code{newdata}. The default is to predict \code{NA}: see \code{\link{na.pass}}.
-##' @param se.fit A logical value indicating whether the standard errors should be included or not. Default is FALSE.
-##' @param ... optional additional parameters.  None are used at present.
-##' @return a numeric vector of predicted values, unless \code{se.fit=TRUE} (in which case a list with elements \code{fit} (predicted values) and \code{se.fit} is returned)
-##' @note There is no option for computing standard errors of predictions because it is difficult to define an efficient method that incorporates uncertainty in the variance parameters; we recommend \code{\link{bootMer}} for this task.
-##' @examples
-##' (gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 |herd), cbpp, binomial))
-##' str(p0 <- predict(gm1))            # fitted values
-##' str(p1 <- predict(gm1,re.form=NA))  # fitted values, unconditional (level-0)
-##' newdata <- with(cbpp, expand.grid(period=unique(period), herd=unique(herd)))
-##' str(p2 <- predict(gm1,newdata))    # new data, all RE
-##' str(p3 <- predict(gm1,newdata,re.form=NA)) # new data, level-0
-##' str(p4 <- predict(gm1,newdata,re.form=~(1|herd))) # explicitly specify RE
-##' @method predict merMod
-##' @export
+## \code{\link{predict}} method for \code{\linkS4class{merMod}} objects
+##
+## @title Predictions from a model at new data values
+## @param object a fitted model object
+## @param newdata data frame for which to evaluate predictions
+## @param newparams new parameters to use in evaluating predictions
+## @param re.form formula for random effects to condition on.  If \code{NULL},
+## include all random effects; if \code{NA} or \code{~0},
+## include no random effects
+## @param terms a \code{\link{terms}} object - not used at present
+## @param type character string - either \code{"link"}, the default,
+##    or \code{"response"} indicating the type of prediction object returned
+## @param allow.new.levels (logical) if FALSE (default), then any new levels
+##    (or NA values) detected in \code{newdata} will trigger an error; if TRUE, then
+##    the prediction will use the unconditional (population-level)
+##    values for data with previously unobserved levels (or \code{NA}s)
+## @param na.action function determining what should be done with missing values for fixed effects in \code{newdata}. The default is to predict \code{NA}: see \code{\link{na.pass}}.
+## @param se.fit A logical value indicating whether the standard errors should be included or not. Default is FALSE.
+## @param ... optional additional parameters.  None are used at present.
+## @return a numeric vector of predicted values, unless \code{se.fit=TRUE} (in which case a list with elements \code{fit} (predicted values) and \code{se.fit} is returned)
+## @note There is no option for computing standard errors of predictions because it is difficult to define an efficient method that incorporates uncertainty in the variance parameters; we recommend \code{\link{bootMer}} for this task.
+## @examples
+## (gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 |herd), cbpp, binomial))
+## str(p0 <- predict(gm1))            # fitted values
+## str(p1 <- predict(gm1,re.form=NA))  # fitted values, unconditional (level-0)
+## newdata <- with(cbpp, expand.grid(period=unique(period), herd=unique(herd)))
+## str(p2 <- predict(gm1,newdata))    # new data, all RE
+## str(p3 <- predict(gm1,newdata,re.form=NA)) # new data, level-0
+## str(p4 <- predict(gm1,newdata,re.form=~(1|herd))) # explicitly specify RE
+## @method predict merMod
 predict.merMod <- function(object, newdata=NULL, newparams=NULL,
                            re.form=NULL,
                            random.only=FALSE,
@@ -868,7 +865,7 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
     ## construct RE formula ONLY: leave out fixed terms,
     ##   which might have loose terms like offsets in them ...
 
-    ##' combine unary or binary operator + arguments (sugar for 'substitute')
+    ## combine unary or binary operator + arguments (sugar for 'substitute')
     makeOp <- function(x,y,op=NULL) {
         if (is.null(op)) {  ## unary
             substitute(OP(X),list(X=x,OP=y))
@@ -1079,8 +1076,8 @@ poisson_simfun <- function(object, nsim, ftd=fitted(object),
     }
 
 
-##' FIXME: need a gamma.shape.merMod method in order for this to work.
-##'        (see initial shot at gamma.shape.merMod below)
+## FIXME: need a gamma.shape.merMod method in order for this to work.
+##        (see initial shot at gamma.shape.merMod below)
 Gamma_simfun <- function(object, nsim, ftd=fitted(object),
                          wts=weights(object)) {
     if (any(wts != 1)) message("using weights to scale shape parameter")

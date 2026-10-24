@@ -1,5 +1,4 @@
 ## utilities, these *exported*:
-##' @export getL
 setGeneric("getL", function(x) standardGeneric("getL"))
 
 fixed.effects <- function(object, ...) {
@@ -41,17 +40,16 @@ isGLMM <- function(x, ...) UseMethod("isGLMM")
 isNLMM <- function(x, ...) UseMethod("isNLMM")
 
 
-##' Refit a model using the maximum likelihood criterion
-##'
-##' This function is primarily used to get a maximum likelihood fit of
-##' a linear mixed-effects model for an \code{\link{anova}} comparison.
-##'
-##' @title Refit a model by maximum likelihood criterion
-##' @param x a fitted model, usually of class \code{"\linkS4class{lmerMod}"},
-##'     to be refit according to the maximum likelihood criterion
-##' @param ... optional additional parameters.  None are used at present.
-##' @return an object like \code{x} but fit by maximum likelihood
-##' @export
+## Refit a model using the maximum likelihood criterion
+##
+## This function is primarily used to get a maximum likelihood fit of
+## a linear mixed-effects model for an \code{\link{anova}} comparison.
+##
+## @title Refit a model by maximum likelihood criterion
+## @param x a fitted model, usually of class \code{"\linkS4class{lmerMod}"},
+##     to be refit according to the maximum likelihood criterion
+## @param ... optional additional parameters.  None are used at present.
+## @return an object like \code{x} but fit by maximum likelihood
 refitML <- function(x, ...) UseMethod("refitML")
 
 refit <- function(object, newresp, ...) UseMethod("refit")

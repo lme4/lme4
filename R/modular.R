@@ -17,13 +17,13 @@ RHSForm <- function(form,as.form=FALSE) {
     formula
 }
 
-##' Original formula, minus response ( = '~ <RHS>') :
+## Original formula, minus response ( = '~ <RHS>') :
 noLHSform <- function(formula) {
     if (length(formula)==2) formula else formula[-2]
 }
 
-##' @param cstr name of control being set
-##' @param val value of control being set
+## @param cstr name of control being set
+## @param val value of control being set
 checkCtrlLevels <- function(cstr, val, smallOK=FALSE) {
     bvals <- c("message","warning","stop","ignore")
     if (smallOK) bvals <- outer(bvals, c("","Small"), paste0)
@@ -51,15 +51,15 @@ wmsg <- function(n, cmp.val, allow.n, msg1="", msg2="", msg3="") {
     list(unident=unident, wstr=wstr)
 }
 
-##' For each r.e. term, test if Z has more columns than rows to detect
-##' unidentifiability:
-##' @title
-##' @param Ztlist list of Zt matrices - one for each r.e. term
-##' @param n no. observations
-##' @param ctrl
-##' @param allow.n allow as many random-effects as there are observations
-##' for each term?
-##' @return possibly empty character string with warning messages
+## For each r.e. term, test if Z has more columns than rows to detect
+## unidentifiability:
+## @title
+## @param Ztlist list of Zt matrices - one for each r.e. term
+## @param n no. observations
+## @param ctrl
+## @param allow.n allow as many random-effects as there are observations
+## for each term?
+## @return possibly empty character string with warning messages
 checkZdims <- function(Ztlist, n, ctrl, allow.n=FALSE) {
     stopifnot(is.list(Ztlist), is.numeric(n))
     cstr <- "check.nobs.vs.nRE"
@@ -84,7 +84,6 @@ checkZdims <- function(Ztlist, n, ctrl, allow.n=FALSE) {
     } else character()
 }
 
-##' @importFrom Matrix rankMatrix
 checkZrank <- function(Zt, n, ctrl, nonSmall = 1e6, allow.n=FALSE)
 {
     stopifnot(is.list(ctrl), is.numeric(n), is.numeric(nonSmall))
@@ -158,12 +157,12 @@ checkScaleX <- function(X,  kind="warning", tol=1e3) {
 }
 
 
-##' @title Check that grouping factors have at least 2 and </<= nobs(.) levels
-##' @param flist mkReTrms(.)$flist
-##' @param n
-##' @param ctrl
-##' @param allow.n
-##' @return
+## @title Check that grouping factors have at least 2 and </<= nobs(.) levels
+## @param flist mkReTrms(.)$flist
+## @param n
+## @param ctrl
+## @param allow.n
+## @return
 checkNlevels <- function(flist, n, ctrl, allow.n=FALSE)
 {
     stopifnot(is.list(ctrl), is.numeric(n))
@@ -211,27 +210,26 @@ checkNlevels <- function(flist, n, ctrl, allow.n=FALSE)
     c(wstr, wst2, wst3) ## possibly == character(0)
 }
 
-##' Coefficients (columns) are dropped from a design matrix to
-##' ensure that it has full rank.
-##'
-##'  Redundant columns of the design matrix are identified with the
-##'  LINPACK implementation of the \code{\link{qr}} decomposition and
-##'  removed. The returned design matrix will have \code{qr(X)$rank}
-##'  columns.
-##'
-##' (Note: I have lifted this function from the ordinal (soon Rufus)
-##' package and modified it slightly./rhbc)
-##'
-##' @title Ensure full rank design matrix
-##' @param X a design matrix, e.g., the result of
-##' \code{\link{model.matrix}} possibly of less than full column rank,
-##' i.e., with redundant parameters.
-##' @param silent should a message not be issued if X is column rank
-##' deficient?
-##' @return The design matrix \code{X} without redundant columns.
-##' @seealso \code{\link{qr}} and \code{\link{lm}}
-##' @importFrom Matrix rankMatrix
-##' @author Rune Haubo Bojesen Christensen (drop.coef()); Martin Maechler
+## Coefficients (columns) are dropped from a design matrix to
+## ensure that it has full rank.
+##
+##  Redundant columns of the design matrix are identified with the
+##  LINPACK implementation of the \code{\link{qr}} decomposition and
+##  removed. The returned design matrix will have \code{qr(X)$rank}
+##  columns.
+##
+## (Note: I have lifted this function from the ordinal (soon Rufus)
+## package and modified it slightly./rhbc)
+##
+## @title Ensure full rank design matrix
+## @param X a design matrix, e.g., the result of
+## \code{\link{model.matrix}} possibly of less than full column rank,
+## i.e., with redundant parameters.
+## @param silent should a message not be issued if X is column rank
+## deficient?
+## @return The design matrix \code{X} without redundant columns.
+## @seealso \code{\link{qr}} and \code{\link{lm}}
+## @author Rune Haubo Bojesen Christensen (drop.coef()); Martin Maechler
 chkRank.drop.cols <- function(X, kind, tol = 1e-7, method = "qr") {
     ## Test and match arguments:
     stopifnot(is.matrix(X)) # i.e., *not* sparse
@@ -306,7 +304,7 @@ checkResponse <- function(y, ctrl) {
   } else character()
 }
 
-##' Extract all warning msgs from a merMod object
+## Extract all warning msgs from a merMod object
 .merMod.msgs <- function(x) {
     ## currently only those found with 'X' :
     aX <- attributes(x@pp$X)
@@ -323,29 +321,29 @@ checkResponse <- function(y, ctrl) {
 ##     res <- napredict(x)
 ## }
 
-##' @rdname modular
-##' Internal workhorse shared by lFormula() and glFormula().
-##' Handles formula checking, model-frame construction, random-effects setup,
-##' and fixed-effects matrix building -- all of which is identical between the
-##' two public functions.
-##'
-##' @param formula   raw model formula from the caller (processed internally
-##'                  via \code{checkFormulaData} and \code{as.formula})
-##' @param mc        raw \code{match.call()} result from the caller,
-##'                  used to construct the \code{stats::model.frame} call
-##' @param data      the \code{data} argument from the caller
-##' @param contrasts optional contrasts argument
-##' @param control   the checkControl sub-list
-##' @param isGLMM    logical: if \code{TRUE}, include \code{mustart} and
-##'                  \code{etastart} in the model.frame call (glmer-specific)
-##' @param allow.n   passed to checkNlevels, checkZdims, checkZrank;
-##'                  FALSE for lmer (default), TRUE for glmer
-##' @param check_zero_rows  if TRUE, stop on empty model frame (lmer mode)
-##' @param check_na_Zt      if TRUE, stop on NA in Z matrix (lmer mode)
-##' @param set_varnames_fixed  if TRUE, set varnames.fixed attribute (lmer mode)
-##' @param parent_env  parent.frame() captured by the calling function
-##' @return list(fr, X, reTrms, formula, wmsgs) -- callers (lFormula/glFormula)
-##'   append their own specific elements (REML or family) to this result
+## @rdname modular
+## Internal workhorse shared by lFormula() and glFormula().
+## Handles formula checking, model-frame construction, random-effects setup,
+## and fixed-effects matrix building -- all of which is identical between the
+## two public functions.
+##
+## @param formula   raw model formula from the caller (processed internally
+##                  via \code{checkFormulaData} and \code{as.formula})
+## @param mc        raw \code{match.call()} result from the caller,
+##                  used to construct the \code{stats::model.frame} call
+## @param data      the \code{data} argument from the caller
+## @param contrasts optional contrasts argument
+## @param control   the checkControl sub-list
+## @param isGLMM    logical: if \code{TRUE}, include \code{mustart} and
+##                  \code{etastart} in the model.frame call (glmer-specific)
+## @param allow.n   passed to checkNlevels, checkZdims, checkZrank;
+##                  FALSE for lmer (default), TRUE for glmer
+## @param check_zero_rows  if TRUE, stop on empty model frame (lmer mode)
+## @param check_na_Zt      if TRUE, stop on NA in Z matrix (lmer mode)
+## @param set_varnames_fixed  if TRUE, set varnames.fixed attribute (lmer mode)
+## @param parent_env  parent.frame() captured by the calling function
+## @return list(fr, X, reTrms, formula, wmsgs) -- callers (lFormula/glFormula)
+##   append their own specific elements (REML or family) to this result
 mkFormula <- function(formula, mc, data, contrasts, control,
                       isGLMM = FALSE,
                       allow.n = FALSE,
@@ -464,16 +462,15 @@ mkFormula <- function(formula, mc, data, contrasts, control,
          wmsgs = c(Nlev = wmsgNlev, Zdims = wmsgZdims, Zrank = wmsgZrank))
 }
 
-##' @rdname modular
-##' @param control a list giving (for \code{[g]lFormula}) all options (see \code{\link{lmerControl}} for running the model;
-##' (for \code{mkLmerDevfun,mkGlmerDevfun}) options for inner optimization step;
-##' (for \code{optimizeLmer} and \code{optimize[Glmer}) control parameters for nonlinear optimizer (typically inherited from the \dots argument to \code{lmerControl})
-##' @return \bold{lFormula, glFormula}: A list containing components,
-##' \item{fr}{model frame}
-##' \item{X}{fixed-effect design matrix}
-##' \item{reTrms}{list containing information on random effects structure: result of \code{\link{mkReTrms}}}
-##' \item{REML}{(lFormula only): logical flag: use restricted maximum likelihood? (Copy of argument.)}
-##' @export
+## @rdname modular
+## @param control a list giving (for \code{[g]lFormula}) all options (see \code{\link{lmerControl}} for running the model;
+## (for \code{mkLmerDevfun,mkGlmerDevfun}) options for inner optimization step;
+## (for \code{optimizeLmer} and \code{optimize[Glmer}) control parameters for nonlinear optimizer (typically inherited from the \dots argument to \code{lmerControl})
+## @return \bold{lFormula, glFormula}: A list containing components,
+## \item{fr}{model frame}
+## \item{X}{fixed-effect design matrix}
+## \item{reTrms}{list containing information on random effects structure: result of \code{\link{mkReTrms}}}
+## \item{REML}{(lFormula only): logical flag: use restricted maximum likelihood? (Copy of argument.)}
 lFormula <- function(formula, data=NULL, REML = TRUE,
                      subset, weights, na.action, offset, contrasts = NULL,
                      control=lmerControl(), ...)
@@ -583,27 +580,26 @@ updateStart <- function(start, par) {
               domain = NA)
 }
 
-##' @rdname modular
-##' @param fr A model frame containing the variables needed to create an
-##'   \code{\link{lmerResp}} or \code{\link{glmResp}} instance
-##' @param X fixed-effects design matrix
-##' @param reTrms information on random effects structure (see \code{\link{mkReTrms}})
-##' @param REML (logical) fit restricted maximum likelihood model?
-##' @param start starting values
-##' @param verbose print output?
-##' @return \bold{mkLmerDevfun, mkGlmerDevfun}: A function to calculate deviance
-##' (or restricted deviance) as a function of the theta (random-effect) parameters
-##' (for GlmerDevfun, of beta (fixed-effect) parameters as well).  These deviance
-##' functions have an environment containing objects required for their evaluation.
-##' CAUTION: The output object of \code{mk(Gl|L)merDevfun} is an \code{\link{environment}}
-##' containing reference class objects (see \code{\link{ReferenceClasses}}, \code{\link{merPredD-class}},
-##' \code{\link{lmResp-class}}), which behave in ways that may surprise many users. For example, if the
-##' output of \code{mk(Gl|L)merDevfun} is naively copied, then modifications to the original will
-##' also appear in the copy (and vice versa). To avoid this behavior one must make a deep copy
-##' (see \code{\link{ReferenceClasses}} for details).
-##' \cr
-##' \cr
-##' @export
+## @rdname modular
+## @param fr A model frame containing the variables needed to create an
+##   \code{\link{lmerResp}} or \code{\link{glmResp}} instance
+## @param X fixed-effects design matrix
+## @param reTrms information on random effects structure (see \code{\link{mkReTrms}})
+## @param REML (logical) fit restricted maximum likelihood model?
+## @param start starting values
+## @param verbose print output?
+## @return \bold{mkLmerDevfun, mkGlmerDevfun}: A function to calculate deviance
+## (or restricted deviance) as a function of the theta (random-effect) parameters
+## (for GlmerDevfun, of beta (fixed-effect) parameters as well).  These deviance
+## functions have an environment containing objects required for their evaluation.
+## CAUTION: The output object of \code{mk(Gl|L)merDevfun} is an \code{\link{environment}}
+## containing reference class objects (see \code{\link{ReferenceClasses}}, \code{\link{merPredD-class}},
+## \code{\link{lmResp-class}}), which behave in ways that may surprise many users. For example, if the
+## output of \code{mk(Gl|L)merDevfun} is naively copied, then modifications to the original will
+## also appear in the copy (and vice versa). To avoid this behavior one must make a deep copy
+## (see \code{\link{ReferenceClasses}} for details).
+## \cr
+## \cr
 mkLmerDevfun <- function(fr, X, reTrms, REML = TRUE, start = NULL,
                          verbose = 0, control = lmerControl(), ...)
 {
@@ -663,8 +659,8 @@ mkLmerDevfun <- function(fr, X, reTrms, REML = TRUE, start = NULL,
 }
 
 
-##' @param devfun a deviance function, as generated by \code{\link{mkLmerDevfun}}
-##' @return \bold{optimizeLmer}: Results of an optimization.
+## @param devfun a deviance function, as generated by \code{\link{mkLmerDevfun}}
+## @return \bold{optimizeLmer}: Results of an optimization.
 optimizeLmer <- function(devfun,
                          optimizer=    formals(lmerControl)$optimizer,
                          restart_edge= formals(lmerControl)$restart_edge,
@@ -743,9 +739,8 @@ optimizeLmer <- function(devfun,
         opt
 }
 
-##' @rdname modular
-##' @inheritParams glmer
-##' @export
+## @rdname modular
+## @inheritParams glmer
 glFormula <- function(formula, data=NULL, family = gaussian,
                       subset, weights, na.action, offset,
                       contrasts = NULL, start, mustart, etastart,
@@ -791,53 +786,52 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     c(res, list(family = family))
 }
 
-##' Effective random-effects degrees-of-freedom correction for glmer's
-##' moment-based dispersion estimator: phi = deviance/(n - qEff) instead
-##' of the plain deviance/n. qEff is the rank of the combined
-##' fixed+random "saturated" mean-structure design matrix [X, Z]
-##' (treating every random-effects term as if it were a set of ordinary
-##' fixed-effect dummy/product columns) -- the same n-p logic behind the
-##' classical unbiased variance estimator RSS/(n-p) in linear
-##' regression, generalized here to whatever redundancy structure the
-##' random effects happen to have.
-##'
-##' An earlier version of this used a naive closed-form guess,
-##' qEff = sum(q_k) - (K-1) for K additive random-effects terms (q_k =
-##' the k-th term's raw dimension, levels x columns) -- correct for
-##' crossed, scalar-or-single-multi-column-term structures, but found
-##' (via misc/Gamma_GLMM/paramsurvey_loggaussian/, see README on the
-##' Gamma_GLMM branch) to UNDER-correct for two real structures: nested
-##' terms (e.g. (1|Rail1/Rail2) -- the outer term's columns are an exact
-##' linear combination of the inner nested term's, contributing *zero*
-##' extra rank) and multiple random-slope terms sharing a covariate
-##' (e.g. (1+x|Rail1)+(1+x|Rail2) -- their slope-column blocks are
-##' redundant with *each other*, not just with the intercept). Both are
-##' just special cases of "the naive formula didn't count some linear
-##' dependency among the columns" -- so rather than hand-coding a
-##' growing list of known redundancy patterns, this computes the rank
-##' directly. Verified against every paramsurvey_loggaussian case,
-##' including the two the naive formula got wrong, and checked for
-##' computational cost at a much larger scale (q=1000): the rank
-##' computation is a one-time cost per fit (the design's rank doesn't
-##' depend on theta/phi/beta), and stays a small fraction of the fit's
-##' own cost -- *provided* `method = "qr"` is used, which dispatches to
-##' a genuine sparse QR; the default `rankMatrix()` method
-##' (`"tolNorm2"`, via `svd()`) silently densifies for sparse input and
-##' scales far worse.
-##'
-##' Only meaningful for free-dispersion families -- profilePhi()
-##' (external.cpp) only ever applies qEff when hasFreeDispersion() is
-##' true, so for fixed-dispersion families (binomial, Poisson,
-##' negative.binomial) the result would never be used at all. Gated
-##' here via hasNoScale(family) (same check mkMerMod() already uses)
-##' rather than computing it and throwing it away -- not just for
-##' efficiency: for a model with as many random-effects columns as
-##' observations (e.g. an observation-level random effect used to model
-##' overdispersion in a Poisson GLMM), the rank computation itself can
-##' be expensive or fail outright (observed: sparse QR out-of-memory at
-##' q ~ 50000) for a family where the answer was always going to be
-##' discarded.
-##' @noRd
+## Effective random-effects degrees-of-freedom correction for glmer's
+## moment-based dispersion estimator: phi = deviance/(n - qEff) instead
+## of the plain deviance/n. qEff is the rank of the combined
+## fixed+random "saturated" mean-structure design matrix [X, Z]
+## (treating every random-effects term as if it were a set of ordinary
+## fixed-effect dummy/product columns) -- the same n-p logic behind the
+## classical unbiased variance estimator RSS/(n-p) in linear
+## regression, generalized here to whatever redundancy structure the
+## random effects happen to have.
+##
+## An earlier version of this used a naive closed-form guess,
+## qEff = sum(q_k) - (K-1) for K additive random-effects terms (q_k =
+## the k-th term's raw dimension, levels x columns) -- correct for
+## crossed, scalar-or-single-multi-column-term structures, but found
+## (via misc/Gamma_GLMM/paramsurvey_loggaussian/, see README on the
+## Gamma_GLMM branch) to UNDER-correct for two real structures: nested
+## terms (e.g. (1|Rail1/Rail2) -- the outer term's columns are an exact
+## linear combination of the inner nested term's, contributing *zero*
+## extra rank) and multiple random-slope terms sharing a covariate
+## (e.g. (1+x|Rail1)+(1+x|Rail2) -- their slope-column blocks are
+## redundant with *each other*, not just with the intercept). Both are
+## just special cases of "the naive formula didn't count some linear
+## dependency among the columns" -- so rather than hand-coding a
+## growing list of known redundancy patterns, this computes the rank
+## directly. Verified against every paramsurvey_loggaussian case,
+## including the two the naive formula got wrong, and checked for
+## computational cost at a much larger scale (q=1000): the rank
+## computation is a one-time cost per fit (the design's rank doesn't
+## depend on theta/phi/beta), and stays a small fraction of the fit's
+## own cost -- *provided* `method = "qr"` is used, which dispatches to
+## a genuine sparse QR; the default `rankMatrix()` method
+## (`"tolNorm2"`, via `svd()`) silently densifies for sparse input and
+## scales far worse.
+##
+## Only meaningful for free-dispersion families -- profilePhi()
+## (external.cpp) only ever applies qEff when hasFreeDispersion() is
+## true, so for fixed-dispersion families (binomial, Poisson,
+## negative.binomial) the result would never be used at all. Gated
+## here via hasNoScale(family) (same check mkMerMod() already uses)
+## rather than computing it and throwing it away -- not just for
+## efficiency: for a model with as many random-effects columns as
+## observations (e.g. an observation-level random effect used to model
+## overdispersion in a Poisson GLMM), the rank computation itself can
+## be expensive or fail outright (observed: sparse QR out-of-memory at
+## q ~ 50000) for a family where the answer was always going to be
+## discarded.
 computeQEff <- function(X, reTrms, enable, family) {
     if (!isTRUE(enable) || hasNoScale(family)) return(NA_real_)
     full <- cbind(X, t(reTrms$Zt))
@@ -867,8 +861,7 @@ computeQEff <- function(X, reTrms, enable, family) {
     qEff
 }
 
-##' @rdname modular
-##' @export
+## @rdname modular
 mkGlmerDevfun <- function(fr, X, reTrms, family,
                           nAGQ = if (control$nAGQ0initStep) 0L else 1L,
                           verbose = 0L,
@@ -919,10 +912,9 @@ mkGlmerDevfun <- function(fr, X, reTrms, family,
 
 
 
-##' @rdname modular
-##' @param nAGQ number of Gauss-Hermite quadrature points
-##' @param stage optimization stage (1: nAGQ=0, optimize over theta only; 2: nAGQ possibly >0, optimize over theta and beta)
-##' @export
+## @rdname modular
+## @param nAGQ number of Gauss-Hermite quadrature points
+## @param stage optimization stage (1: nAGQ=0, optimize over theta only; 2: nAGQ possibly >0, optimize over theta and beta)
 optimizeGlmer <- function(devfun,
                           optimizer = if (nAGQ > 0L) "Nelder_Mead" else "bobyqa",
                           restart_edge=FALSE,
@@ -991,8 +983,7 @@ check.boundary <- function(rho,opt,devfun,boundary.tol) {
 }
 
 ## only do this function if nAGQ > 0L
-##' @rdname modular
-##' @export
+## @rdname modular
 updateGlmerDevfun <- function(devfun, reTrms, nAGQ = 1L){
     stopifnot(length(nAGQ <- as.integer(nAGQ)) == 1L,
               0L <= nAGQ, nAGQ <= 100L)

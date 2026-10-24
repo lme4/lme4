@@ -6,19 +6,19 @@ namedList <- function(...) {
     setNames(L,nm)
 }
 
-##' By extracting "checking options" from \code{nms}, this function
-##' implicitly defines what "checking options" are.
-##'
-##' @title Extract "checking options" or "checking arguments" (-> ../man/lmerControl.Rd)
-##' those starting with "check." but *not* the "check.conv.." nor "check.rankX.." ones:
-##' @param nms character vector
-##' @return those elements of \code{nms} which are "checking options"
-##' @author Martin Maechler
+## By extracting "checking options" from \code{nms}, this function
+## implicitly defines what "checking options" are.
+##
+## @title Extract "checking options" or "checking arguments" (-> ../man/lmerControl.Rd)
+## those starting with "check." but *not* the "check.conv.." nor "check.rankX.." ones:
+## @param nms character vector
+## @return those elements of \code{nms} which are "checking options"
+## @author Martin Maechler
 .get.checkingOpts <- function(nms)
     nms[grepl("^check\\.(?!conv|rankX|scaleX)", nms, perl=TRUE)]
 
 
-##' Check check.conv.*() options and produce good error message
+## Check check.conv.*() options and produce good error message
 chk.convOpt <- function(opt) {
     cnm <- deparse(nm <- substitute(opt))[[1]]
     if(!is.list(opt)) stop("check.conv* option ", cnm, " must be a list")
@@ -33,7 +33,7 @@ chk.convOpt <- function(opt) {
     invisible()
 }
 
-##' Exported constructor for the user calling  *lmerControl():
+## Exported constructor for the user calling  *lmerControl():
 .makeCC <- function(action, tol, relTol, ...) {
     stopifnot(is.character(action), length(action) == 1)
     if(!is.numeric(tol))
@@ -49,7 +49,7 @@ chk.convOpt <- function(opt) {
       list(...))
 }
 
-##' Internal utility :  Allow check.conv.* to be a string
+## Internal utility :  Allow check.conv.* to be a string
 chk.cconv <- function(copt, callingFn) {
     cnm <- deparse(substitute(copt))
     if(is.character(copt)) {
@@ -200,8 +200,7 @@ formals(glmerControl) <- c(formals(glmerControl),
                                 disp_dof_correction = TRUE)
                            )
 
-##' @rdname lmerControl
-##' @export
+## @rdname lmerControl
 nlmerControl <- function(optimizer="Nelder_Mead",
                          tolPwrss = 1e-10,
                          optCtrl = list())

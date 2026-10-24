@@ -6,18 +6,18 @@
 help_str <- "\n  See ?lme4::convergence and ?lme4::troubleshooting."
 
 
-##' @param derivs typically the "derivs" attribute of optimizeLmer(); with
-##' "gradients" and possibly "Hessian" component
-##' @param coefs estimated function value
-##' @param ctrl list of lists, each with \code{action} character strings specifying
-##' what should happen when a check triggers, and \code{tol} numerical tolerances,
-##' as is the result of \code{\link{lmerControl}()$checkConv}.
-##' @param lbound vector of lower bounds \emph{for random-effects parameters only}
-##'   (length is taken to determine number of RE parameters)
-##' @param debug useful if some checks are on "ignore", but would "trigger"
-##' @param nobs the number of observations from the dataset
-##' @param ndim the number of dimensions for the variance-covariance matrix 
-##' of random effects
+## @param derivs typically the "derivs" attribute of optimizeLmer(); with
+## "gradients" and possibly "Hessian" component
+## @param coefs estimated function value
+## @param ctrl list of lists, each with \code{action} character strings specifying
+## what should happen when a check triggers, and \code{tol} numerical tolerances,
+## as is the result of \code{\link{lmerControl}()$checkConv}.
+## @param lbound vector of lower bounds \emph{for random-effects parameters only}
+##   (length is taken to determine number of RE parameters)
+## @param debug useful if some checks are on "ignore", but would "trigger"
+## @param nobs the number of observations from the dataset
+## @param ndim the number of dimensions for the variance-covariance matrix
+## of random effects
 checkConv <- function(derivs, coefs, ctrl, lbound, ubound, debug = FALSE,
                       nobs = NULL, ndim = NULL)
 {

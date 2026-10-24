@@ -14,10 +14,7 @@ profnames <- function(object, signames=TRUE,
   res
 }
 
-##' @importFrom splines backSpline interpSpline periodicSpline splineKnots
-##' @importFrom stats profile
-##' @method profile merMod
-##' @export
+## @method profile merMod
 profile.merMod <- function(fitted,
                            which=NULL,
                            alphamax = 0.01,
@@ -422,19 +419,18 @@ profile.merMod <- function(fitted,
               class = c("thpr", "data.frame"))# 'thpr': see ../man/profile-methods.Rd
 } ## profile.merMod
 
-##' Transform 'which' \in {parnames | integer | "beta_" | "theta_"}
-##' into integer indices
-##' @param which numeric or character vector
-##' @param nvp number of variance-covariance parameters
-##' @param nptot total number of parameters
-##' @param parnames vector of parameter names
-##' @param verbose print messages?
-##' @examples
-##' fm1 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
-##' tn <- names(getME(fm1,"theta"))
-##' nn <- c(tn,names(fixef(fm1)))
-##' get.which("theta_",length(tn),length(nn),nn, verbose=TRUE)
-##'
+## Transform 'which' \in {parnames | integer | "beta_" | "theta_"}
+## into integer indices
+## @param which numeric or character vector
+## @param nvp number of variance-covariance parameters
+## @param nptot total number of parameters
+## @param parnames vector of parameter names
+## @param verbose print messages?
+## @examples
+## fm1 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
+## tn <- names(getME(fm1,"theta"))
+## nn <- c(tn,names(fixef(fm1)))
+## get.which("theta_",length(tn),length(nn),nn, verbose=TRUE)
 get.which <- function(which, nvp, nptot, parnames, verbose=FALSE) {
     if (is.null(which))
         seq_len(nptot)
@@ -721,8 +717,6 @@ panel.thpr <- function(x, y, spl, absVal, ...)
 }
 
 ## A lattice-based plot method for profile objects
-##' @importFrom lattice xyplot
-##' @S3method xyplot thpr
 xyplot.thpr <-
     function (x, data = NULL,
               levels = sqrt(qchisq(pmax.int(0, pmin.int(1, conf)), df = 1)),
@@ -815,8 +809,7 @@ format.perc <- function (x, digits, ...) {
           "%")
 }
 
-##' confint() method for  our profile() results 'thpr'
-##' @importFrom stats confint
+## confint() method for  our profile() results 'thpr'
 confint.thpr <- function(object, parm, level = 0.95, zeta,
                          ## tolerance for non-monotonic profiles
                          ## (raw values, not splines)
@@ -894,20 +887,20 @@ confint.thpr <- function(object, parm, level = 0.95, zeta,
 ## FIXME: make bootMer more robust; make profiling more robust;
 ## more warnings; documentation ...
 
-##' Compute confidence intervals on the parameters of an lme4 fit
-##' @param object a fitted [ng]lmer model
-##' @param parm parameters (specified by integer position)
-##' @param level confidence level
-##' @param method for computing confidence intervals
-##' @param zeta likelihood cutoff
-##' (if not specified, computed from \code{level}: "profile" only)
-##' @param nsim number of simulations for parametric bootstrap intervals
-##' @param boot.type bootstrap confidence interval type
-##' @param quiet (logical) suppress messages about computationally intensive profiling?
-##' @param signames (logical) use old-style names for \code{method="profile"}? (See \code{signames} argument to \code{\link{profile}}
-##' @param oldNames (logical) deprecated; has the same purpose as the \code{signames} argument.
-##' @param \dots additional parameters to be passed to  \code{\link{profile.merMod}} or \code{\link{bootMer}}
-##' @return a numeric table of confidence intervals
+## Compute confidence intervals on the parameters of an lme4 fit
+## @param object a fitted [ng]lmer model
+## @param parm parameters (specified by integer position)
+## @param level confidence level
+## @param method for computing confidence intervals
+## @param zeta likelihood cutoff
+## (if not specified, computed from \code{level}: "profile" only)
+## @param nsim number of simulations for parametric bootstrap intervals
+## @param boot.type bootstrap confidence interval type
+## @param quiet (logical) suppress messages about computationally intensive profiling?
+## @param signames (logical) use old-style names for \code{method="profile"}? (See \code{signames} argument to \code{\link{profile}}
+## @param oldNames (logical) deprecated; has the same purpose as the \code{signames} argument.
+## @param \dots additional parameters to be passed to  \code{\link{profile.merMod}} or \code{\link{bootMer}}
+## @return a numeric table of confidence intervals
 confint.merMod <- function(object, parm, level = 0.95,
                            method = c("profile", "Wald", "boot"),
                            zeta, nsim=500, boot.type = c("perc", "basic", "norm"),
@@ -985,13 +978,13 @@ confint.merMod <- function(object, parm, level = 0.95,
            stop("unknown confidence interval method"))
 }
 
-##' Convert x-cosine and y-cosine to average and difference.
-##'
-##' Convert the x-cosine and the y-cosine to an average and difference
-##' ensuring that the difference is positive by flipping signs if
-##' necessary
-##' @param xc x-cosine
-##' @param yc y-cosine
+## Convert x-cosine and y-cosine to average and difference.
+##
+## Convert the x-cosine and the y-cosine to an average and difference
+## ensuring that the difference is positive by flipping signs if
+## necessary
+## @param xc x-cosine
+## @param yc y-cosine
 ad <- function(xc, yc)
 {
     a <- (xc + yc)/2
@@ -999,27 +992,27 @@ ad <- function(xc, yc)
     cbind(sign(d)* a, abs(d))
 }
 
-##' convert d versus a (as an xyVector) and level to a matrix of taui and tauj
-##' @param xy an xyVector
-##' @param lev the level of the contour
+## convert d versus a (as an xyVector) and level to a matrix of taui and tauj
+## @param xy an xyVector
+## @param lev the level of the contour
 tauij <- function(xy, lev) lev * cos(xy$x + outer(xy$y/2, c(-1, 1)))
 
-##' @title safe arc-cosine
-##' @param x numeric vector argument
-##' @return acos(x) being careful of boundary conditions
+## @title safe arc-cosine
+## @param x numeric vector argument
+## @return acos(x) being careful of boundary conditions
 sacos <- function(x) acos(pmax.int(-0.999, pmin.int(0.999, x)))
 
-##' Generate a contour
-##'
-##' @title Generate a contour
-##' @param sij the arc-cosines of i on j
-##' @param sji the arc-cosines of j on i
-##' @param levels numeric vector of levels at which to interpolate
-##' @param nseg number of segments in the interpolated contour
-##' @return a list with components
-##' \item{tki}{the tau-scale predictions of i on j at the contour levels}
-##' \item{tkj}{the tau-scale predictions of j on i at the contour levels}
-##' \item{pts}{an array of dimension (length(levels), nseg, 2) containing the points on the contours}
+## Generate a contour
+##
+## @title Generate a contour
+## @param sij the arc-cosines of i on j
+## @param sji the arc-cosines of j on i
+## @param levels numeric vector of levels at which to interpolate
+## @param nseg number of segments in the interpolated contour
+## @return a list with components
+## \item{tki}{the tau-scale predictions of i on j at the contour levels}
+## \item{tkj}{the tau-scale predictions of j on i at the contour levels}
+## \item{pts}{an array of dimension (length(levels), nseg, 2) containing the points on the contours}
 cont <- function(sij, sji, levels, nseg = 101)
 {
     ada <- array(0, c(length(levels), 2L, 4L))
@@ -1044,19 +1037,16 @@ chooseFace <- function (fontface = NULL, font = 1)
 }
 
 
-##' Draws profile pairs plots.  Contours are for the marginal
-##' two-dimensional regions (i.e. using df = 2).
-##'
-##' @title Profile pairs plot
-##' @param x the result of \code{\link{profile}} (or very similar structure)
-##' @param data unused - only for compatibility with generic
-##' @param levels the contour levels to be shown; usually derived from \code{conf}
-##' @param conf numeric vector of confidence levels to be shown as contours
-##' @param ... further arguments passed to \code{\link{splom}}
-##' @importFrom grid gpar viewport
-##' @importFrom lattice splom
-##' @method splom thpr
-##' @export
+## Draws profile pairs plots.  Contours are for the marginal
+## two-dimensional regions (i.e. using df = 2).
+##
+## @title Profile pairs plot
+## @param x the result of \code{\link{profile}} (or very similar structure)
+## @param data unused - only for compatibility with generic
+## @param levels the contour levels to be shown; usually derived from \code{conf}
+## @param conf numeric vector of confidence levels to be shown as contours
+## @param ... further arguments passed to \code{\link{splom}}
+## @method splom thpr
 splom.thpr <- function (x, data,
                         levels = sqrt(qchisq(pmax.int(0, pmin.int(1, conf)), 2)),
                         conf = c(50, 80, 90, 95, 99)/100, which = 1:nptot,
@@ -1280,13 +1270,13 @@ log.thpr <- function (x, base = exp(1)) logProf(x, base=base)
 
 
 
-##' Create an approximating density from a profile object  -- called only from densityplot.thpr()
-##'
-##' @title Approximate densities from profiles
-##' @param pr a profile object
-##' @param npts number of points at which to evaluate the density
-##' @param upper upper bound on cumulative for a cutoff
-##' @return a data frame
+## Create an approximating density from a profile object  -- called only from densityplot.thpr()
+##
+## @title Approximate densities from profiles
+## @param pr a profile object
+## @param npts number of points at which to evaluate the density
+## @param upper upper bound on cumulative for a cutoff
+## @return a data frame
 dens <- function(pr, npts=201, upper=0.999) {
     npts <- as.integer(npts)
     spl  <- attr(pr, "forward")
@@ -1339,18 +1329,16 @@ dens <- function(pr, npts=201, upper=0.999) {
     fr
 }
 
-##' Densityplot method for a mixed-effects model profile
+## Densityplot method for a mixed-effects model profile
 ##
-##' @title densityplot from a mixed-effects profile
-##' @param x a mixed-effects profile
-##' @param data not used - for compatibility with generic
-##' @param ... optional arguments to \code{\link[lattice]{densityplot}()}
-##' from package \pkg{lattice}.
-##' @return a density plot
-##' @examples ## see   example("profile.merMod")
-##' @importFrom lattice densityplot
-##' @method densityplot thpr
-##' @export
+## @title densityplot from a mixed-effects profile
+## @param x a mixed-effects profile
+## @param data not used - for compatibility with generic
+## @param ... optional arguments to \code{\link[lattice]{densityplot}()}
+## from package \pkg{lattice}.
+## @return a density plot
+## @examples ## see   example("profile.merMod")
+## @method densityplot thpr
 densityplot.thpr <- function(x, data, npts=201, upper=0.999, ...) {
     dd <- dens(x, npts=npts, upper=upper)
     ll <- c(list(...),
@@ -1362,7 +1350,7 @@ densityplot.thpr <- function(x, data, npts=201, upper=0.999, ...) {
     do.call(xyplot, stripExpr(ll, names(attr(x, "forward"))))
 }
 
-##' Transform a mixed-effects profile to the variance scale
+## Transform a mixed-effects profile to the variance scale
 varianceProf <- function(x, ranef=TRUE) {
     ## "parallel" to logProf()
     stopifnot(inherits(x, "thpr"))
@@ -1390,10 +1378,9 @@ varianceProf <- function(x, ranef=TRUE) {
 }
 
 ## convert profile to data frame, adding a .focal parameter to simplify lattice/ggplot plotting
-##' @method as.data.frame thpr
-##' @param x the result of \code{\link{profile}} (or very similar structure)
-##' @export
-##' @rdname profile-methods
+## @method as.data.frame thpr
+## @param x the result of \code{\link{profile}} (or very similar structure)
+## @rdname profile-methods
 as.data.frame.thpr <- function(x,...) {
     class(x) <- "data.frame"
     m <- as.matrix(x[,seq(ncol(x))-1]) ## omit .par

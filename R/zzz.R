@@ -80,12 +80,11 @@ get_abi_version <- function() {
 .Matrix.abi.build.version <- get_abi_version()
 
 ## simplified version of glmmTMB package checking
-##' @param this_pkg downstream package being tested
-##' @param dep_pkg upstream package on which \code{this_pkg} depends
-##' @param dep_type "ABI" or "package"
-##' @param built_version a \code{numeric_version} object indicating what version of \code{dep_pkg} was used to  build \code{this_pkg}
-##' @param warn (logical) warn if condition not met?
-##' @noRd
+## @param this_pkg downstream package being tested
+## @param dep_pkg upstream package on which \code{this_pkg} depends
+## @param dep_type "ABI" or "package"
+## @param built_version a \code{numeric_version} object indicating what version of \code{dep_pkg} was used to  build \code{this_pkg}
+## @param warn (logical) warn if condition not met?
 check_dep_version <- function(this_pkg = "lme4",  dep_pkg = "Matrix", dep_type = "ABI",
                               built_version = .Matrix.abi.build.version,
                               warn = TRUE) {

@@ -1,12 +1,11 @@
-##' PCA of random-effects variance-covariance estimates
-##'
-##' Perform a Principal Components Analysis (PCA) of the random-effects
-##' variance-covariance estimates from a fitted mixed-effects model
-##' @title PCA of random-effects
-##' @param x a merMod object
-##' @return a \code{prcomplist} object
-##' @author Douglas Bates
-##' @export
+## PCA of random-effects variance-covariance estimates
+##
+## Perform a Principal Components Analysis (PCA) of the random-effects
+## variance-covariance estimates from a fitted mixed-effects model
+## @title PCA of random-effects
+## @param x a merMod object
+## @return a \code{prcomplist} object
+## @author Douglas Bates
 rePCA <- function(x) UseMethod('rePCA')
 
 rePCA.merMod <- function(x) {

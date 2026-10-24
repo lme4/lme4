@@ -44,8 +44,8 @@ dropOffset <- function(form) {
 ## dropOffset(~-x+offset(stuff))
 
 if(getRversion() < "3.5.0") {
-##' Utility for lmList(), ...: Collect errors from a list \code{x},
-##' produce a "summary warning" and keep that message as "warningMsg" attribute
+## Utility for lmList(), ...: Collect errors from a list \code{x},
+## produce a "summary warning" and keep that message as "warningMsg" attribute
 warnErrList <- function(x, warn = TRUE) {
   errs <- vapply(x, inherits, NA, what = "error")
   if (any(errs)) {
@@ -75,20 +75,19 @@ warnErrList <- function(x, warn = TRUE) {
 
 
 
-##' @title List of lm Objects with a Common Model
-##' @param formula a linear formula object of the form
-##'     \code{y ~ x1+...+xn | g}. In the formula object, \code{y} represents
-##'     the response, \code{x1,...,xn} the covariates, and \code{g} the
-##'     grouping factor specifying the partitioning of the data according to
-##'     which different \code{lm} fits should be performed.
-##' @inheritParams lmer
-##' @param family an optional family specification for a generalized
-##'     linear model.
-##' @param pool logical scalar, should the variance estimate pool the
-##'     residual sums of squares
-##' @param ... additional, optional arguments to be passed to the
-##'     model function or family evaluation.
-##' @export
+## @title List of lm Objects with a Common Model
+## @param formula a linear formula object of the form
+##     \code{y ~ x1+...+xn | g}. In the formula object, \code{y} represents
+##     the response, \code{x1,...,xn} the covariates, and \code{g} the
+##     grouping factor specifying the partitioning of the data according to
+##     which different \code{lm} fits should be performed.
+## @inheritParams lmer
+## @param family an optional family specification for a generalized
+##     linear model.
+## @param pool logical scalar, should the variance estimate pool the
+##     residual sums of squares
+## @param ... additional, optional arguments to be passed to the
+##     model function or family evaluation.
 lmList <- function(formula, data, family, subset, weights,
                    na.action, offset,
                    pool = !isGLM || .hasScale(family2char(family)),
@@ -194,13 +193,11 @@ family2char <- function(fam) {
     if(is.function(fam)) fam()$family else if(!is.character(fam)) fam$family else fam
 }
 
-##' Does a lmList4 object have a "scale" / sigma / useScale ?
+## Does a lmList4 object have a "scale" / sigma / useScale ?
 hasScale <- function(object)
     !isGLMlist(object) || .hasScale(family(object[[1]])$family)
 
 
-##' @importFrom stats coef
-##' @S3method coef lmList4
 ## Extract the coefficients and form a  data.frame if possible
 ## FIXME: commented out nlme stuff (augFrame etc.).  Restore, or delete for good
 ## FIXME: modified so that non-estimated values will be NA rather than set to
@@ -289,8 +286,6 @@ sigma.lmList4 <- function(object, ...)
 ## 1 for GLM  <==>  1 when useScale is FALSE for [G]LMMs
 
 
-##' @importFrom methods show
-##' @exportMethod show
 setMethod("show", "lmList4", function(object)
 {
     mCall <- object@call
@@ -309,7 +304,6 @@ setMethod("show", "lmList4", function(object)
     }
 })
 
-##' @S3method confint lmList4
 confint.lmList4 <- function(object, parm, level = 0.95, ...)
 {
     mCall <- match.call()
@@ -352,9 +346,6 @@ confint.lmList4 <- function(object, parm, level = 0.95, ...)
     new("lmList4.confint", aperm(val, 3:1))
 }
 
-##' @importFrom graphics plot
-##' @importFrom lattice .......
-##' @S3method plot lmList4.confint
 plot.lmList4.confint <- function(x, y, order, ...)
 {
 ##    stopifnot(require("lattice"))
@@ -402,8 +393,6 @@ plot.lmList4.confint <- function(x, y, order, ...)
             panel=panelfun, ...)
 }
 
-##' @importFrom stats update
-##' @S3method update lmList4
 update.lmList4 <- function(object, formula., ..., evaluate = TRUE) {
     call <- object@call
     if (is.null(call))
@@ -424,13 +413,11 @@ update.lmList4 <- function(object, formula., ..., evaluate = TRUE) {
     else call
 }
 
-##' @importFrom stats formula
-##' @S3method formula lmList4
-##' @return of class "formula" ==> as.formula() rather than just [["formula"]]
+## @return of class "formula" ==> as.formula() rather than just [["formula"]]
 formula.lmList4 <- function(x, ...) structure(x@call[["formula"]], class = "formula")
 
-##' Get the grouping factor of an "lmList4" object
-##' Important as auxiliary method for many of the nlme-imported methods:
+## Get the grouping factor of an "lmList4" object
+## Important as auxiliary method for many of the nlme-imported methods:
 getGroups.lmList4 <- function(object, ...) object@groups
 
 

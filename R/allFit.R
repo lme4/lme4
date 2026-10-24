@@ -50,37 +50,37 @@ nmkbw <- function(fn, par, lower, upper, control) {
 }
 
 
-##' Attempt to re-fit a [g]lmer model with a range of optimizers.
-##' The default is to use all known optimizers for R that satisfy the
-##' requirements (do not require explicit gradients, allow
-##' box constraints), in three categories; (i) built-in
-##' (minqa::bobyqa, lme4::Nelder_Mead, nlminbwrap), (ii) wrapped via optimx
-##' (most of optimx's optimizers that allow box constraints require
-##' an explicit gradient function to be specified; the two provided
-##' here are really base R functions that can be accessed via optimx,
-##' (iii) wrapped via nloptr; (iv)
-##'
-##' @param object a fitted model
-##' @param meth.tab a matrix (or data.frame) with columns
-##' - method  the name of a specific optimization method to pass to the optimizer
-##'           (leave blank for built-in optimizers)
-##' - optimizer  the \code{optimizer} function to use
-##' @param verbose print progress messages?
-##' @param catch.err catch errors?
-##' @param start_from_mle (logical) initialize the refitting process with starting values from the fitted model?
-##' @return a list of fitted \code{merMod} objects
-##' @seealso slice, slice2D in the bbmle package
-##' @examples
-##' library(lme4)
-##' gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
-##'                  data = cbpp, family = binomial)
-##' gm_all <- allFit(gm1, parallel=TRUE)
-##' ss <- summary(gm_all)
-##' ss$fixef               ## extract fixed effects
-##' ss$llik                ## log-likelihoods
-##' ss$sdcor               ## SDs and correlations
-##' ss$theta               ## Cholesky factors
-##' ss$which.OK            ## which fits worked
+## Attempt to re-fit a [g]lmer model with a range of optimizers.
+## The default is to use all known optimizers for R that satisfy the
+## requirements (do not require explicit gradients, allow
+## box constraints), in three categories; (i) built-in
+## (minqa::bobyqa, lme4::Nelder_Mead, nlminbwrap), (ii) wrapped via optimx
+## (most of optimx's optimizers that allow box constraints require
+## an explicit gradient function to be specified; the two provided
+## here are really base R functions that can be accessed via optimx,
+## (iii) wrapped via nloptr; (iv)
+##
+## @param object a fitted model
+## @param meth.tab a matrix (or data.frame) with columns
+## - method  the name of a specific optimization method to pass to the optimizer
+##           (leave blank for built-in optimizers)
+## - optimizer  the \code{optimizer} function to use
+## @param verbose print progress messages?
+## @param catch.err catch errors?
+## @param start_from_mle (logical) initialize the refitting process with starting values from the fitted model?
+## @return a list of fitted \code{merMod} objects
+## @seealso slice, slice2D in the bbmle package
+## @examples
+## library(lme4)
+## gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
+##                  data = cbpp, family = binomial)
+## gm_all <- allFit(gm1, parallel=TRUE)
+## ss <- summary(gm_all)
+## ss$fixef               ## extract fixed effects
+## ss$llik                ## log-likelihoods
+## ss$sdcor               ## SDs and correlations
+## ss$theta               ## Cholesky factors
+## ss$which.OK            ## which fits worked
 
 allFit <- function(object, meth.tab = NULL,
                    data=NULL,

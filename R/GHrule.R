@@ -1,8 +1,8 @@
-##' Create a univariate Gauss-Hermite quadrature rule
-##'
-##' This version of Gauss-Hermite quadrature provides the node
-##' positions and weights for a scalar integral of a function
-##' multiplied by the standard normal density.
+## Create a univariate Gauss-Hermite quadrature rule
+##
+## This version of Gauss-Hermite quadrature provides the node
+## positions and weights for a scalar integral of a function
+## multiplied by the standard normal density.
 GHrule <- function (ord, asMatrix=TRUE) {
     stopifnot(length(ord) == 1,
               (ord <- as.integer(ord)) >= 0L,

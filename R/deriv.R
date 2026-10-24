@@ -1,32 +1,30 @@
 
-##' This function computes the 1st and 2nd derivative (gradient and
-##' Hessian) of a function
-##' with vector-valued input and scalar output using a central finite
-##' difference method.
-##'
-##' The function has to return a single scalar numerical value and take
-##' as argument a numeric vector of the same length as \code{x}. The function also
-##' has to be evaluable in a neighborhood around \code{x}, i.e. at
-##' \code{x - delta} and at \code{x + delta} for all elements in \code{x}.
-##'
-##' @title Compute 1st and 2nd derivative
-##' @param fun function for which to compute the gradient.
-##' @param x numeric vector of values at which to compute the
-##' gradient.
-##' @param delta the amount to subtract and add to \code{x} when computing the
-##' central difference.
-##' @param fx optional value of \code{fun(x, ...)}.
-##' @param ... additional arguments to \code{fun}.
-##'
-##' @keywords utilities
-##' @export
-##' @family derivatives
-##'
-##' @return a list with components
-##' \item{gradient}{the first derivative vector}
-##' \item{Hessian}{the second derivative matrix}
-##' @author Rune Haubo Bojesen Christensen
-##' 
+## This function computes the 1st and 2nd derivative (gradient and
+## Hessian) of a function
+## with vector-valued input and scalar output using a central finite
+## difference method.
+##
+## The function has to return a single scalar numerical value and take
+## as argument a numeric vector of the same length as \code{x}. The function also
+## has to be evaluable in a neighborhood around \code{x}, i.e. at
+## \code{x - delta} and at \code{x + delta} for all elements in \code{x}.
+##
+## @title Compute 1st and 2nd derivative
+## @param fun function for which to compute the gradient.
+## @param x numeric vector of values at which to compute the
+## gradient.
+## @param delta the amount to subtract and add to \code{x} when computing the
+## central difference.
+## @param fx optional value of \code{fun(x, ...)}.
+## @param ... additional arguments to \code{fun}.
+##
+## @keywords utilities
+## @family derivatives
+##
+## @return a list with components
+## \item{gradient}{the first derivative vector}
+## \item{Hessian}{the second derivative matrix}
+## @author Rune Haubo Bojesen Christensen
 deriv12 <- function(fun, x, delta=1e-4, fx=NULL,
                     lower=rep(NA_real_,length(x)), upper=rep(NA_real_,length(x)), ...) {
 ### Compute gradient and Hessian simultaneously (to save computing time)

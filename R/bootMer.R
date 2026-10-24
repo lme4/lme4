@@ -24,10 +24,10 @@
 ## }
 ## for an indication of why this is not necessarily a good idea!
 
-##' Perform model-based (Semi-)parametric bootstrap for mixed models.
-##'
-##' The semi-parametric variant is not yet implemented, and we only
-##' provide a method for \code{\link{lmer}}  and \code{\link{glmer}} results.
+## Perform model-based (Semi-)parametric bootstrap for mixed models.
+##
+## The semi-parametric variant is not yet implemented, and we only
+## provide a method for \code{\link{lmer}}  and \code{\link{glmer}} results.
 bootMer <- function(x, FUN, nsim = 1, seed = NULL,
                     use.u = FALSE, re.form = NA,
                     type = c("parametric","semiparametric"),
@@ -178,7 +178,6 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL,
     s
 } ## {bootMer}
 
-##' @S3method as.data.frame boot
 as.data.frame.bootMer <- function(x,...) {
   as.data.frame(x$t)
 }
