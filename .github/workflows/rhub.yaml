@@ -64,6 +64,9 @@ jobs:
         with:
           token: ${{ secrets.RHUB_TOKEN }}
           job-config: ${{ matrix.config.job-config }}
+        env:
+          # as for CRAN submissions; else 'checking sizes of PDF files' warns
+          BUILD_ARGS: --compact-vignettes=both
 
   other-platforms:
     needs: setup
@@ -102,4 +105,7 @@ jobs:
         with:
           job-config: ${{ matrix.config.job-config }}
           token: ${{ secrets.RHUB_TOKEN }}
+        env:
+          # as for CRAN submissions; else 'checking sizes of PDF files' warns
+          BUILD_ARGS: --compact-vignettes=both
 
