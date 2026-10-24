@@ -445,8 +445,9 @@ test_that("non-integer Poisson responses (GH #180)", {
   expect_equal(unname(getME(g, "theta")), 0.5566, tolerance = 1e-3)
 })
 
-test_that("non-integer binomial responses: Laplace/AGQ match PIRLS (GH #1011)", {
-  d <- data.frame(
+## fractional binomial responses (weights 1) from GH #1011
+nonint_binom_1011 <- function()
+  data.frame(
     y = c(0.2565, 0.3552, 0.344, 0.3393, 0.2216, 0.2628, 0.479, 0.2689, 0.2791,
           0.1885, 0.3799, 0.4617, 0.2209, 0.4506, 0.4922, 0.5739, 0.8292, 0.6354,
           0.776, 0.048, 0.5312, 0.0616, 0.1741, 0.9788, 0.917, 0.3709, 0.5611,
@@ -459,15 +460,63 @@ test_that("non-integer binomial responses: Laplace/AGQ match PIRLS (GH #1011)", 
           0.9509, -1.1285, -0.2256, 1.1649, -0.3001, -0.6718),
     f = factor(rep(c("a", "b", "c"), c(13, 13, 13))),
     g = factor(paste0("g", c(rep(1:6, each = 6), 1, 1, 1))))
+
+## fractional binomial responses with a clearly positive RE variance
+## (from the discussion of GH PR #1012)
+nonint_binom_theta <- function() {
+  set.seed(11)
+  g <- factor(rep(1:10, each = 30))
+  x <- rnorm(300)
+  data.frame(y = plogis(-0.3 + 0.8 * x + rnorm(10, sd = 1.5)[g]), x = x, g = g)
+}
+
+## quiet binomial glmer fit (non-integer counts warn; singular fits message)
+qglmerb <- function(...)
+  suppressWarnings(suppressMessages(glmer(..., family = binomial)))
+
+test_that("non-integer binomial responses: Laplace/AGQ match PIRLS (GH #1011)", {
+  d <- nonint_binom_1011()
   cf_glm <- coef(suppressWarnings(glm(y ~ x + f, data = d, family = binomial)))
   ## all fits are singular, so should match glm(); the rounded data
   ## (which used to be fitted for nAGQ >= 1) are completely separated
   fits <- lapply(c(0, 1, 30), function(q)
-    suppressWarnings(suppressMessages(
-      glmer(y ~ x + f + (1 | g), data = d, family = binomial, nAGQ = q))))
+    qglmerb(y ~ x + f + (1 | g), data = d, nAGQ = q))
   for (f in fits) {
     expect_equal(fixef(f), cf_glm, tolerance = 1e-4)
     expect_equal(as.numeric(logLik(f)), as.numeric(logLik(fits[[1]])),
                  tolerance = 1e-6)
+  }
+})
+
+test_that("non-integer binomial responses with theta > 0 (GH PR #1012)", {
+  d <- nonint_binom_theta()
+  ## reference values from lme4 2.0-6 with nAGQ = 20 (which didn't round);
+  ## lme4 2.1-0 gave slope 1.69, theta 3.14 for both nAGQ = 1 and 20
+  f20 <- qglmerb(y ~ x + (1 | g), data = d, nAGQ = 20)
+  expect_equal(unname(fixef(f20)["x"]), 0.780, tolerance = 1e-3)
+  expect_equal(unname(getME(f20, "theta")), 1.739, tolerance = 1e-3)
+  f1 <- qglmerb(y ~ x + (1 | g), data = d)
+  expect_equal(unname(fixef(f1)["x"]), 0.780, tolerance = 1e-3)
+  expect_equal(unname(getME(f1, "theta")), 1.730, tolerance = 1e-3)
+})
+
+test_that("0/1 responses with fractional weights match fractional responses (GH PR #1012)", {
+  ## projpred's augmented-data form: each observation becomes two rows,
+  ## y = 1 with weight y_i and y = 0 with weight 1 - y_i. Same likelihood
+  ## up to a constant, so the fits should agree
+  aug <- function(d) rbind(transform(d, w = y, y = 1),
+                           transform(d, w = 1 - y, y = 0))
+  for (dd in list(list(d = nonint_binom_1011(), form = y ~ x + f + (1 | g)),
+                  list(d = nonint_binom_theta(), form = y ~ x + (1 | g)))) {
+    da <- aug(dd$d)
+    for (q in c(0, 1, 20)) {
+      f_frac <- qglmerb(dd$form, data = dd$d, nAGQ = q)
+      ## (weights can't be passed through qglmerb()'s '...')
+      f_aug <- suppressWarnings(suppressMessages(
+        glmer(dd$form, data = da, weights = w, family = binomial, nAGQ = q)))
+      expect_equal(fixef(f_aug), fixef(f_frac), tolerance = 1e-4)
+      expect_equal(getME(f_aug, "theta"), getME(f_frac, "theta"),
+                   tolerance = 1e-4)
+    }
   }
 })
