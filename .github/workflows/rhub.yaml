@@ -92,11 +92,10 @@ jobs:
       # teatimeguest/setup-texlive-action no longer exists (404)
       - uses: r-lib/actions/setup-tinytex@v2
       - name: Install LaTeX packages for vignettes
-        run: >-
-          tlmgr install
-          adjustbox collectbox babel-english blkarray caption colortbl
-          etoolbox fancyvrb framed hyperref lineno lm multirow natbib
-          threeparttable thumbpdf tools upquote url wrapfig xcolor
+        # TinyTeX's tlmgr may be older than the repository it installs from
+        run: |
+          tlmgr update --self
+          tlmgr install adjustbox collectbox babel-english blkarray caption colortbl etoolbox fancyvrb framed hyperref lineno lm multirow natbib threeparttable thumbpdf tools upquote url wrapfig xcolor
       - uses: r-hub/actions/run-check@v1
         with:
           job-config: ${{ matrix.config.job-config }}
