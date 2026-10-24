@@ -1,0 +1,53 @@
+# Minimal diagnostic run on macOS x86_64 (Intel), to match CRAN's
+# r-release-macos-x86_64 check machine. Installs lme4 from this branch and
+# runs .github/scripts/diag-profile-boundary.R (no R CMD check).
+# Runs a Linux job alongside for comparison.
+on:
+  workflow_dispatch:
+    inputs:
+      script:
+        description: 'R script to run (relative to repo root)'
+        default: '.github/scripts/diag-profile-boundary.R'
+
+name: diag-macos-intel
+
+jobs:
+  diag:
+    runs-on: ${{ matrix.os }}
+    name: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-15-intel, ubuntu-latest]
+
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      OPENBLAS_NUM_THREADS: 1
+      OMP_NUM_THREADS: 1
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: 'release'
+          use-public-rspm: true
+
+      # hard dependencies only, then lme4 itself built from source
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          dependencies: '"hard"'
+          extra-packages: local::.
+          cache-version: diag-1
+
+      - name: Run diagnostic script
+        run: Rscript "${{ github.event.inputs.script || '.github/scripts/diag-profile-boundary.R' }}" 2>&1 | tee diag-output.txt
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: diag-${{ matrix.os }}
+          path: |
+            diag-output.txt
+            diag-profile-boundary.rds
