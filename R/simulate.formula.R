@@ -22,50 +22,48 @@
 ## SOFTWARE.
 ##
 
-#' A `simulate` Method for `formula` objects that dispatches based on the Left-Hand Side
-#'
-#' This method evaluates the left-hand side (LHS) of the given formula and
-#' dispatches it to an appropriate method based on the result by
-#' setting an nonce class name on the formula.
-#'
-#' @param object a one- or two-sided [`formula`].
-#' @param nsim,seed number of realisations to simulate and the random
-#'   seed to use; see [simulate()].
-#' @param ... additional arguments to methods.
-#' @param basis if given, overrides the LHS of the formula for the
-#'   purposes of dispatching.
-#' @param newdata,data if passed, the `object`'s LHS is evaluated in
-#'   this environment; at most one of the two may be passed.
-#'
-#' The dispatching works as follows:
-#'
-#' 1. If `basis` is not passed, and the formula has an LHS the
-#'    expression on the LHS of the formula in the `object` is
-#'    evaluated in the environment `newdata` or `data` (if given), in
-#'    any case enclosed by the environment of `object`. Otherwise,
-#'    `basis` is used.
-#' 
-#' 1. The result is set as an attribute `".Basis"` on `object`. If
-#'    there is no `basis` or LHS, it is not set.
-#' 
-#' 1. The class vector of `object` has `c("formula_lhs_\var{CLASS}",
-#'    "formula_lhs")` prepended to it, where \var{CLASS} is the class
-#'    of the LHS value or `basis`. If LHS or `basis` has multiple
-#'    classes, they are all prepended; if there is no LHS or `basis`,
-#'    `c("formula_lhs_", "formula_lhs")` is.
-#' 
-#' 1. [simulate()] generic is evaluated on the new `object`, with all
-#'    arguments passed on, excluding `basis`; if `newdata` or `data`
-#'    are missing, they too are not passed on. The evaluation takes
-#'    place in the parent's environment.
-#'
-#' A "method" to receive a formula whose LHS evaluates to \var{CLASS}
-#' can therefore be implemented by a function
-#' `simulate.formula_lhs_\var{CLASS}()`. This function can expect a
-#' [`formula`] object, with additional attribute `.Basis` giving the
-#' evaluated LHS (so that it does not need to be evaluated again).
-#'
-#' @export
+## A `simulate` Method for `formula` objects that dispatches based on the Left-Hand Side
+##
+## This method evaluates the left-hand side (LHS) of the given formula and
+## dispatches it to an appropriate method based on the result by
+## setting an nonce class name on the formula.
+##
+## @param object a one- or two-sided [`formula`].
+## @param nsim,seed number of realisations to simulate and the random
+##   seed to use; see [simulate()].
+## @param ... additional arguments to methods.
+## @param basis if given, overrides the LHS of the formula for the
+##   purposes of dispatching.
+## @param newdata,data if passed, the `object`'s LHS is evaluated in
+##   this environment; at most one of the two may be passed.
+##
+## The dispatching works as follows:
+##
+## 1. If `basis` is not passed, and the formula has an LHS the
+##    expression on the LHS of the formula in the `object` is
+##    evaluated in the environment `newdata` or `data` (if given), in
+##    any case enclosed by the environment of `object`. Otherwise,
+##    `basis` is used.
+##
+## 1. The result is set as an attribute `".Basis"` on `object`. If
+##    there is no `basis` or LHS, it is not set.
+##
+## 1. The class vector of `object` has `c("formula_lhs_\var{CLASS}",
+##    "formula_lhs")` prepended to it, where \var{CLASS} is the class
+##    of the LHS value or `basis`. If LHS or `basis` has multiple
+##    classes, they are all prepended; if there is no LHS or `basis`,
+##    `c("formula_lhs_", "formula_lhs")` is.
+##
+## 1. [simulate()] generic is evaluated on the new `object`, with all
+##    arguments passed on, excluding `basis`; if `newdata` or `data`
+##    are missing, they too are not passed on. The evaluation takes
+##    place in the parent's environment.
+##
+## A "method" to receive a formula whose LHS evaluates to \var{CLASS}
+## can therefore be implemented by a function
+## `simulate.formula_lhs_\var{CLASS}()`. This function can expect a
+## [`formula`] object, with additional attribute `.Basis` giving the
+## evaluated LHS (so that it does not need to be evaluated again).
 ## See https://github.com/lme4/lme4/issues/566 for further discussion
 simulate.formula <- function(object, nsim=1, seed=NULL, ..., basis, newdata, data) {
   ## utility fun for generating new class
@@ -119,24 +117,20 @@ simulate.formula <- function(object, nsim=1, seed=NULL, ..., basis, newdata, dat
   eval(cl, parent.frame())
 }
 
-#' @describeIn simulate.formula A method for one-sided formulas (no LHS) that
-#'   routes to [.simulateFun()], enabling \code{simulate(~re_formula,
-#'   family=..., newdata=..., newparams=...)} usage. \code{ergm} (and other
-#'   packages using the shared \code{simulate.formula}/\code{simulate.formula_lhs}
-#'   dispatch mechanism from GH#566) only ever supply two-sided formulas, so
-#'   they never reach this method; this method exists only to give one-sided
-#'   formulas a clearer error message than the generic
-#'   \code{simulate.formula_lhs()} fallback would.
-#'
-#' @export
+## @describeIn simulate.formula A method for one-sided formulas (no LHS) that
+##   routes to [.simulateFun()], enabling \code{simulate(~re_formula,
+##   family=..., newdata=..., newparams=...)} usage. \code{ergm} (and other
+##   packages using the shared \code{simulate.formula}/\code{simulate.formula_lhs}
+##   dispatch mechanism from GH#566) only ever supply two-sided formulas, so
+##   they never reach this method; this method exists only to give one-sided
+##   formulas a clearer error message than the generic
+##   \code{simulate.formula_lhs()} fallback would.
 simulate.formula_lhs_ <- function(object, nsim=1, seed=NULL, ...) {
   class(object) <- setdiff(class(object), c("formula_lhs_", "formula_lhs"))
   .simulateFun(formula=object, nsim=nsim, seed=seed, ...)
 }
 
-#' @describeIn simulate.formula A function to catch the situation when there is no method implemented for the class to which the LHS evaluates.
-#'
-#' @export
+## @describeIn simulate.formula A function to catch the situation when there is no method implemented for the class to which the LHS evaluates.
 simulate.formula_lhs <- function(object, nsim=1, seed=NULL, ...){
   stop("No applicable method for LHS of type ", paste0(sQuote(class(attr(object, ".Basis"))), collapse=", "), ".")
 }

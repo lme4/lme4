@@ -905,13 +905,13 @@ glmerLaplaceHandle <- function(pp, resp, nAGQ, tol, maxit, verbose,
 isFlexLambda <- function() FALSE
 
 
-#' convert a list of matrices (n, pxp blocks) to a  p x p x n  array
+## convert a list of matrices (n, pxp blocks) to a  p x p x n  array
 mlist_to_array <- function(m) {
     p <- nrow(m[[1]])
     n <- length(m)
     array(unlist(lapply(m,as.matrix)),dim=c(p,p,n))
 }
-#' @inheritParams bdiag_to_array
+## @inheritParams bdiag_to_array
 bdiag_to_mlist <- function(m,n) {
     if (length(n)==1 && n<nrow(m)) {
         n <- rep(n,nrow(m)%/%n)
@@ -1185,13 +1185,13 @@ na.action.merMod <- function(object, ...) {
 }
 
 # Temporarily putting this here; should be removed once reformulas is updated.
-#' get grouping variable symbols/names
-#' @param formula a formula
-#' @param return_val return character string or raw symbol?
-#' @examples
-#' form <- Reaction ~ Days + (Days | group / Subject)
-#' get_grpvars(form)
-#' get_grpvars(form, return_val = "symbol")
+## get grouping variable symbols/names
+## @param formula a formula
+## @param return_val return character string or raw symbol?
+## @examples
+## form <- Reaction ~ Days + (Days | group / Subject)
+## get_grpvars(form)
+## get_grpvars(form, return_val = "symbol")
 get_grpvars <- function(formula, return_val = c("char", "symbol")) {
   return_val <- match.arg(return_val)
   ff <- reformulas::findbars_x(formula)

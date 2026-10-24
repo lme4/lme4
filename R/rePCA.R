@@ -9,7 +9,6 @@
 ##' @export
 rePCA <- function(x) UseMethod('rePCA')
 
-#' @export
 rePCA.merMod <- function(x) {
     chfs <- getME(x,"Tlist")  # list of lower Cholesky factors
     nms <- names(chfs)
@@ -26,7 +25,6 @@ rePCA.merMod <- function(x) {
     structure(lapply(unms,function(m) svals(Matrix::bdiag(chfs[which(nms == m)]))),
               class="prcomplist")
 }
-#' @export
 summary.prcomplist <- function(object,...) {
     lapply(object,summary)
 }
