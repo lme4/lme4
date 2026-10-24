@@ -144,8 +144,8 @@ str(dd <- as.data.frame(rr1))
 if (require(ggplot2)) {
     ggplot(dd, aes(y=grp,x=condval)) +
         geom_point() + facet_wrap(~term,scales="free_x") +
-        geom_errorbarh(aes(xmin=condval -2*condsd,
-                           xmax=condval +2*condsd), height=0)
+        geom_errorbar(aes(xmin=condval -2*condsd,
+                          xmax=condval +2*condsd), width=0)
 }
 }
 \keyword{methods}
