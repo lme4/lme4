@@ -4,7 +4,17 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
-\section{CHANGES IN VERSION 2.1-0}{
+\section{CHANGES IN VERSION 2.1-1}{
+  \subsection{USER-VISIBLE CHANGES}{
+    \itemize{
+      \item modified the check of non-monotonicity to count nearly
+      flat profiles (within floating-point error) as non-monotonic and
+      revert to linear interpolation
+    }
+  }
+}
+
+\section{CHANGES IN VERSION 2.1-0 (2026-10-23)}{
   \subsection{USER-VISIBLE CHANGES}{
     \itemize{
       \item how \code{lme4} searches for model components

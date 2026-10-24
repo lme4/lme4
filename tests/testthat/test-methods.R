@@ -425,6 +425,32 @@ test_that("monotone profile splines (GH #834)", {
   expect_s3_class(attr(p0, "forward")[[1]], "npolySpline")
 })
 
+test_that("near-flat profile steps count as non-monotone", {
+  ## .sig03 profile of 'f2' below as computed on macOS x86_64: the first
+  ## two points are the same fit (.sig01 = 0), so the profile is flat
+  ## there, but their zeta values differ by rounding error (exact tie on
+  ## Linux). Either way there should be no monotone fallback.
+  pp <- data.frame(
+    .sig03 = c(-1, -0.436368102883447406, -0.037236366751181638,
+               0.305483580634138552, 0.565706254340606285,
+               0.746605195339861361, 0.863974827056775307,
+               0.934273985257923489, 0.974980583988875327,
+               0.989999999999999991, 1),
+    .zeta = c(-2.90026877591850640, -2.90026877591850418,
+              -2.65218789639033847, -2.21209794372775770,
+              -1.82294162661934056, -1.46664704156102665,
+              -1.13411151530026499, -0.82712965393363802,
+              -0.53035075182900437, -0.34124420560930957, 0))
+  expect_true(all(diff(pp$.zeta) > 0))
+  form <- .zeta ~ .sig03
+  expect_s3_class(lme4:::profSplines(form, pp)$backward, "error")
+  pp$.zeta[2] <- pp$.zeta[1]
+  expect_s3_class(lme4:::profSplines(form, pp)$backward, "error")
+  ## a genuine (if small) step still gets the monotone fallback
+  pp$.zeta[2] <- pp$.zeta[1] + 1e-6
+  expect_false(inherits(lme4:::profSplines(form, pp)$backward, "error"))
+})
+
 if (testLevel>1) {
 ## slow (~40 s): profiling the correlation
 test_that("confint.thpr uses the right bounds for a subset of parameters", {

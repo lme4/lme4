@@ -635,8 +635,13 @@ monoHermiteSpline <- function(x, y, formula) {
 ## monotone points can still have a negative slope at a knot, which
 ## backSpline() inverts into a wildly wrong backward spline (GH #834).
 ## When the natural splines aren't monotone but the profile points are,
-## use monotone Hermite splines instead.
-profSplines <- function(form, data) {
+## use monotone Hermite splines instead. Steps in zeta smaller than
+## 'flat.tol' (relative to max |zeta|) count as flat, i.e. not monotone:
+## points on a flat stretch of the profile (e.g. a variance parameter
+## stuck at zero) tie exactly on some platforms but differ by rounding
+## error on others (e.g. CRAN macOS x86_64), and the outcome shouldn't
+## depend on that.
+profSplines <- function(form, data, flat.tol = .Machine$double.eps^(2/3)) {
     forspl <- NULL
     bakspl <- tryCatch(backSpline(
         forspl <- interpSpline(form, data, na.action = na.omit)),
@@ -646,8 +651,9 @@ profSplines <- function(form, data) {
         d <- na.omit(data[, c(pname, ".zeta")])
         d <- d[order(d[[pname]]), ]
         dz <- diff(d$.zeta)
+        tol <- flat.tol * max(abs(d$.zeta))
         if (nrow(d) >= 2L && !anyDuplicated(d[[pname]]) &&
-            (all(dz > 0) || all(dz < 0))) {
+            (all(dz > tol) || all(dz < -tol))) {
             forspl <- monoHermiteSpline(d[[pname]], d$.zeta, form)
             bakspl <- monoHermiteSpline(d$.zeta, d[[pname]],
                                         do.call("~", as.list(form)[3:2]))
