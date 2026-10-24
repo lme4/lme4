@@ -25,10 +25,10 @@ jobs:
       OMP_NUM_THREADS: 1
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: '0'
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v7
       - uses: r-lib/actions/setup-pandoc@v2
       - uses: r-lib/actions/setup-r@v2
 #      - name: textshaping dependencies for MacOS
