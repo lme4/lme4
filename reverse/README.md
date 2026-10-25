@@ -337,7 +337,11 @@ submitting the second -- not `--dependency`, per above.
 Each array runs one task per reverse dependency (up to 50 concurrently).
 SLURM logs go to `results*/slurm_JOBID_TASKID.{out,err}`.
 Check results go to `results*/rdepends_PKGNAME.Rcheck/` (nested under
-`old/`/`new/` for `both` mode).
+`old/`/`new/` for `both` mode). Each `.Rcheck` directory is pruned after its
+check to `00check.log`, `00install.out`, example output (`*-Ex.Rout`) and
+failed test output (`*.Rout.fail`), since a full run of unpruned directories
+exceeds the `/scratch` file-count quota; submit with `REVDEP_KEEP_ALL=true`
+in the environment to keep everything.
 
 ### 4. Compare results
 
