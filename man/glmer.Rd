@@ -119,20 +119,33 @@ glmer(formula, data = NULL, family = gaussian
   model (LMM), as fit by \code{\link{lmer}}, this integral can be
   evaluated exactly.  For a GLMM the integral must be approximated.  The
   most reliable approximation for GLMMs
-  is adaptive Gauss-Hermite quadrature,
+  is adaptive Gauss-Hermite quadrature (AGQ),
   at present implemented only for models with
-  a single scalar random effect.  The
-  \code{nAGQ} argument controls the number of nodes in the quadrature
-  formula.  A model with a single, scalar random-effects term could
-  reasonably use up to 25 quadrature points per scalar integral (although
-  the code allows for up to 100 quadrature points).
+  a single random-effects term, which may be scalar (e.g. \code{(1|g)})
+  or vector-valued (e.g. \code{(1+x|g)}, or a structured term such as
+  \code{diag(1+x|g)}), but not for models with several terms (including
+  \code{(1+x||g)}, which expands into several terms) or with nested or
+  crossed grouping factors.  The
+  \code{nAGQ} argument controls the number of nodes per dimension in
+  the quadrature formula.  A model with a single, scalar random-effects
+  term could reasonably use up to 25 quadrature points per scalar
+  integral (although the code allows for up to 100 quadrature points).
 
-%  With vector-valued random effects the complexity of the Gauss-Hermite
-%  quadrature formulas increases dramatically with the dimension.  For a
-%  3-dimensional vector-valued random effect \code{nAGQ=5} requires 93
-%  evaluations of the GLM deviance per evaluation of the approximate GLMM
-%  deviance.  For 20-dimensional evaluations of the GLM deviance per
-%  evaluation of the approximate GLMM deviance.
+  With a \eqn{k}-dimensional vector-valued random effect the default
+  (\code{glmerControl(AGQ_grid = "product")}) is a tensor-product rule
+  with \code{nAGQ^k} nodes, each requiring one evaluation of the GLM
+  deviance per evaluation of the approximate GLMM deviance; e.g. a
+  3-dimensional random effect with \code{nAGQ = 5} needs 125
+  evaluations.  The number of nodes can be reduced by dropping nodes
+  with negligible weight (\code{glmerControl(AGQ_prune = )}) or by
+  using a sparse (Smolyak) grid (\code{glmerControl(AGQ_grid =
+  "sparse")}, available for up to 20 dimensions), which, like the
+  product rule, integrates polynomials of total degree up to
+  \code{2*nAGQ - 1} exactly, but has far fewer nodes (53 rather than 125 for \code{k = 2, nAGQ = 5}).  Because
+  sparse grids have some negative weights they can be less reliable when
+  the integrand is far from Gaussian.  A warning is given when the rule
+  has more than 1000 nodes.
+
 %  The default approximation is the Laplace approximation,
 %  corresponding to \code{nAGQ=1}.
 

@@ -61,7 +61,7 @@ chk.cconv <- function(copt, callingFn) {
 
 ## work around code check since we adjust formals() later
 check.response.not.const <- compDev <- nAGQ0initStep <- tolPwrss <- NULL
-disp_method <- maxPhiIter <- disp_dof_correction <- NULL
+disp_method <- maxPhiIter <- disp_dof_correction <- AGQ_grid <- AGQ_prune <- NULL
 
 merControl <-
     function(optimizer="nloptwrap", # originally Nelder_Mead, then bobyqa ...
@@ -171,12 +171,18 @@ merControl <-
             if (!is.logical(disp_dof_correction) || length(disp_dof_correction) != 1 ||
                 is.na(disp_dof_correction))
                 stop("'disp_dof_correction' must be TRUE or FALSE")
+            AGQ_grid <- match.arg(AGQ_grid, c("product", "sparse"))
+            if (!is.numeric(AGQ_prune) || length(AGQ_prune) != 1 ||
+                is.na(AGQ_prune) || AGQ_prune < 0 || AGQ_prune >= 1)
+                stop("'AGQ_prune' must be a single number in [0, 1)")
             ret <- c(ret, namedList(tolPwrss,
                                     compDev,
                                     nAGQ0initStep,
                                     disp_method,
                                     maxPhiIter,
-                                    disp_dof_correction))
+                                    disp_dof_correction,
+                                    AGQ_grid,
+                                    AGQ_prune))
             ret$checkControl <- c(ret$checkControl,
                                  namedList(check.response.not.const))
         }
@@ -197,7 +203,9 @@ formals(glmerControl) <- c(formals(glmerControl),
                                 check.response.not.const="stop",
                                 disp_method = c("moment", "old/buggy"),
                                 maxPhiIter = 100L,
-                                disp_dof_correction = TRUE)
+                                disp_dof_correction = TRUE,
+                                AGQ_grid = c("product", "sparse"),
+                                AGQ_prune = 0)
                            )
 
 ## @rdname lmerControl

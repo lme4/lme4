@@ -86,7 +86,9 @@ glmerControl(optimizer = c("bobyqa", "Nelder_Mead"),
     check.response.not.const = "stop",
     disp_method = c("moment", "old/buggy"),
     maxPhiIter = 100L,
-    disp_dof_correction = TRUE
+    disp_dof_correction = TRUE,
+    AGQ_grid = c("product", "sparse"),
+    AGQ_prune = 0
  )
 
 nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
@@ -191,6 +193,18 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
     fixed-and-random-effects (\code{X} and \code{Z}) model matrix.
     \code{TRUE} by default; set to \code{FALSE} to reproduce the older,
     uncorrected behaviour.}
+  \item{AGQ_grid}{(GLMMs only) character - the quadrature rule used for
+    adaptive Gauss-Hermite quadrature (\code{nAGQ > 1}) with a
+    vector-valued random effect: \code{"product"} (the default), the
+    tensor product of \code{nAGQ}-point Gauss-Hermite rules
+    (\code{nAGQ^k} nodes for a \eqn{k}-dimensional random effect), or
+    \code{"sparse"}, the sparse grid \code{\link{GQdk}(k, nAGQ)}.  Both
+    are identical to \code{\link{GHrule}(nAGQ)} for scalar random
+    effects.}
+  \item{AGQ_prune}{(GLMMs only) number in [0, 1) - for
+    \code{AGQ_grid = "product"}, drop quadrature nodes whose weight is
+    less than \code{AGQ_prune} times the largest weight; \code{0}
+    (the default) keeps all nodes.}
   \item{check.nlev.gtreq.5}{character - rules for
     checking whether all random effects have >= 5 levels.
     See \code{action}.}

@@ -1480,7 +1480,16 @@ refit.merMod <- function(object,
     }
 
     if (haveGLMM) {
-        GQmat <- GHrule(nAGQ)
+        ## recover the original fit's AGQ rule (see mkMerMod(); falls
+        ## back to the default product rule for older fit objects)
+        agqK  <- if (nAGQ > 1L) length(object@cnms[[1]]) else 1L
+        GQmat <- if (nAGQ > 1L) {
+            v <- dc$dims["AGQsparse"]
+            pr <- dc$cmp["AGQprune"]
+            mkAGQmat(nAGQ, agqK,
+                     type = if (!is.na(v) && v) "sparse" else "product",
+                     prune = if (is.na(pr)) 0 else pr)
+        } else GHrule(nAGQ)
 
         dispProfile <- identical(control$disp_method %||% "moment", "moment")
         maxPhiIter  <- as.integer(control$maxPhiIter %||% 100L)
@@ -1489,7 +1498,7 @@ refit.merMod <- function(object,
                              dispProfile=dispProfile, maxPhiIter=maxPhiIter)
         } else {
             glmerPwrssUpdate(pp,rr, control$tolPwrss, GQmat, maxit=maxit,
-                             grpFac = object@flist[[1]],
+                             grpFac = object@flist[[1]], agqK = agqK,
                              dispProfile=dispProfile, maxPhiIter=maxPhiIter)
         }
     }
@@ -1535,8 +1544,8 @@ refit.merMod <- function(object,
                  lp0 = pp$linPred(1), ## object@resp$eta - baseOffset,
                  baseOffset = baseOffset,
                  pwrssUpdate = glmerPwrssUpdate,
-                 ## save GQmat in the object and use that instead of nAGQ
-                 GQmat = GHrule(nAGQ),
+                 GQmat = GQmat,
+                 agqK = agqK,
                  fac = object@flist[[1]],
                  verbose=verbose,
                  dpars=seq_len(getParLength(object)))
@@ -1750,9 +1759,19 @@ methTitle <- function(dims) { # dims == object@devcomp$dims
                          ## TODO? Use shorter wording here, for (new) 'long = FALSE' argument
                          if((nAGQ <- dims[["nAGQ"]]) == 1)
                              "(Laplace Approximation)"
-                         else
-                             sprintf("(Adaptive Gauss-Hermite Quadrature, nAGQ = %d)",
-                                     nAGQ)
+                         else {
+                             ## node count only shown when it differs
+                             ## from nAGQ (vector-valued, sparse or
+                             ## pruned rules); NA for old fit objects
+                             nn <- dims["AGQnodes"]
+                             sprintf("(Adaptive Gauss-Hermite Quadrature, nAGQ = %d%s)",
+                                     nAGQ,
+                                     if (is.na(nn) || nn == nAGQ) ""
+                                     else sprintf(", %s%d nodes",
+                                                  if (isTRUE(dims["AGQsparse"] == 1L))
+                                                      "sparse grid, " else "",
+                                                  nn))
+                         }
                          }))
 }
 

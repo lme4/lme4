@@ -511,7 +511,12 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc, lme4conv=NULL) {
               ## trips through this integer-mode dims vector like the rest.
               dispProfile = rho$dispProfile %||% NA,
               maxPhiIter = rho$maxPhiIter %||% NA,
-              qEff = rho$qEff %||% NA)
+              qEff = rho$qEff %||% NA,
+              ## AGQ rule (glmerControl(AGQ_grid=, AGQ_prune=)), for
+              ## refit() and print methods; NA unless nAGQ > 1
+              AGQsparse = if (isTRUE(rho$nAGQ > 1L))
+                              identical(rho$AGQ_grid, "sparse") else NA,
+              AGQnodes = if (isTRUE(rho$nAGQ > 1L)) nrow(rho$GQmat) else NA)
     storage.mode(dims) <- "integer"
     fac     <- as.numeric(rcl != "nlsResp")
     if (trivial.y <- (length(resp$y)==0)) {
@@ -569,7 +574,8 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc, lme4conv=NULL) {
              sigmaML=sqrt(unname(if (!dims[["useSc"]] || trivial.y) NA else sigmaML)),
              sigmaREML=sqrt(unname(if (rcl!="lmerResp" || trivial.y) NA else
                                    sigmaML*(dims[["n"]]/dims[["nmp"]]))),
-             tolPwrss=rho$tolPwrss)
+             tolPwrss=rho$tolPwrss,
+             AGQprune=if (isTRUE(rho$nAGQ > 1L)) rho$AGQ_prune %||% 0 else NA)
     ## TODO:  improve this hack to get something in frame slot (maybe need weights, etc...)
     if(missing(fr)) fr <- data.frame(resp$y)
     ans <-
