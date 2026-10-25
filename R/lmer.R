@@ -315,7 +315,7 @@ mkdevfun <- function(rho, nAGQ=1L, maxit = if(extends(rho.cld, "nlsResp")) 300L 
     ## (clearly preferred to using globalVariables() !]
     fac <- pp <- resp <- lp0 <- compDev <- dpars <- baseOffset <- tolPwrss <-
         pwrssUpdate <- ## <-- even though it's a function below
-        GQmat <- nlmerAGQ <- mkTheta <- dispProfile <- maxPhiIter <- qEff <- NULL
+        GQmat <- nlmerAGQ <- mkTheta <- dispProfile <- maxPhiIter <- qEff <- agqK <- NULL
 
     ## The deviance function (to be returned, with 'rho' as its environment):
     ff <-
@@ -330,6 +330,9 @@ mkdevfun <- function(rho, nAGQ=1L, maxit = if(extends(rho.cld, "nlsResp")) 300L 
         if (!is.null(cd <- control$ compDev)) rho$compDev <- cd
         if (!is.null(dp <- control$disp_method)) rho$dispProfile <- identical(dp, "moment")
         if (!is.null(mpi <- control$maxPhiIter)) rho$maxPhiIter <- as.integer(mpi)
+        ## random effects per grouping-factor level, for AGQ; set by
+        ## updateGlmerDevfun() / refit(), scalar if absent
+        if (is.null(rho$agqK)) rho$agqK <- 1L
         if (nAGQ == 0L)
             function(par) {
                 resp$updateMu(lp0)
@@ -350,7 +353,8 @@ mkdevfun <- function(rho, nAGQ=1L, maxit = if(extends(rho.cld, "nlsResp")) 300L 
                 offset <- if (length(spars)==0) baseOffset else baseOffset + pp$X %*% spars
                 resp$setOffset(offset)
                 p <- pwrssUpdate(pp, resp, tol=tolPwrss, GQmat=GQmat,
-                                 compDev=compDev, grpFac=fac, maxit=maxit, verbose=verbose,
+                                 compDev=compDev, grpFac=fac, agqK=agqK,
+                                 maxit=maxit, verbose=verbose,
                                  dispProfile=dispProfile, maxPhiIter=maxPhiIter, qEff=qEff)
                 resp$updateWts()
                 p
@@ -433,6 +437,8 @@ RglmerWrkIter <- function(pp, resp, uOnly=FALSE) {
 ## @param GQmat matrix of Gauss-Hermite quad info
 ## @param compDev compute in C++ (as opposed to doing as much as possible in R)
 ## @param grpFac grouping factor (normally found in environment ..)
+## @param agqK number of random effects per level of \code{grpFac}
+##     (columns of the single random-effects term), for AGQ
 ## @param verbose verbosity, of course
 ## @param dispProfile for families with a free dispersion parameter (e.g.
 ##     Gamma), profile it via a nested fixed-point loop around PIRLS
@@ -444,7 +450,8 @@ RglmerWrkIter <- function(pp, resp, uOnly=FALSE) {
 ## @param qEff degrees-of-freedom correction to the moment estimator's
 ##     denominator (\code{glmerControl(disp_dof_correction=TRUE)}; see
 ##     \code{\link{glmerControl}}), or \code{NA_real_} for none
-glmerPwrssUpdate <- function(pp, resp, tol, GQmat, compDev=TRUE, grpFac=NULL, maxit = 70L, verbose=0,
+glmerPwrssUpdate <- function(pp, resp, tol, GQmat, compDev=TRUE, grpFac=NULL, agqK=1L,
+                              maxit = 70L, verbose=0,
                               dispProfile=TRUE, maxPhiIter=100L, qEff=NA_real_) {
     nAGQ <- nrow(GQmat)
     if (compDev) {
@@ -454,7 +461,7 @@ glmerPwrssUpdate <- function(pp, resp, tol, GQmat, compDev=TRUE, grpFac=NULL, ma
                          verbose, dispProfile, as.integer(maxPhiIter), qEff))
         return(.Call(glmerAGQ, pp$ptr(), resp$ptr(),
                      tol, as.integer(maxit),
-                     GQmat, grpFac, verbose,
+                     GQmat, grpFac, as.integer(agqK), verbose,
                      dispProfile, as.integer(maxPhiIter), qEff))
     }
  ### does this show anywhere ??? [i.e. is it ever used in our checks/examples/scripts/vignettes ?
