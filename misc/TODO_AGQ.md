@@ -43,6 +43,14 @@ any width (`(1+x|g)`, `diag(x|g)`, `cs(x|g)`, ...). Quadrature rules come from `
     consistent log-likelihood at the reported phi will sit below the maximum. At finite sample
     sizes we don't know which of dev/n, dev/(n - qEff) or ML gives less bias or lower MSE for phi
     or for the other parameters; that would need a simulation study.
+  - **Simulation study:** `misc/Gamma_GLMM/dispsim/` (see its README; `glmerControl(
+    disp_dof_correction = "n" / "n-p" / "n-q")`). For Gamma `(1|g)`, phi in {0.2, 1, 2} x
+    cluster size {4, 20}: dev/n is biased low at small phi with large q/n (-17%) and high at
+    large phi with small q/n (+24%), which explains the conflicting paramsurvey results. n - q
+    over-corrects in every cell (+4% to +57%). Post-hoc digamma keeps the overfitting bias
+    (-19% in small clusters). Only glmmTMB ML/REML is unbiased for phi everywhere, but glmer
+    dev/n has the best RMSE for the RE sd in small clusters. Suggests not keeping n - q as the
+    default; an effective-df (hat-matrix trace) correction is untried.
   - **To decide before fixing:** either pass the profiled phi to `aic()`/`Laplace()` (giving a
     consistent but non-ML log-likelihood, about 3.4 worse than glmmTMB in the example), or use the
     dof correction only for reporting `sigma()` and keep it out of the likelihood. Either way,
