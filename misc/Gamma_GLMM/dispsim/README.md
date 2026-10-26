@@ -125,3 +125,43 @@ Other observations:
   about 7%.
 - **beta0** is biased low, increasingly with phi and small clusters (2 / 4:
   glmer -0.14 to -0.19, glmmTMB REML -0.11, ML -0.04). Not investigated.
+
+## Next step: effective-df (hat-matrix trace) correction (not yet tried)
+
+phi = dev/(n - edf), with edf = tr(H) for the penalized weighted
+least-squares problem at the converged mode:
+
+edf = ||C_L||_F^2 + ||C_R||_F^2,
+C_L = L^{-1} P Lambda' Z' W^{1/2},  C_R = R_X^{-T} (X' W^{1/2} - R_ZX' C_L)
+
+(the same computation as `hatvalues.merMod()`, `R/lmer.R`). edf runs from p
+(theta -> 0) to rank [X Z] = q (no shrinkage), so it lies between the n - p
+and n - q corrections. For GLMMs W must be the *working* weights
+(`fit@pp$Xwts`, which on this branch already include 1/phi; `getME(fit, "L")`
+is factored with them), not the prior weights `hatvalues.merMod()` uses
+(hence its "may not make sense for GLMMs" warning). edf depends on phi
+through W, so it needs a fixed point.
+
+Implementation options, cheapest first:
+
+1. **Reporting only** (about 20 lines of R in `phi_alt()`): compute edf from
+   the fitted model's `L`, `RX`, `RZX`, `Xwts` and report dev/(n - edf),
+   iterating phi/edf with u fixed. Changes only the reported phi, not theta.
+2. **Approximate in-fit** (R, no C++): refit with `qEff` set to the current
+   edf (via the existing numeric `qEff` hook, `mkGlmerDevfun()` ->
+   `rho$qEff`), recompute edf at the new estimates, repeat until it settles
+   (warm starts; probably 2-4 refits). Affects theta. Approximation: edf is
+   fixed at its value at the final estimates instead of varying with theta
+   during the optimization (not checked).
+3. **Proper C++** (a day or more): compute edf inside `profilePhi()` at each
+   outer phi iteration. C_L needs a solve with L against a q x n right-hand
+   side: trivial when L is diagonal (single scalar RE), but for large or
+   crossed designs possibly much more than PIRLS itself, on every devfun
+   call. Options: compute it once per devfun call after PIRLS converges
+   (edf lags one phi iteration), or a stochastic (Hutchinson) trace
+   estimator. Needs benchmarking on large models (the same scaling concern
+   that moved `computeQEff()` to sparse QR).
+
+Plan: try 1 and 2 in this study first. If the edf correction removes the
+bias in the phi = 0.2, cluster size 4 cell without inflating the others, option 3 is
+worth doing.
