@@ -186,13 +186,15 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
   \item{maxPhiIter}{(GLMMs only) integer - maximum number of outer
     iterations for the \code{disp_method="moment"} nested
     fixed-point loop. Only used when \code{disp_method="moment"}.}
-  \item{disp_dof_correction}{(GLMMs only) logical - for free-dispersion
-    families, apply a degrees-of-freedom correction to the
-    \code{disp_method="moment"} estimator (\code{deviance/(n-q)} instead
-    of \code{deviance/n}), where \code{q} is the rank of the combined
-    fixed-and-random-effects (\code{X} and \code{Z}) model matrix.
-    \code{TRUE} by default; set to \code{FALSE} to reproduce the older,
-    uncorrected behaviour.}
+  \item{disp_dof_correction}{(GLMMs only) logical or character - for
+    free-dispersion families, the denominator of the
+    \code{disp_method="moment"} dispersion estimator: \code{"n-q"}
+    (\code{deviance/(n-q)}, where \code{q} is the rank of the combined
+    fixed-and-random-effects (\code{X} and \code{Z}) model matrix),
+    \code{"n-p"} (\code{deviance/(n-p)}, where \code{p} is the number of
+    fixed-effect parameters), or \code{"n"} (\code{deviance/n}, no
+    correction). \code{TRUE} (the default) is equivalent to \code{"n-q"}
+    and \code{FALSE} to \code{"n"}, the older, uncorrected behaviour.}
   \item{AGQ_grid}{(GLMMs only) character - the quadrature rule used for
     adaptive Gauss-Hermite quadrature (\code{nAGQ > 1}) with a
     vector-valued random effect: \code{"product"} (the default), the

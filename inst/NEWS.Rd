@@ -14,6 +14,12 @@
       the default tensor-product rule, or \code{"sparse"}, a sparse
       grid) and \code{AGQ_prune} control the quadrature rule. Results
       for scalar random effects are unchanged.
+      \item \code{glmerControl(disp_dof_correction=)} now also accepts
+      \code{"n-q"} (equivalent to \code{TRUE}, the default), \code{"n-p"}
+      (dividing the deviance by \code{n} minus the number of
+      fixed-effect parameters) or \code{"n"} (equivalent to
+      \code{FALSE}) as the denominator of the moment-based dispersion
+      estimator for free-dispersion GLMMs.
       \item modified the check of non-monotonicity to count nearly
       flat profiles (within floating-point error) as non-monotonic and
       revert to linear interpolation

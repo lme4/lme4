@@ -148,6 +148,19 @@ test_that("disp_dof_correction defaults to TRUE", {
     expect_false(isTRUE(all.equal(sigma(fit_default), sigma(fit_explicit_off))))
 })
 
+test_that("disp_dof_correction accepts \"n\", \"n-p\" and \"n-q\"", {
+    entry <- dofTestData[["single-scalar"]]
+    fitc <- function(type) glmer(entry$formula, data = entry$data,
+                                 family = gaussian(link = "log"),
+                                 control = glmerControl(disp_dof_correction = type))
+    s <- sapply(c(n = "n", np = "n-p", nq = "n-q"), function(type) sigma(fitc(type)))
+    expect_equal(s[["n"]], sigma(fitc(FALSE)))
+    expect_equal(s[["nq"]], sigma(fitc(TRUE)))
+    ## p < q, so the n-p correction lies strictly between the other two
+    expect_true(s[["n"]] < s[["np"]] && s[["np"]] < s[["nq"]])
+    expect_error(glmerControl(disp_dof_correction = "foo"))
+})
+
 ## computeQEff()'s OOM-avoidance tryCatch (R/modular.R): observed to fail
 ## outright ("QR factorization ... out of memory") for the sparse QR at
 ## q ~ 50000 -- an observation-level random effect (OLRE, one RE level per
