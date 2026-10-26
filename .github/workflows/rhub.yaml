@@ -65,8 +65,11 @@ jobs:
           token: ${{ secrets.RHUB_TOKEN }}
           job-config: ${{ matrix.config.job-config }}
         env:
-          # as for CRAN submissions; else 'checking sizes of PDF files' warns
-          BUILD_ARGS: --compact-vignettes=both
+          # the containers lack the LaTeX packages the vignettes need; these
+          # platforms test compilers/sanitizers/BLAS, and the vignettes are
+          # checked on the other platforms
+          BUILD_ARGS: --no-build-vignettes
+          CHECK_ARGS: --ignore-vignettes
 
   other-platforms:
     needs: setup
@@ -80,6 +83,20 @@ jobs:
 
     steps:
       - uses: r-hub/actions/checkout@v1
+      # LaTeX setup comes before setup-r: on Windows, once R/Rtools were set
+      # up, 'tlmgr install' hung extracting the first package (until the
+      # job time limit); in a clean job it takes seconds
+      # teatimeguest/setup-texlive-action no longer exists (404)
+      - uses: r-lib/actions/setup-tinytex@v2
+      # TinyTeX's tlmgr may be older than the repository it installs from.
+      - name: Update tlmgr
+        timeout-minutes: 15
+        run: tlmgr update --self
+      # Package list: TeX Live packages providing every file loaded by the
+      # preambles of the .Rnw vignettes (plus knitr's framed)
+      - name: Install LaTeX packages for vignettes
+        timeout-minutes: 15
+        run: tlmgr install amsfonts amsmath atbegshi atveryend babel babel-english bigintcalc bitset blkarray cm cm-super ec epstopdf-pkg etoolbox fancyvrb fontname framed gettitlestring graphics graphics-cfg graphics-def grfext hycolor hyperref iftex infwarerr intcalc kvdefinekeys kvoptions kvsetkeys l3kernel latex latexconfig lineno lm ltxcmds natbib pdfescape pdftexcmds refcount rerunfilecheck stringenc thumbpdf tools uniquecounter upquote url xcolor
       - uses: r-hub/actions/setup-r@v1
         with:
           job-config: ${{ matrix.config.job-config }}
@@ -92,15 +109,6 @@ jobs:
         with:
           job-config: ${{ matrix.config.job-config }}
           token: ${{ secrets.RHUB_TOKEN }}
-      # teatimeguest/setup-texlive-action no longer exists (404)
-      - uses: r-lib/actions/setup-tinytex@v2
-      - name: Install LaTeX packages for vignettes
-        # TinyTeX's tlmgr may be older than the repository it installs from.
-        # Package list: TeX Live packages providing every file loaded by the
-        # preambles of the .Rnw vignettes (plus knitr's framed)
-        run: |
-          tlmgr update --self
-          tlmgr install amsfonts amsmath atbegshi atveryend babel babel-english bigintcalc bitset blkarray cm cm-super ec epstopdf-pkg etoolbox fancyvrb fontname framed gettitlestring graphics graphics-cfg graphics-def grfext hycolor hyperref iftex infwarerr intcalc kvdefinekeys kvoptions kvsetkeys l3kernel latex latexconfig lineno lm ltxcmds natbib pdfescape pdftexcmds refcount rerunfilecheck stringenc thumbpdf tools uniquecounter upquote url xcolor
       - uses: r-hub/actions/run-check@v1
         with:
           job-config: ${{ matrix.config.job-config }}

@@ -15,6 +15,8 @@
 ##   REVDEP_LME4     which lme4 version to use: "old" or "new" (default "new")
 ##                   selects /opt/revdep/Library_{old,new}/ as the first
 ##                   entry on .libPaths() so the right lme4 is found first
+##   REVDEP_KEEP_ALL "true" keeps the whole .Rcheck directory instead of
+##                   pruning it to the logs (default "false"; see below)
 
 args <- commandArgs(trailingOnly = TRUE)
 stopifnot("expected one argument: task index" = length(args) >= 1L)
@@ -88,6 +90,39 @@ if (file.exists(rdep_path))
     unlink(rdep_path, recursive = TRUE)  # remove stale results from a previous run
 if (file.exists(std_path))
     file.rename(std_path, rdep_path)
+
+## ---- Prune the .Rcheck directory ------------------------------------------
+## A full .Rcheck directory (unpacked sources, installed package, vignette
+## and test outputs) can hold thousands of files; a full run of ~650
+## packages x old/new then exhausts the file-count quota on /scratch, and
+## once it does, SLURM can no longer create the tasks' log files and every
+## remaining task fails (exit code 0:53). checkChanges.R,
+## checkChanges_detailed.R and grep_problems.sh only read 00check.log and
+## 00install.out; example output and failed test output are kept too, for
+## diagnosing failures. Set REVDEP_KEEP_ALL=true to keep everything.
+keep_all <- tolower(Sys.getenv("REVDEP_KEEP_ALL", "false")) %in% c("true", "1", "yes")
+if (!keep_all && dir.exists(rdep_path)) {
+    all_files <- list.files(rdep_path, recursive = TRUE, all.files = TRUE)
+    keep_re   <- "^00check\\.log$|^00install\\.out$|-Ex\\.Rout$|\\.Rout\\.fail$"
+    keep      <- all_files[grepl(keep_re, all_files) &
+                           !startsWith(all_files, "00_pkg_src/")]
+    save_dir  <- tempfile("keep")
+    for (f in keep) {
+        dir.create(dirname(file.path(save_dir, f)), recursive = TRUE,
+                   showWarnings = FALSE)
+        file.copy(file.path(rdep_path, f), file.path(save_dir, f))
+    }
+    unlink(rdep_path, recursive = TRUE)
+    dir.create(rdep_path)
+    for (f in keep) {
+        dir.create(dirname(file.path(rdep_path, f)), recursive = TRUE,
+                   showWarnings = FALSE)
+        file.copy(file.path(save_dir, f), file.path(rdep_path, f))
+    }
+    unlink(save_dir, recursive = TRUE)
+    cat(sprintf("pruned %s: kept %d of %d files\n",
+                out_name, length(keep), length(all_files)))
+}
 
 ## Always exit 0 so SLURM marks the task COMPLETED regardless of check
 ## outcome; R CMD check results (ERROR/WARNING/NOTE) live in the .Rcheck

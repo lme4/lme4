@@ -165,9 +165,11 @@ configure.vars <- list(
 ## a LinkingTo dependency that was (Rcpp, RcppEigen, TMB, ...) were compiled
 ## against the old headers, so they are reinstalled too.
 ## installed packages, keeping only the copy that loads first when a package
-## is in more than one library
+## is in more than one library. noCache: installed.packages() otherwise
+## re-reads a library only when its top-level directory changes, which an
+## in-place apt/dpkg upgrade doesn't do, so upgraded versions go unseen.
 installed_first <- function() {
-    ip <- installed.packages()
+    ip <- installed.packages(noCache = TRUE)
     ip[!duplicated(ip[, "Package"]), , drop = FALSE]
 }
 changed_since <- function(ver) {

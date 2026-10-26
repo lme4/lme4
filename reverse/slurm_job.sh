@@ -56,6 +56,7 @@ run_one () {
         --bind "${results}:/results" \
         --bind "${CHECK_ONE_R}:/opt/revdep/check_one.R" \
         --env "REVDEP_LME4=${ver}" \
+        --env "REVDEP_KEEP_ALL=${REVDEP_KEEP_ALL:-false}" \
         --env "_R_CHECK_FORCE_SUGGESTS_=false" \
         --env "_R_CHECK_CRAN_INCOMING_=false" \
         --env "R_PROFILE=/dev/null" \
