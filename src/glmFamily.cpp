@@ -201,14 +201,26 @@ namespace glm {
 
 
     //@{
+    // binomial and Poisson aic(): use R's *_raw() densities, which (unlike
+    // Rf_dbinom()/Rf_dpois()) don't round or reject non-integer counts but
+    // evaluate the continuous extension (lgamma() in place of factorials).
+    // Identical to the usual values for integer counts; for non-integer
+    // counts aic(mu) - aic(y) is still the deviance, so the Laplace/AGQ
+    // objective is optimized at the same place as PIRLS (GH #180, #682,
+    // #1011). The single warning for non-integer counts comes from the
+    // family's initialize() (binomial) or mkRespMod() (Poisson).
     double                binomialDist::aic     (const ArrayXd& y, const ArrayXd& n, const ArrayXd& mu,
                                                  const ArrayXd& wt, double dev) const {
         ArrayXd    m((n > 1).any() ? n : wt);
-        ArrayXd   yy((m * y).unaryExpr(Round<double>()));
-        m = m.unaryExpr(Round<double>());
         double ans(0.);
-        for (int i=0; i < mu.size(); ++i)
-            ans += (m[i] <= 0. ? 0. : wt[i]/m[i]) * ::Rf_dbinom(yy[i], m[i], mu[i], true);
+        for (int i=0; i < mu.size(); ++i) {
+            // m * y can miss an integer count by rounding error (y = s/n);
+            // snap such values so integer data give exactly the old results
+            double k = m[i] * y[i], kr = std::round(k);
+            if (std::abs(k - kr) <= 1e-7 * std::max(1., std::abs(k))) k = kr;
+            ans += (m[i] <= 0. ? 0. : wt[i]/m[i]) *
+                ::Rf_dbinom_raw(k, m[i], mu[i], 1. - mu[i], true);
+        }
         return (-2. * ans);
     }
     const ArrayXd         binomialDist::devResid(const ArrayXd& y, const ArrayXd& mu, const ArrayXd& wt) const {
@@ -321,7 +333,7 @@ namespace glm {
     double                 PoissonDist::aic     (const ArrayXd& y, const ArrayXd& n, const ArrayXd& mu,
                                                  const ArrayXd& wt, double dev) const {
         double ans(0.);
-        for (int i = 0; i < mu.size(); ++i) ans += ::Rf_dpois(y[i], mu[i], true) * wt[i];
+        for (int i = 0; i < mu.size(); ++i) ans += ::Rf_dpois_raw(y[i], mu[i], true) * wt[i];
         return (-2. * ans);
     }
     const ArrayXd          PoissonDist::devResid(const ArrayXd& y, const ArrayXd& mu, const ArrayXd& wt) const {

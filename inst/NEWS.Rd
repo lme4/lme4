@@ -19,6 +19,22 @@
       revert to linear interpolation
     }
   }
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item \code{glmer} now handles non-integer responses for the
+      binomial and Poisson families consistently: the log-likelihood
+      uses the continuous extension of the binomial/Poisson density
+      (\code{lgamma()} in place of factorials) rather than rounding the
+      counts (binomial) or returning \code{-Inf} (Poisson). Poisson
+      fits with non-integer responses previously had an infinite
+      objective, so the random-effects parameters were not optimized;
+      binomial fits with non-integer counts optimized the likelihood of
+      the rounded data for \code{nAGQ >= 1} (since 2.1-0, also for
+      \code{nAGQ > 1}). Non-integer Poisson responses now give a single
+      warning, as non-integer binomial counts already did. Results for
+      integer data are unchanged (GH #180, #682, #1011, @avehtari).
+    }
+  }
 }
 
 \section{CHANGES IN VERSION 2.1-0 (2026-10-23)}{
