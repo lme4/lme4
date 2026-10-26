@@ -832,8 +832,14 @@ glFormula <- function(formula, data=NULL, family = gaussian,
 ## be expensive or fail outright (observed: sparse QR out-of-memory at
 ## q ~ 50000) for a family where the answer was always going to be
 ## discarded.
-computeQEff <- function(X, reTrms, enable, family) {
-    if (!isTRUE(enable) || hasNoScale(family)) return(NA_real_)
+##
+## type: "n-q" (rank of [X, Z], as above), "n-p" (rank of X only, the
+## classical fixed-effects-only correction), or "n" (no correction).
+## TRUE/FALSE are accepted as synonyms for "n-q"/"n".
+computeQEff <- function(X, reTrms, type, family) {
+    if (is.logical(type)) type <- if (isTRUE(type)) "n-q" else "n"
+    if (type == "n" || hasNoScale(family)) return(NA_real_)
+    if (type == "n-p") return(as.double(ncol(X))) # X is already full rank
     full <- cbind(X, t(reTrms$Zt))
     ## Matrix::qr() warns ("matrix is structurally rank deficient; using
     ## augmented matrix..." / "computing t(x) as nrow(x) < ncol(x)")
@@ -853,7 +859,7 @@ computeQEff <- function(X, reTrms, enable, family) {
     qEff <- tryCatch(
         unname(suppressWarnings(rankMatrix(full, method = "qr"))[1]),
         error = function(e) {
-            warning("glmerControl(disp_dof_correction=TRUE): computing the ",
+            warning("glmerControl(disp_dof_correction=\"n-q\"): computing the ",
                     "degrees-of-freedom correction failed (", conditionMessage(e),
                     "); proceeding without it.")
             NA_real_

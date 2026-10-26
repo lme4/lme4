@@ -10,6 +10,12 @@
       \item \code{glmer} and \code{lmer} fits are faster: the sparse
       Cholesky factor was computed twice with the same input in each PIRLS
       step and each \code{lmer} deviance evaluation. Results are unchanged.
+      \item \code{glmerControl(disp_dof_correction=)} now also accepts
+      \code{"n-q"} (equivalent to \code{TRUE}, the default), \code{"n-p"}
+      (dividing the deviance by \code{n} minus the number of
+      fixed-effect parameters) or \code{"n"} (equivalent to
+      \code{FALSE}) as the denominator of the moment-based dispersion
+      estimator for free-dispersion GLMMs.
       \item modified the check of non-monotonicity to count nearly
       flat profiles (within floating-point error) as non-monotonic and
       revert to linear interpolation
