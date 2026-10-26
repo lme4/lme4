@@ -1,0 +1,61 @@
+dispsim_g20_n4_shape1_sd0.5.rds
+$nsim
+[1] 100
+
+$ngrp
+[1] 20
+
+$nper
+[1] 4
+
+$shape
+[1] 1
+
+$sd_re
+[1] 0.5
+
+$wall
+[1] 42.85178
+
+
+errors / warnings / singular / mean time (s):
+             errors warnings singular  time
+glmer_n           0        0        6 1.310
+glmer_n-p         0        0        6 1.259
+glmer_n-q         0        2        2 1.405
+glmmTMB_ML        0        0       14 0.344
+glmmTMB_REML      0        0        8 0.300
+
+   param              method true  mean     bias se_bias  rmse   n
+1  beta0             glmer_n  1.0 0.952 -0.04839  0.0174 0.179 100
+2  beta0           glmer_n-p  1.0 0.949 -0.05104  0.0173 0.180 100
+3  beta0           glmer_n-q  1.0 0.924 -0.07572  0.0172 0.187 100
+4  beta0          glmmTMB_ML  1.0 1.003  0.00346  0.0167 0.166 100
+5  beta0        glmmTMB_REML  1.0 0.953 -0.04732  0.0176 0.182 100
+6  beta1             glmer_n  0.5 0.474 -0.02643  0.0140 0.142 100
+7  beta1           glmer_n-p  0.5 0.474 -0.02642  0.0140 0.142 100
+8  beta1           glmer_n-q  0.5 0.474 -0.02615  0.0139 0.141 100
+9  beta1          glmmTMB_ML  0.5 0.474 -0.02643  0.0140 0.142 100
+10 beta1        glmmTMB_REML  0.5 0.474 -0.02641  0.0140 0.142 100
+11 sd_re             glmer_n  0.5 0.409 -0.09139  0.0188 0.208 100
+12 sd_re           glmer_n-p  0.5 0.418 -0.08169  0.0187 0.203 100
+13 sd_re           glmer_n-q  0.5 0.522  0.02187  0.0177 0.177 100
+14 sd_re          glmmTMB_ML  0.5 0.380 -0.11967  0.0213 0.244 100
+15 sd_re        glmmTMB_REML  0.5 0.405 -0.09493  0.0217 0.235 100
+16   phi             glmer_n  1.0 1.061  0.06147  0.0181 0.190 100
+17   phi           glmer_n-p  1.0 1.086  0.08595  0.0185 0.203 100
+18   phi           glmer_n-q  1.0 1.409  0.40902  0.0236 0.472 100
+19   phi          glmmTMB_ML  1.0 1.003  0.00281  0.0139 0.139 100
+20   phi        glmmTMB_REML  1.0 1.014  0.01418  0.0142 0.142 100
+21   phi     glmer_n:digamma  1.0 0.926 -0.07442  0.0143 0.160 100
+22   phi   glmer_n-p:digamma  1.0 0.923 -0.07650  0.0142 0.161 100
+23   phi   glmer_n-q:digamma  1.0 0.908 -0.09185  0.0137 0.165 100
+24   phi   glmer_n:digamma_q  1.0 1.214  0.21426  0.0184 0.282 100
+25   phi glmer_n-p:digamma_q  1.0 1.212  0.21158  0.0183 0.279 100
+26   phi glmer_n-q:digamma_q  1.0 1.192  0.19176  0.0177 0.261 100
+27   phi   glmer_n:pearson_p  1.0 0.845 -0.15533  0.0188 0.243 100
+28   phi glmer_n-p:pearson_p  1.0 0.842 -0.15806  0.0186 0.243 100
+29   phi glmer_n-q:pearson_p  1.0 0.826 -0.17382  0.0175 0.246 100
+30   phi   glmer_n:pearson_q  1.0 1.117  0.11668  0.0248 0.273 100
+31   phi glmer_n-p:pearson_q  1.0 1.113  0.11307  0.0246 0.270 100
+32   phi glmer_n-q:pearson_q  1.0 1.092  0.09224  0.0231 0.248 100
