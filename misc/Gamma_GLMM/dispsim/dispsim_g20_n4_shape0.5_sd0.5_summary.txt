@@ -15,47 +15,57 @@ $sd_re
 [1] 0.5
 
 $wall
-[1] 47.76258
+[1] 19.13262
 
 
 errors / warnings / singular / mean time (s):
-             errors warnings singular  time
-glmer_n           0        0       11 1.454
-glmer_n-p         0        1       10 1.371
-glmer_n-q         0        1        4 1.636
-glmmTMB_ML        0        0       22 0.324
-glmmTMB_REML      0        0       14 0.287
+                   errors warnings singular  time
+glmer_n                 0        0       11 0.466
+glmer_n-p               0        1       10 0.444
+glmer_n-q               0        1        4 0.543
+GLMMadaptive_AGQ1       0        0        0 0.041
+GLMMadaptive_AGQ11      0        2        0 0.345
+glmmTMB_ML              0        0       22 0.062
+glmmTMB_REML            0        0       14 0.049
 
    param              method true  mean     bias se_bias  rmse   n
 1  beta0             glmer_n  1.0 0.859 -0.14124  0.0227 0.266 100
 2  beta0           glmer_n-p  1.0 0.854 -0.14602  0.0227 0.269 100
 3  beta0           glmer_n-q  1.0 0.808 -0.19182  0.0226 0.295 100
-4  beta0          glmmTMB_ML  1.0 0.957 -0.04282  0.0212 0.215 100
-5  beta0        glmmTMB_REML  1.0 0.886 -0.11380  0.0231 0.256 100
-6  beta1             glmer_n  0.5 0.495 -0.00467  0.0159 0.159 100
-7  beta1           glmer_n-p  0.5 0.496 -0.00446  0.0160 0.159 100
-8  beta1           glmer_n-q  0.5 0.497 -0.00255  0.0163 0.162 100
-9  beta1          glmmTMB_ML  0.5 0.494 -0.00649  0.0158 0.157 100
-10 beta1        glmmTMB_REML  0.5 0.494 -0.00593  0.0158 0.157 100
-11 sd_re             glmer_n  0.5 0.490 -0.01038  0.0270 0.268 100
-12 sd_re           glmer_n-p  0.5 0.504  0.00381  0.0270 0.268 100
-13 sd_re           glmer_n-q  0.5 0.656  0.15575  0.0269 0.309 100
-14 sd_re          glmmTMB_ML  0.5 0.371 -0.12880  0.0301 0.326 100
-15 sd_re        glmmTMB_REML  0.5 0.412 -0.08800  0.0299 0.310 100
-16   phi             glmer_n  2.0 2.366  0.36574  0.0389 0.533 100
-17   phi           glmer_n-p  2.0 2.421  0.42095  0.0397 0.578 100
-18   phi           glmer_n-q  2.0 3.142  1.14169  0.0502 1.246 100
-19   phi          glmmTMB_ML  2.0 1.992 -0.00759  0.0257 0.256 100
-20   phi        glmmTMB_REML  2.0 2.013  0.01318  0.0259 0.258 100
-21   phi     glmer_n:digamma  2.0 1.876 -0.12352  0.0270 0.296 100
-22   phi   glmer_n-p:digamma  2.0 1.873 -0.12715  0.0269 0.296 100
-23   phi   glmer_n-q:digamma  2.0 1.843 -0.15687  0.0257 0.300 100
-24   phi   glmer_n:digamma_q  2.0 2.442  0.44157  0.0349 0.562 100
-25   phi glmer_n-p:digamma_q  2.0 2.437  0.43687  0.0347 0.557 100
-26   phi glmer_n-q:digamma_q  2.0 2.398  0.39846  0.0332 0.518 100
-27   phi   glmer_n:pearson_p  2.0 1.650 -0.35039  0.0309 0.466 100
-28   phi glmer_n-p:pearson_p  2.0 1.644 -0.35598  0.0305 0.468 100
-29   phi glmer_n-q:pearson_p  2.0 1.609 -0.39120  0.0272 0.476 100
-30   phi   glmer_n:pearson_q  2.0 2.181  0.18084  0.0409 0.445 100
-31   phi glmer_n-p:pearson_q  2.0 2.173  0.17345  0.0403 0.437 100
-32   phi glmer_n-q:pearson_q  2.0 2.127  0.12689  0.0360 0.380 100
+4  beta0   GLMMadaptive_AGQ1  1.0 1.123  0.12271  0.0231 0.260 100
+5  beta0  GLMMadaptive_AGQ11  1.0 0.953 -0.04674  0.0211 0.215 100
+6  beta0          glmmTMB_ML  1.0 0.957 -0.04282  0.0212 0.215 100
+7  beta0        glmmTMB_REML  1.0 0.886 -0.11380  0.0231 0.256 100
+8  beta1             glmer_n  0.5 0.495 -0.00467  0.0159 0.159 100
+9  beta1           glmer_n-p  0.5 0.496 -0.00446  0.0160 0.159 100
+10 beta1           glmer_n-q  0.5 0.497 -0.00255  0.0163 0.162 100
+11 beta1   GLMMadaptive_AGQ1  0.5 0.522  0.02163  0.0174 0.175 100
+12 beta1  GLMMadaptive_AGQ11  0.5 0.494 -0.00614  0.0158 0.157 100
+13 beta1          glmmTMB_ML  0.5 0.494 -0.00649  0.0158 0.157 100
+14 beta1        glmmTMB_REML  0.5 0.494 -0.00593  0.0158 0.157 100
+15 sd_re             glmer_n  0.5 0.490 -0.01038  0.0270 0.268 100
+16 sd_re           glmer_n-p  0.5 0.504  0.00381  0.0270 0.268 100
+17 sd_re           glmer_n-q  0.5 0.656  0.15575  0.0269 0.309 100
+18 sd_re   GLMMadaptive_AGQ1  0.5 0.802  0.30237  0.0149 0.337 100
+19 sd_re  GLMMadaptive_AGQ11  0.5 0.415 -0.08466  0.0260 0.272 100
+20 sd_re          glmmTMB_ML  0.5 0.371 -0.12880  0.0301 0.326 100
+21 sd_re        glmmTMB_REML  0.5 0.412 -0.08800  0.0299 0.310 100
+22   phi             glmer_n  2.0 2.366  0.36574  0.0389 0.533 100
+23   phi           glmer_n-p  2.0 2.421  0.42095  0.0397 0.578 100
+24   phi           glmer_n-q  2.0 3.142  1.14169  0.0502 1.246 100
+25   phi   GLMMadaptive_AGQ1  2.0 1.664 -0.33606  0.0214 0.398 100
+26   phi  GLMMadaptive_AGQ11  2.0 1.987 -0.01304  0.0257 0.256 100
+27   phi          glmmTMB_ML  2.0 1.992 -0.00759  0.0257 0.256 100
+28   phi        glmmTMB_REML  2.0 2.013  0.01318  0.0259 0.258 100
+29   phi     glmer_n:digamma  2.0 1.876 -0.12352  0.0270 0.296 100
+30   phi   glmer_n-p:digamma  2.0 1.873 -0.12715  0.0269 0.296 100
+31   phi   glmer_n-q:digamma  2.0 1.843 -0.15687  0.0257 0.300 100
+32   phi   glmer_n:digamma_q  2.0 2.442  0.44157  0.0349 0.562 100
+33   phi glmer_n-p:digamma_q  2.0 2.437  0.43687  0.0347 0.557 100
+34   phi glmer_n-q:digamma_q  2.0 2.398  0.39846  0.0332 0.518 100
+35   phi   glmer_n:pearson_p  2.0 1.650 -0.35039  0.0309 0.466 100
+36   phi glmer_n-p:pearson_p  2.0 1.644 -0.35598  0.0305 0.468 100
+37   phi glmer_n-q:pearson_p  2.0 1.609 -0.39120  0.0272 0.476 100
+38   phi   glmer_n:pearson_q  2.0 2.181  0.18084  0.0409 0.445 100
+39   phi glmer_n-p:pearson_q  2.0 2.173  0.17345  0.0403 0.437 100
+40   phi glmer_n-q:pearson_q  2.0 2.127  0.12689  0.0360 0.380 100
