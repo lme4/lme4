@@ -49,8 +49,27 @@ fit_all <- function(dd, form = y ~ x + (1 | g)) {
                 wrap("glmmTMB_ML", glmmTMB(form, dd, Gamma(link = "log"),
                                            control = glmmTMBControl(parallel = 1))),
                 wrap("glmmTMB_REML", glmmTMB(form, dd, Gamma(link = "log"), REML = TRUE,
-                                             control = glmmTMBControl(parallel = 1))))
+                                             control = glmmTMBControl(parallel = 1))),
+                ## nAGQ = 1 is not a usable Laplace approximation in GLMMadaptive
+                ## (beta0 off by about -0.5 here); nAGQ = 11 (the default) is
+                ## effectively exact ML
+                wrap("GLMMadaptive_AGQ11", ga_fit(form, dd, nAGQ = 11)),
+                wrap("GLMMadaptive_AGQ1", ga_fit(form, dd, nAGQ = 1)))
     do.call(rbind, lapply(res, extract_row))
+}
+
+## For family "Gamma", mixed_model() always gets starting betas from
+## glm.fit(family = Gamma()), with the inverse link: on the wrong scale for
+## the log-link model, and it fails outright ("no valid set of coefficients")
+## on 10-50% of these data sets. Renaming the family sends it down the
+## user-defined-family path (same log_dens and score functions), where a family
+## passed as initial_values$betas sets the link of the starting glm.
+ga_fit <- function(form, dd, nAGQ) {
+    fam <- GLMMadaptive::Gamma.fam()
+    fam$family <- "Gamma (log-link start)"
+    GLMMadaptive::mixed_model(reformulas::nobars(form), random = ~ 1 | g, data = dd,
+                              family = fam, n_phis = 1, nAGQ = nAGQ,
+                              initial_values = list(betas = Gamma(link = "log")))
 }
 
 extract_row <- function(r) {
@@ -67,6 +86,14 @@ extract_row <- function(r) {
         out$logLik <- c(logLik(f))
         out$singular <- isSingular(f)
         out <- cbind(out, phi_alt(f))
+    } else if (inherits(f, "MixMod")) {
+        out[c("beta0", "beta1")] <- fixef(f)
+        out$sd_re <- sqrt(f$D[1, 1])
+        out$phi <- exp(-f$phis[[1]])            # GLMMadaptive Gamma: phis = log(shape)
+        out$logLik <- c(logLik(f))
+        out$singular <- out$sd_re < 1e-4
+        if (!f$converged) out$warn <- paste(c(out$warn[out$warn != ""], "not converged"),
+                                            collapse = " | ")
     } else {
         out[c("beta0", "beta1")] <- fixef(f)$cond
         out$sd_re <- sqrt(VarCorr(f)$cond$g[1, 1])

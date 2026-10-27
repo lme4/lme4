@@ -18,6 +18,11 @@ offset in `misc/TODO_AGQ.md` (the deviance uses two different phi values).
 - `summarize_dispsim.R`: `Rscript summarize_dispsim.R dispsim_<setup>.rds`:
   failure counts, timing, and bias / SE(bias) / RMSE per method and parameter.
 - `dispsim_<setup>_summary.txt`: saved output of `summarize_dispsim.R`.
+- `plot_dispsim.R`: `Rscript plot_dispsim.R` -> `dispsim_bias.png`,
+  `dispsim_rmse.png`: relative bias and relative RMSE (+/- 2 SE; SE(RMSE) by
+  the delta method) of beta0, beta1, RE sd and phi, by method, true phi and
+  cluster size. Reporting-only phi estimators are shown for `glmer_n` only;
+  `GLMMadaptive_AGQ1` is omitted.
 
 ## Design
 
@@ -28,6 +33,22 @@ Gamma(log), `y ~ x + (1|g)`, x ~ N(0,1), beta = (1, 0.5). Methods:
   PIRLS, q = rank of [X Z]. The corrected fits are warm-started from `glmer_n`
   (this saves little time: about 4.1 vs 4.3 s per fit).
 - `glmmTMB_ML`, `glmmTMB_REML`.
+- `GLMMadaptive_AGQ11`, `GLMMadaptive_AGQ1`: `mixed_model()` with 11 (the
+  default) or 1 adaptive Gauss-Hermite points. phi = 1/shape is a parameter
+  of the marginal likelihood (Newton steps on its exact score in the EM
+  phase, then joint `optim` with beta and D), so this is ML like glmmTMB but
+  with an (effectively) exact integral rather than Laplace. Two GLMMadaptive
+  problems (0.9.7; also in GitHub 0.9-8):
+  - For Gamma, starting betas always come from `glm.fit(family = Gamma())`
+    (inverse link), which fails ("no valid set of coefficients") on 10-50%
+    of these data sets; user `initial_values` don't help because that
+    `glm.fit` runs first (cf. GLMMadaptive issue #55). `ga_fit()` renames the
+    family so it takes the user-defined-family path (same likelihood) and
+    passes `initial_values = list(betas = Gamma(link = "log"))`.
+  - `nAGQ = 1` is not Laplace: beta0 is off by +0.12 to +0.27 (and +0.25 for
+    a simple Poisson GLMM), probably because the quadrature setup
+    (`GH$log_dets` etc.) is held fixed within each `optim` call, dropping the
+    d log|H| / d beta term. Kept in the .rds files, left out of the plots.
 - Reporting-only phi alternatives, computed after each glmer fit at its
   conditional means (theta and beta unchanged): `digamma` (conditional ML
   given mu, `log(nu) - digamma(nu) = D/(2n)`, phi = 1/nu), `pearson_p`
@@ -77,8 +98,9 @@ singular fits. Full output in `dispsim_g20_n20_shape0.5_sd0.5_summary.txt`.
 ### Factorial: phi x cluster size, 2026-10-26
 
 `run_factorial.sh`: phi in {0.2, 1, 2} (shape 5, 1, 0.5) x cluster size in
-{4, 20}, 20 clusters, RE sd 0.5, 100 replicates per cell (about 9 minutes
-in total on 12 workers). q/n = 21/80 = 0.26 for cluster size 4 (close to epil2's
+{4, 20}, 20 clusters, RE sd 0.5, 100 replicates per cell (about 3 minutes
+in total on 12 workers; rerun with the GLMMadaptive arms, other results
+unchanged). q/n = 21/80 = 0.26 for cluster size 4 (close to epil2's
 0.28) and 21/400 = 0.05 for 20. Adds `phi_digamma_q` (digamma with D/(2(n - q))).
 Combined table: `Rscript combine_dispsim.R` -> `dispsim_combined_summary.csv`
 (long format, relative bias / SE / relative RMSE). Per-cell output in
@@ -96,6 +118,7 @@ phi, relative bias (SE about 0.01-0.03):
 | digamma, n-q | +0.09 | +0.21 | +0.22 | +0.01 | +0.01 | +0.03 |
 | Pearson, n-q | +0.05 | +0.12 | +0.09 | -0.01 | -0.03 | -0.05 |
 | glmmTMB ML | +0.00 | +0.00 | -0.00 | -0.00 | -0.00 | +0.00 |
+| GLMMadaptive AGQ(11) | +0.00 | +0.00 | -0.01 | -0.00 | -0.00 | +0.00 |
 
 (Reporting-only rows shown for the `glmer_n` fit; they hardly depend on
 which glmer arm they come from.)
@@ -125,6 +148,22 @@ Other observations:
   about 7%.
 - **beta0** is biased low, increasingly with phi and small clusters (2 / 4:
   glmer -0.14 to -0.19, glmmTMB REML -0.11, ML -0.04). Not investigated.
+- **GLMMadaptive AGQ(11) vs glmmTMB ML** (same estimator, AGQ vs Laplace
+  integral): phi and beta agree in every cell, so the Laplace approximation
+  costs nothing there. The RE sd differs only in small clusters: relative
+  bias / RMSE at 1 / 4 -0.20 / 0.42 (AGQ) vs -0.24 / 0.49 (Laplace), at
+  2 / 4 -0.17 / 0.54 vs -0.26 / 0.65. About half of that gap is an
+  artifact: where glmmTMB is singular (14 and 22 of 100), GLMMadaptive
+  stops at sd 0.06-0.15 (mean about 0.10) with a logLik 0.03-0.08 *lower*
+  than glmmTMB's (exact at sd = 0), i.e. short of the boundary optimum, so
+  it reports 0 singular fits. The rest is real: in non-singular
+  replicates AGQ gives larger sd (paired difference +0.009 +/- 0.002 at
+  1 / 4, +0.029 +/- 0.007 at 2 / 4), so some of glmmTMB's RE-sd bias in
+  small clusters is Laplace error.
+- Figures: `dispsim_bias.png`, `dispsim_rmse.png`. The +/- 2 SE bars are
+  marginal; methods are fitted to the same data sets, so differences between
+  methods are much more precise than overlapping bars suggest (e.g. beta1,
+  where all methods move together).
 
 ## Next step: effective-df (hat-matrix trace) correction (not yet tried)
 
