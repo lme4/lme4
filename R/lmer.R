@@ -2301,7 +2301,9 @@ vcov_full <- function(object, s = sigma(object)) {
     Lambdat <- getME(object, "Lambdat")
 
     RXtinv <- solve(t(RX))
-    LinvLambdat <- solve(L, Lambdat, system = "L")
+    ## L is the factor of P (Lambda'Z'WZ Lambda + I) P': apply P before
+    ## solving, as is done for RZX and in hatvalues.merMod() (GH #1013)
+    LinvLambdat <- solve(L, solve(L, Lambdat, system = "P"), system = "L")
     Minv <- s * rbind(
                     cbind(LinvLambdat,
                           Matrix(0, nrow = nrow(L), ncol = ncol(RX))),
