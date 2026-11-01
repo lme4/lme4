@@ -28,8 +28,8 @@
       integer data are unchanged (GH #180, #682, #1011, @avehtari).
       \item \code{vcov(., full = TRUE)}, and hence the standard errors
       from \code{predict(., se.fit = TRUE)}, now apply the fill-reducing
-      permutation of the sparse Cholesky factor. They were wrong
-      whenever that permutation is not the identity, as is typical in
+      permutation of the sparse Cholesky factor. They could be wrong
+      when that permutation was not the identity, as is typical in
       models with more than one random-effects term (nested or
       crossed); in the examples of the issue the standard errors were
       off by factors of up to 4. Fits whose permutation is the
