@@ -832,8 +832,14 @@ glFormula <- function(formula, data=NULL, family = gaussian,
 ## be expensive or fail outright (observed: sparse QR out-of-memory at
 ## q ~ 50000) for a family where the answer was always going to be
 ## discarded.
-computeQEff <- function(X, reTrms, enable, family) {
-    if (!isTRUE(enable) || hasNoScale(family)) return(NA_real_)
+##
+## type: "n-q" (rank of [X, Z], as above), "n-p" (rank of X only, the
+## classical fixed-effects-only correction), or "n" (no correction).
+## TRUE/FALSE are accepted as synonyms for "n-q"/"n".
+computeQEff <- function(X, reTrms, type, family) {
+    if (is.logical(type)) type <- if (isTRUE(type)) "n-q" else "n"
+    if (type == "n" || hasNoScale(family)) return(NA_real_)
+    if (type == "n-p") return(as.double(ncol(X))) # X is already full rank
     full <- cbind(X, t(reTrms$Zt))
     ## Matrix::qr() warns ("matrix is structurally rank deficient; using
     ## augmented matrix..." / "computing t(x) as nrow(x) < ncol(x)")
@@ -853,7 +859,7 @@ computeQEff <- function(X, reTrms, enable, family) {
     qEff <- tryCatch(
         unname(suppressWarnings(rankMatrix(full, method = "qr"))[1]),
         error = function(e) {
-            warning("glmerControl(disp_dof_correction=TRUE): computing the ",
+            warning("glmerControl(disp_dof_correction=\"n-q\"): computing the ",
                     "degrees-of-freedom correction failed (", conditionMessage(e),
                     "); proceeding without it.")
             NA_real_
@@ -875,7 +881,9 @@ mkGlmerDevfun <- function(fr, X, reTrms, family,
                          compDev = control$compDev,
                          dispProfile = identical(control$disp_method %||% "moment", "moment"),
                          maxPhiIter = as.integer(control$maxPhiIter %||% 100L),
-                         qEff = computeQEff(X, reTrms, control$disp_dof_correction %||% TRUE, family)),
+                         qEff = computeQEff(X, reTrms, control$disp_dof_correction %||% TRUE, family),
+                         AGQ_grid = control$AGQ_grid %||% "product",
+                         AGQ_prune = control$AGQ_prune %||% 0),
                     parent = parent.frame())
     rho$pp <- do.call(merPredD$new,
                       c(reTrms[c("Zt","theta","Lambdat","Lind")],
@@ -988,11 +996,12 @@ updateGlmerDevfun <- function(devfun, reTrms, nAGQ = 1L){
     stopifnot(length(nAGQ <- as.integer(nAGQ)) == 1L,
               0L <= nAGQ, nAGQ <= 100L)
     if (nAGQ > 1L) {
-        if (length(reTrms$flist) != 1L || length(reTrms$cnms[[1]]) != 1L)
-            stop("nAGQ > 1 is only available for models with a single, scalar random-effects term")
+        if (length(reTrms$flist) != 1L || length(reTrms$cnms) != 1L)
+            stop("nAGQ > 1 is only available for models with a single random-effects term")
     }
     rho <- environment(devfun)
     rho$nAGQ       <- nAGQ
+    rho$agqK       <- length(reTrms$cnms[[1]])
     rho$lower      <- c(reTrms$lower,
                         rep(-Inf, length(rho$pp$beta0)))
     rho$upper      <- c(reTrms$upper %||% rep(Inf, length(reTrms$lower)),
@@ -1000,7 +1009,11 @@ updateGlmerDevfun <- function(devfun, reTrms, nAGQ = 1L){
     rho$lp0        <- rho$pp$linPred(1)
     rho$dpars      <- seq_along(reTrms$lower)
     rho$baseOffset <- forceCopy(rho$resp$offset) # forcing a copy (!)
-    rho$GQmat      <- GHrule(nAGQ)
+    rho$GQmat      <- if (nAGQ > 1L)
+                          mkAGQmat(nAGQ, rho$agqK,
+                                   type = rho$AGQ_grid %||% "product",
+                                   prune = rho$AGQ_prune %||% 0)
+                      else GHrule(nAGQ)
     rho$fac        <- reTrms$flist[[1]]
     mkdevfun(rho, nAGQ)  # does this attach rho to devfun??
 }

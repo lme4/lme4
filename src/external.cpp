@@ -5,6 +5,8 @@
 // This file is part of lme4.
 
 #include <iomanip>
+#include <limits>
+#include <vector>
 #include "predModule.h"
 #include "respModule.h"
 #include "optimizer.h"
@@ -531,7 +533,8 @@ extern "C" {
     // function used below in glmerAGQ
     //
     // fac: mapped integer vector indicating the factor levels
-    // u: current conditional modes
+    // u: current conditional modes (level-major: level j owns
+    // entries j*k, ..., j*k + k - 1)
     // devRes: current deviance residuals (i.e. similar to results of
     // family()$dev.resid, but computed in glmFamily.cpp)
     // phi: current (profiled, or fixed at 1 for fixed-dispersion
@@ -540,13 +543,17 @@ extern "C" {
     // profilePhi()'s use in glmerLaplace()); the u^2 penalty is left
     // unscaled, same split as everywhere else in this fix. phi==1
     // reproduces the original formula exactly.
-    static Ar1 devcCol(const MiVec& fac, const Ar1& u, const Ar1& devRes, double phi) {
-        Ar1  ans(u.square());
+    // k: number of random effects per level (columns of the term)
+    static Ar1 devcCol(const MiVec& fac, const Ar1& u, const Ar1& devRes, double phi,
+                       int k) {
+        const int nlev(u.size() / k);
+        Ar1  ans(nlev);
+        for (int j = 0; j < nlev; ++j) ans[j] = u.segment(j * k, k).square().sum();
         for (int i = 0; i < devRes.size(); ++i) ans[fac[i] - 1] += devRes[i] / phi;
-        // return: vector the size of u (i.e. length = number of
-        // grouping factor levels), containing the squared conditional
-        // modes plus the sum of the (phi-reweighted) deviance residuals
-        // associated with each level
+        // return: vector of length = number of grouping factor
+        // levels, containing the squared length of each level's
+        // conditional modes plus the sum of the (phi-reweighted)
+        // deviance residuals associated with each level
         return ans;
     }
 
@@ -554,15 +561,28 @@ extern "C" {
 
     // tol: tolerance for pirls
     // maxit: maximum number of pirls iterations
-    // GQmat: matrix of quadrature weights
+    // GQmat: quadrature rule for a k-dimensional standard normal, one
+    //   node per row: columns 0..k-1 are the node coordinates, column k
+    //   the weight (weights sum to 1; may be negative for sparse grids)
+    //   and column k+1 the log standard-normal density at the node
+    //   (summed over dimensions)
     // fac: grouping factor (gets converted to mapped integer below)
+    // k: number of random effects per level of fac (columns of the
+    //   single random-effects term)
     // dispProfile, maxPhiIter, qEff: as in glmerLaplace() -- see
     // profilePhi(). (qEff will always reduce to the trivial K=1 case
     // here in practice, since AGQ is only reachable for a single
-    // scalar random-effects term -- see the "AGQ only defined for..."
-    // check below -- but there's no need to special-case that.)
-    SEXP glmerAGQ(SEXP pp_, SEXP rp_, SEXP tol_, SEXP maxit_, SEXP GQmat_, SEXP fac_, SEXP verbose_,
-                  SEXP dispProfile_, SEXP maxPhiIter_, SEXP qEff_) {
+    // random-effects term, but there's no need to special-case that.)
+    //
+    // The penalized-deviance Hessian Lambda'Z'WZLambda + I is block-
+    // diagonal with one k x k block H_j = R_j'R_j per level. Each level's
+    // integral is evaluated on the nodes u_j = uhat_j + R_j^{-1} z; the
+    // log|R_j|^2 terms are already part of ldL2, so only the quadrature
+    // correction to the Laplace approximation is accumulated here. All
+    // levels are conditionally independent, so each node needs a single
+    // evaluation of the linear predictor for all levels at once.
+    SEXP glmerAGQ(SEXP pp_, SEXP rp_, SEXP tol_, SEXP maxit_, SEXP GQmat_, SEXP fac_, SEXP k_,
+                  SEXP verbose_, SEXP dispProfile_, SEXP maxPhiIter_, SEXP qEff_) {
         BEGIN_RCPP;
 
         XPtr<glmResp>     rp(rp_);
@@ -570,6 +590,7 @@ extern "C" {
         const MiVec      fac(as<MiVec>(fac_)); // convert grouping
                                                // factor to mapped
                                                // integer
+        const int          k(::Rf_asInteger(k_));
         double           tol(::Rf_asReal(tol_));
         int            maxit(::Rf_asInteger(maxit_));
         double          verb(::Rf_asReal(verbose_));
@@ -578,6 +599,15 @@ extern "C" {
         double         qEff(::Rf_asReal(qEff_));
         if (fac.size() != rp->mu().size())
             throw std::invalid_argument("size of fac must match dimension of response vector");
+        const MMat     GQmat(as<MMat>(GQmat_));
+        if (k < 1 || GQmat.cols() != k + 2)
+            throw std::invalid_argument("GQmat must have k + 2 columns");
+        const int          q(pp->u0().size());
+        if (q % k != 0)
+            throw std::invalid_argument("AGQ only defined for a single random-effects term");
+        const int       nlev(q / k);
+        if (fac.minCoeff() < 1 || fac.maxCoeff() > nlev)
+            throw std::invalid_argument("grouping factor does not match the random effects");
 
         // Find the conditional mode(s), profiling phi via the same
         // nested fixed-point loop glmerLaplace() uses for free-
@@ -592,29 +622,73 @@ extern "C" {
                     // conditional modes plus the sum of the (phi-
                     // reweighted) deviance residuals associated with
                     // each level
-        const Ar1      devc0(devcCol(fac, pp->u(1.), rp->devResid(), phi));
-        const unsigned int q(pp->u0().size());
-        if (pp->L().factor()->nzmax !=  q)
-            throw std::invalid_argument("AGQ only defined for a single scalar random-effects term");
-        const Ar1         sd(MAr1((double*)pp->L().factor()->x, q).inverse());
+        const Ar1      devc0(devcCol(fac, pp->u(1.), rp->devResid(), phi, k));
 
-        const MMat     GQmat(as<MMat>(GQmat_));
-        Ar1             mult(q);
+        // Per-level blocks H_j of Lambda'Z'WZLambda + I, accumulated
+        // directly from the columns (observations) of LamtUt =
+        // Lambda'Z'W^{1/2} (current after profilePhi()), rather than read
+        // from the CHOLMOD factor (whose layout depends on the
+        // fill-reducing permutation). Rinv[j] = R_j^{-1}, H_j = R_j'R_j.
+        std::vector<Mat>  Rinv(nlev, Mat::Identity(k, k));
+        {
+            const merPredD::MSpMatrixd& LamtUt(pp->LamtUt());
+            for (int i = 0; i < LamtUt.outerSize(); ++i) {
+                const int j(fac[i] - 1);
+                Vec v(Vec::Zero(k));
+                for (merPredD::MSpMatrixd::InnerIterator it(LamtUt, i); it; ++it) {
+                    const int r(it.index() - j * k);
+                    if (r < 0 || r >= k) {
+                        if (it.value() != 0)
+                            throw std::invalid_argument("AGQ only defined for a single random-effects term");
+                    } else v[r] = it.value();
+                }
+                Rinv[j].selfadjointView<Eigen::Lower>().rankUpdate(v);
+            }
+            for (int j = 0; j < nlev; ++j) {
+                Eigen::LLT<Mat> llt(Rinv[j].selfadjointView<Eigen::Lower>());
+                if (llt.info() != Eigen::Success)
+                    throw std::runtime_error("AGQ: Cholesky decomposition of Hessian block failed");
+                Rinv[j] = llt.matrixU().solve(Mat::Identity(k, k));
+            }
+        }
 
-        mult.setZero();
+        // Per-level quadrature sums  s_j = sum_i w_i exp(a_ij), held on a
+        // scaled log scale (m_j = running max of a_ij, so that the
+        // returned sum is m_j + log(s_j)) to avoid under/overflow; this
+        // works with negative weights as long as the final s_j > 0.
+        const double  lnorm(k * std::log(sqrt2pi));
+        Ar1   m(Ar1::Constant(nlev, -std::numeric_limits<double>::infinity()));
+        Ar1   s(Ar1::Zero(nlev));
+        Ar1   a(nlev);
+        Vec   delta(q);
         for (int i = 0; i < GQmat.rows(); ++i) {
-            double     zknot(GQmat(i, 0));
-            if (zknot == 0)
-                mult += Ar1::Constant(q, GQmat(i, 1));
+            const Vec  z(GQmat.row(i).head(k).transpose());
+            const double w(GQmat(i, k));
+            if ((z.array() == 0).all())
+                a.setZero(); // exp(-ldnorm(0)) / (2 pi)^(k/2) == 1
             else {
-                pp->setU0(zknot * sd); // to be added to current delu
+                for (int j = 0; j < nlev; ++j)
+                    delta.segment(j * k, k) = Rinv[j] * z;
+                pp->setU0(delta); // to be added to current delu
                 rp->updateMu(pp->linPred(1.));
-                mult += (-0.5 * (devcCol(fac, pp->u(1.), rp->devResid(), phi) - devc0) -
-                         GQmat(i, 2)).exp() * GQmat(i, 1)/sqrt2pi;
+                a = -0.5 * (devcCol(fac, pp->u(1.), rp->devResid(), phi, k) - devc0) -
+                    GQmat(i, k + 1) - lnorm;
+            }
+            for (int j = 0; j < nlev; ++j) {
+                if (a[j] > m[j]) {
+                    s[j] = s[j] * std::exp(m[j] - a[j]) + w;
+                    m[j] = a[j];
+                } else s[j] += w * std::exp(a[j] - m[j]);
             }
         }
         pp->setU0(Vec::Zero(q)); // restore settings from pwrssUpdate;
         rp->updateMu(pp->linPred(1.));
+        if ((s <= 0).any()) {
+            // only possible for rules with negative weights (sparse grids)
+            if (verb > 0)
+                Rcpp::Rcout << "glmerAGQ: non-positive quadrature sum" << std::endl;
+            return ::Rf_ScalarReal(1e10);
+        }
         // devc0.sum() (the raw, phi-free deviance-based term) is
         // replaced by rp->Laplace(ldL2, 0., sqrL) -- the same density-
         // based fit term glmerLaplace() reports, which correctly
@@ -623,7 +697,7 @@ extern "C" {
         // converged mode -- see profilePhi()/misc/Gamma_GLMM/
         // README_Gamma_GLMMs.md) that a bare deviance sum omits.
         return ::Rf_ScalarReal(rp->Laplace(pp->ldL2(), 0., pp->sqrL(1.)) -
-                                2 * std::log(mult.prod()));
+                                2 * (m + s.log()).sum());
         END_RCPP;
     }
 
@@ -1219,7 +1293,7 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(glmFamily_theta,    1),
     CALLDEF(glmFamily_variance, 2),
 
-    CALLDEF(glmerAGQ,           10),
+    CALLDEF(glmerAGQ,           11),
     CALLDEF(glmerLaplace,       9),
 
     CALLDEF(golden_Create,      2),

@@ -333,9 +333,10 @@ $f_{\mc Y,\mc U}(\bm y,\bm u)$.
 Approximating the integral with respect to $\bm u$ of the joint density (evaluated at the observed $\bm y$)
 by the integral of this local quadratic approximation is \emph{Laplace's method}.
 
-For simple models involving scalar random effects from a single random-effects term the multivariate integral
-with respect to $\bm u$ can be factored into a product of scalar integrals, which can be evaluated by
-Gauss-Hermite rules.
+For models with a single random-effects term the multivariate integral
+with respect to $\bm u$ can be factored into a product of low-dimensional integrals, one per level
+of the grouping factor (scalar integrals for scalar random effects, $k$-dimensional integrals for a
+$k$-dimensional vector-valued random effect), which can be evaluated by Gauss-Hermite rules.
 
 %\footnote{The \code{lme4} package supports fitting negative binomial GLMMs,
 %which are an extension of GLMMs; the negative binomial family is within the
@@ -840,9 +841,16 @@ A reasonable strategy for choosing the number of nodes is to re-fit the model wi
 \citep{tuerlinckxStatisticalInferenceGeneralized2006a}; a ``warm-start'' procedure using the parameter estimates from the previous fit as starting values (and using \code{control = glmerControl(nAGQ0initStep = FALSE)} to disable the \code{nAGQ=0} preliminary fit) will speed up this procedure.
 
 At present, AGQ is only available 
-for models with a single scalar random effect. (The \code{GLMMadaptive} package implements
-AGQ for vector-valued random effect models, although it is still restricted to models with
-a single random effect; \cite{rabe-heskethMaximumLikelihoodEstimation2005b} describe methods
+for models with a single random-effects term (scalar or vector-valued).
+For a $k$-dimensional random effect the default rule is a tensor product of $k$ one-dimensional
+Gauss-Hermite rules, with \code{nAGQ}$^k$ nodes; for larger $k$, \code{glmerControl(AGQ\_grid = "sparse")}
+uses a sparse (Smolyak) grid with many fewer nodes.
+Each level's integral is centred at the conditional mode $\tilde{\bm u}_j$ found by PIRLS and scaled by
+the Cholesky factor of the corresponding diagonal block of $\bm\Lambda_\theta^\top\bm Z^\top\bm W\bm Z\bm\Lambda_\theta + \bm I$,
+so that \code{nAGQ = 1} reproduces the Laplace approximation.
+(The \code{GLMMadaptive} package also implements
+AGQ for vector-valued random effect models, likewise restricted to models with
+a single grouping factor; \cite{rabe-heskethMaximumLikelihoodEstimation2005b} describe methods
 for AGQ for models with nested random effects.)
 
 \section{Model fitting}
