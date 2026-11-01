@@ -530,6 +530,44 @@ test_that("prediction standard error", {
   
 })
 
+test_that("vcov(full = TRUE) and se.fit with a permuted Cholesky factor (GH #1013)", {
+  ## joint covariance of (b, beta) from the dense mixed-model equations:
+  ##   sigma^2 T H^{-1} T',  T = blockdiag(Lambda, I),
+  ##   H = [Lambda'Z'WZ Lambda + I, Lambda'Z'WX; X'WZ Lambda, X'WX]
+  dense_vcov_full <- function(fit) {
+    w <- weights(fit, type = "working")
+    X <- getME(fit, "X")
+    Lambda <- as.matrix(getME(fit, "Lambda"))
+    ZL <- as.matrix(getME(fit, "Z")) %*% Lambda
+    q <- ncol(ZL)
+    H <- rbind(cbind(crossprod(ZL, w * ZL) + diag(q), crossprod(ZL, w * X)),
+               cbind(crossprod(X, w * ZL), crossprod(X, w * X)))
+    Tm <- diag(q + ncol(X))
+    Tm[seq_len(q), seq_len(q)] <- Lambda
+    sigma(fit)^2 * Tm %*% solve(H, t(Tm))
+  }
+  cbpp$obs <- seq_len(nrow(cbpp))
+  ## each fit has a fill-reducing permutation that is not the identity
+  fits <- list(
+    nested = lmer(strength ~ 1 + (1 | batch/cask), Pastes),
+    ## unbalanced: in the full Penicillin data the permutation only
+    ## reorders exchangeable plates, so the error does not show there
+    crossed = lmer(diameter ~ 1 + (1 | plate) + (1 | sample),
+                   Penicillin[-c(3, 30, 61, 95, 140), ]),
+    glmm = glmer(cbind(incidence, size - incidence) ~ period +
+                   (1 | herd) + (1 | obs), cbpp, family = binomial))
+  for (nm in names(fits)) {
+    fit <- fits[[nm]]
+    C <- dense_vcov_full(fit)
+    expect_equal(as.matrix(vcov(fit, full = TRUE)), C,
+                 check.attributes = FALSE, tolerance = 1e-8, info = nm)
+    ZX <- cbind(as.matrix(getME(fit, "Z")), getME(fit, "X"))
+    expect_equal(suppressWarnings(predict(fit, se.fit = TRUE))$se.fit,
+                 sqrt(rowSums((ZX %*% C) * ZX)),
+                 check.attributes = FALSE, tolerance = 1e-8, info = nm)
+  }
+})
+
 test_that("NA + re.form = NULL + simulate OK (GH #737)", {
     d <- lme4::sleepstudy
     d$Reaction[1] <- NA
