@@ -7,6 +7,9 @@
 \section{CHANGES IN VERSION 2.1-1}{
   \subsection{USER-VISIBLE CHANGES}{
     \itemize{
+      \item \code{glmer} and \code{lmer} fits are faster: the sparse
+      Cholesky factor was computed twice with the same input in each PIRLS
+      step and each \code{lmer} deviance evaluation. Results are unchanged.
       \item modified the check of non-monotonicity to count nearly
       flat profiles (within floating-point error) as non-monotonic and
       revert to linear interpolation

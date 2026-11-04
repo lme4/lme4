@@ -99,7 +99,7 @@ namespace lme4 {
         void              updateL();
         void         updateLamtUt();
         void            updateRes(const VectorXd&);
-        void           updateXwts(const  ArrayXd&);
+        void           updateXwts(const  ArrayXd&, bool refreshL = true);
     };
 }
 
