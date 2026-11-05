@@ -271,18 +271,41 @@ extern "C" {
         return rp->wrss() + (fac ? pp->sqrL(fac) : pp->u0().squaredNorm());
     }
 
-    static double internal_glmerWrkIter(merPredD *pp, glmResp *rp, bool uOnly) {
+    // resDevOut, if non-NULL, receives rp->resDev() at the updated mean (the
+    // value already needed for the returned penalized deviance), so callers
+    // that need it afterwards need not recompute it.
+    static double internal_glmerWrkIter(merPredD *pp, glmResp *rp, bool uOnly,
+                                        double *resDevOut = NULL) {
         int debug=0; // !=0 to enable
         if (debug) Rcpp::Rcout << "(igWI, pre-updateXwts) Xwts: min: " << 
                        pp->Xwts().minCoeff() << 
                        " sqrtWrkWt: min: " <<
                        rp->sqrtWrkWt().minCoeff() << std::endl;
-        pp->updateXwts(rp->sqrtWrkWt(), false);  // L is refreshed by updateDecomp()
-        if (debug) Rcpp::Rcout << "(igWI) Xwts: min: " << 
-                       pp->Xwts().minCoeff() << 
-                       " max: " << pp->Xwts().maxCoeff() << std::endl;
-        pp->updateDecomp();
-        pp->updateRes(rp->wtWrkResp());
+        // muEta and the working weights depend only on rp's current mean, which is
+        // untouched until updateMu() below, so compute them once for both uses.
+        const Eigen::ArrayXd muEta(rp->muEta());
+        const Eigen::ArrayXd sqrtWrkWt(rp->sqrtWrkWt(muEta));
+        if (uOnly) {
+            // solveU() uses only L and Utr.  VtV, RZX, RX and ldRX2 are not read
+            // by any step of this iteration (the glmer objective does not use
+            // ldRX2 either) and are rebuilt, for the accepted mean, by the full
+            // refresh at the end of profilePhi().  updateL() is what
+            // updateDecomp() would run first, so L is identical.
+            pp->updateXwts(sqrtWrkWt, false, false);
+            if (debug) Rcpp::Rcout << "(igWI) Xwts: min: " <<
+                           pp->Xwts().minCoeff() <<
+                           " max: " << pp->Xwts().maxCoeff() << std::endl;
+            pp->updateL();
+        } else {
+            // updateDecomp() calls updateL(), so skip the duplicate factorization
+            // updateXwts() would otherwise perform on the same Lambdat*Ut.
+            pp->updateXwts(sqrtWrkWt, false);
+            if (debug) Rcpp::Rcout << "(igWI) Xwts: min: " <<
+                           pp->Xwts().minCoeff() <<
+                           " max: " << pp->Xwts().maxCoeff() << std::endl;
+            pp->updateDecomp();
+        }
+        pp->updateRes(rp->wtWrkResp(muEta, sqrtWrkWt));
         if (uOnly) pp->solveU();
         else pp->solve();
         if (debug) {
@@ -302,7 +325,9 @@ extern "C" {
                                 // formula exactly); the ||u||^2 penalty
                                 // (sqrL) is untouched -- see
                                 // misc/README_Gamma_GLMMs.md
-        return rp->resDev() / rp->phi() + pp->sqrL(1.);
+        const double resDev = rp->resDev();
+        if (resDevOut) *resDevOut = resDev;
+        return resDev / rp->phi() + pp->sqrL(1.);
     }
 
     // FIXME: improve verbose output (remove code, even commented,
@@ -316,10 +341,13 @@ extern "C" {
     //       >> length(delb) ...
     //
     // FIXME: sufficient to print just before/after update?
+    // resDevOut, if non-NULL, receives rp->resDev() at the converged mean.
     static void pwrssUpdate(glmResp *rp, merPredD *pp, bool uOnly,
-                            double tol, int maxit, int verbose) {
+                            double tol, int maxit, int verbose,
+                            double *resDevOut = NULL) {
         double oldpdev=std::numeric_limits<double>::max();
         double pdev;
+        double resDev = std::numeric_limits<double>::quiet_NaN();
         int maxstephalfit = 20;
         bool   cvgd = false, verb = verbose > 2, moreverb = verbose > 10;
         int debug=0;
@@ -338,7 +366,7 @@ extern "C" {
                 }
             }
             Vec   olddelu(pp->delu()), olddelb(pp->delb());
-            pdev = internal_glmerWrkIter(pp, rp, uOnly);
+            pdev = internal_glmerWrkIter(pp, rp, uOnly, &resDev);
             if (verb) {
                 Rcpp::Rcout << "pdev=" << pdev << 
                     "; delu_min: " << pp->delu().minCoeff() <<
@@ -347,7 +375,13 @@ extern "C" {
                     "; delb_max: " << pp->delb().maxCoeff() <<
                     std::endl; // if (verb) 
             }
-            if (std::abs((oldpdev - pdev) / pdev) < tol) {cvgd = true; break;}
+            if (std::abs((oldpdev - pdev) / pdev) < tol) {
+                cvgd = true;
+                // no step-halving after this iteration, so resDev belongs to the
+                // mean that is left in rp
+                if (resDevOut) *resDevOut = resDev;
+                break;
+            }
 
             if (ISNAN(pdev) || (pdev > oldpdev)) { 
                 // PWRSS step led to _larger_ deviation, or nan; try step halving
@@ -416,9 +450,12 @@ extern "C" {
     // (non-NA) for models where every random-effects term is a scalar
     // random intercept; see misc/Gamma_GLMM/README_Gamma_GLMMs.md
     // (Gamma_GLMM branch) for the derivation and validation.
+    // resDevOut, if non-NULL, receives rp->resDev() at the accepted mean (unchanged by
+    // the factorization refresh at the end), so glmerLaplace() can pass it on to
+    // Laplace() instead of recomputing the deviance residuals.
     static bool profilePhi(glmResp *rp, merPredD *pp, bool uOnly, double tol,
                             int maxit, int verb, bool dispProfile, int maxPhiIter,
-                            double qEff) {
+                            double qEff, double *resDevOut = NULL) {
         if (rp->hasFreeDispersion() && dispProfile) {
             double phi = 1.;
             double lastGoodPhi = 1.;
@@ -428,7 +465,7 @@ extern "C" {
             for (int outer = 0; outer < maxPhiIter; ++outer) {
                 rp->setPhi(phi);
                 try {
-                    pwrssUpdate(rp, pp, uOnly, tol, maxit, verb);
+                    pwrssUpdate(rp, pp, uOnly, tol, maxit, verb, resDevOut);
                 } catch (std::runtime_error&) {
                     // A candidate phi destabilized this PIRLS call enough to trip its
                     // own step-halving safeguard (can happen transiently for extreme/
@@ -453,7 +490,7 @@ extern "C" {
                     phi = lastGoodPhi;
                     rp->setPhi(phi);
                     try {
-                        pwrssUpdate(rp, pp, uOnly, tol, maxit, verb);
+                        pwrssUpdate(rp, pp, uOnly, tol, maxit, verb, resDevOut);
                     } catch (std::runtime_error&) {
                         // Even that safe fallback failed for this exact candidate
                         // theta/beta. Report a large but finite deviance instead of
@@ -488,7 +525,7 @@ extern "C" {
             // the final reported deviance (via aic()'s own internal dev/n
             // plug-in) is dispersion-aware. Kept for backward
             // compatibility -- see glmerControl(disp_method=).
-            pwrssUpdate(rp, pp, uOnly, tol, maxit, verb);
+            pwrssUpdate(rp, pp, uOnly, tol, maxit, verb, resDevOut);
         }
         // PIRLS updates mu after forming the working factorization. Rebuild
         // it at the accepted mean and final phi before Laplace or AGQ uses it.
@@ -522,9 +559,13 @@ extern "C" {
         int  maxPhiIter(::Rf_asInteger(maxPhiIter_));
         double    qEff(::Rf_asReal(qEff_));
 
-        if (!profilePhi(rp, pp, uOnly, tol, maxit, verb, dispProfile, maxPhiIter, qEff))
+        // NaN unless profilePhi() ran a PIRLS solve (e.g. maxPhiIter == 0 skips it)
+        double resDev = std::numeric_limits<double>::quiet_NaN();
+        if (!profilePhi(rp, pp, uOnly, tol, maxit, verb, dispProfile, maxPhiIter, qEff, &resDev))
             return ::Rf_ScalarReal(1e10);
-        return ::Rf_ScalarReal(rp->Laplace(pp->ldL2(), pp->ldRX2(), pp->sqrL(1.)));
+        if (ISNAN(resDev))
+            return ::Rf_ScalarReal(rp->Laplace(pp->ldL2(), pp->ldRX2(), pp->sqrL(1.)));
+        return ::Rf_ScalarReal(rp->LaplaceAtDev(pp->ldL2(), pp->ldRX2(), pp->sqrL(1.), resDev));
         END_RCPP;
     }
 

@@ -51,6 +51,24 @@ namespace lme4 {
             m_factorizationIsOk = true;
         }
 
+        // Same as above for a mapped (compressed) sparse matrix, e.g. the
+        // R-owned LamtUt in merPredD: cholmod_sparse only views the matrix's
+        // buffers, so the caller need not copy it into a SparseMatrix first.
+        void factorize_p(const Eigen::Map<Eigen::SparseMatrix<double> >& matrix,
+                         Eigen::ArrayXi fset, double beta=0.) {
+            eigen_assert(m_analysisIsOk && "You must first call analyzePattern()");
+            cholmod_sparse    A = viewAsCholmod(
+                Eigen::Ref<Eigen::SparseMatrix<double> >(
+                    const_cast<Eigen::Map<Eigen::SparseMatrix<double> >&>(matrix)));
+            double beta_[2]; beta_[0] = beta; beta_[1] = 0.0;
+
+            R_MATRIX_CHOLMOD(factorize_p)(
+                &A, beta_, fset.data(), fset.size(), factor(), &cholmod());
+
+            this->m_info = Eigen::Success;
+            m_factorizationIsOk = true;
+        }
+
         template<typename OtherDerived>
         void solveInPlace(const Eigen::MatrixBase<OtherDerived>& _other, int type) const {
             OtherDerived& other = _other.const_cast_derived();
