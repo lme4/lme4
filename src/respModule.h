@@ -104,10 +104,14 @@ namespace lme4 {
         Eigen::ArrayXd   devResid() const;
         Eigen::ArrayXd      muEta() const;
         Eigen::ArrayXd  sqrtWrkWt() const;
+        Eigen::ArrayXd  sqrtWrkWt(const Eigen::ArrayXd&) const;
+                                // working weights from an already computed muEta()
         Eigen::ArrayXd   variance() const;
         Eigen::ArrayXd  wrkResids() const;
         Eigen::ArrayXd    wrkResp() const;
         Eigen::ArrayXd  wtWrkResp() const;
+        Eigen::ArrayXd  wtWrkResp(const Eigen::ArrayXd&, const Eigen::ArrayXd&) const;
+                                // wtWrkResp() from already computed muEta() and sqrtWrkWt()
 
         const MVec&           eta() const {return d_eta;}
         const MVec&             n() const {return d_n;}
@@ -117,7 +121,11 @@ namespace lme4 {
         bool     hasFreeDispersion() const {return d_fam.hasFreeDispersion();}
 
         double                aic() const;
+        double                aic(double) const;
+                                // aic() from an already computed resDev()
         double            Laplace(double,double,double) const;
+        double        LaplaceAtDev(double,double,double,double) const;
+                                // Laplace() from an already computed resDev()
         double             resDev() const;
         double              theta() const {return d_fam.theta();}
                                 //< negative binomial distribution only

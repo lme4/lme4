@@ -165,21 +165,10 @@ namespace lme4 {
 
     void merPredD::updateL() {
         updateLamtUt();
-        // More complicated code to handle the case of zeros in
-        // potentially nonzero positions.  The factorize_p method is
-        // for a SparseMatrix<double>, not a MappedSparseMatrix<double>.
-        SpMatrixd  m(d_LamtUt.rows(), d_LamtUt.cols());
-        m.resizeNonZeros(d_LamtUt.nonZeros());
-        std::copy(d_LamtUt.valuePtr(),
-                  d_LamtUt.valuePtr() + d_LamtUt.nonZeros(),
-                  m.valuePtr());
-        std::copy(d_LamtUt.innerIndexPtr(),
-                  d_LamtUt.innerIndexPtr() + d_LamtUt.nonZeros(),
-                  m.innerIndexPtr());
-        std::copy(d_LamtUt.outerIndexPtr(),
-                  d_LamtUt.outerIndexPtr() + d_LamtUt.cols() + 1,
-                  m.outerIndexPtr());
-        d_L.factorize_p(m, Eigen::ArrayXi(), 1.);
+        // d_LamtUt is a mapped compressed matrix whose structure (including
+        // explicitly stored zeros) is fixed.  factorize_p() hands CHOLMOD a view
+        // of the mapped buffers, so no SparseMatrix copy is made per call.
+        d_L.factorize_p(d_LamtUt, Eigen::ArrayXi(), 1.);
         d_ldL2 = ::M_chm_factor_ldetL2(d_L.factor());
     }
 
@@ -237,7 +226,7 @@ namespace lme4 {
   return d_CcNumer;
     }
 
-    void merPredD::updateXwts(const ArrayXd& sqrtXwt, bool refreshL) {
+    void merPredD::updateXwts(const ArrayXd& sqrtXwt, bool refreshL, bool refreshVtV) {
         if (d_Xwts.size() != sqrtXwt.size())
             throw invalid_argument("updateXwts: dimension mismatch");
         std::copy(sqrtXwt.data(), sqrtXwt.data() + sqrtXwt.size(), d_Xwts.data());
@@ -275,7 +264,7 @@ namespace lme4 {
             }
         }
 	// avoid crossprod of n-by-0 matrix: GH #794
-        if (d_V.cols() > 0) d_VtV.setZero().selfadjointView<Eigen::Upper>().rankUpdate(d_V.adjoint());
+        if (refreshVtV && d_V.cols() > 0) d_VtV.setZero().selfadjointView<Eigen::Upper>().rankUpdate(d_V.adjoint());
         if (refreshL) updateL();
     }
 
