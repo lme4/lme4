@@ -14,6 +14,9 @@
       the default tensor-product rule, or \code{"sparse"}, a sparse
       grid) and \code{AGQ_prune} control the quadrature rule. Results
       for scalar random effects are unchanged.
+      \item \code{glmer} and \code{lmer} fits are faster: the sparse
+      Cholesky factor was computed twice with the same input in each PIRLS
+      step and each \code{lmer} deviance evaluation. Results are unchanged.
       \item modified the check of non-monotonicity to count nearly
       flat profiles (within floating-point error) as non-monotonic and
       revert to linear interpolation
@@ -33,6 +36,15 @@
       \code{nAGQ > 1}). Non-integer Poisson responses now give a single
       warning, as non-integer binomial counts already did. Results for
       integer data are unchanged (GH #180, #682, #1011, @avehtari).
+      \item \code{vcov(., full = TRUE)}, and hence the standard errors
+      from \code{predict(., se.fit = TRUE)}, now apply the fill-reducing
+      permutation of the sparse Cholesky factor. They could be wrong
+      when that permutation was not the identity, as is typical in
+      models with more than one random-effects term (nested or
+      crossed); in the examples of the issue the standard errors were
+      off by factors of up to 4. Fits whose permutation is the
+      identity (usually those with a single grouping factor) and
+      \code{vcov()} of the fixed effects are unchanged (GH #1013, @hdbt).
     }
   }
 }

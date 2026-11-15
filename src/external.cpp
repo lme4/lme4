@@ -279,7 +279,7 @@ extern "C" {
                        pp->Xwts().minCoeff() << 
                        " sqrtWrkWt: min: " <<
                        rp->sqrtWrkWt().minCoeff() << std::endl;
-        pp->updateXwts(rp->sqrtWrkWt());
+        pp->updateXwts(rp->sqrtWrkWt(), false);  // L is refreshed by updateDecomp()
         if (debug) Rcpp::Rcout << "(igWI) Xwts: min: " << 
                        pp->Xwts().minCoeff() << 
                        " max: " << pp->Xwts().maxCoeff() << std::endl;
@@ -496,7 +496,7 @@ extern "C" {
         // it at the accepted mean and final phi before Laplace or AGQ uses it.
         // Do not solve again: that would change the accepted coefficients and
         // leave the factorization one iteration behind again.
-        pp->updateXwts(rp->sqrtWrkWt());
+        pp->updateXwts(rp->sqrtWrkWt(), false);  // L is refreshed by updateDecomp()
         pp->updateDecomp();
         return true;
     }
@@ -721,7 +721,7 @@ extern "C" {
         bool cvgd(false);
         for (int it=0; it < maxit; ++it) {
             rp->updateMu(pp->linPred(0.));
-            pp->updateXwts(rp->sqrtXwt());
+            pp->updateXwts(rp->sqrtXwt(), false);  // L is refreshed by updateDecomp()
             pp->updateDecomp();
             pp->updateRes(rp->wtres());
             double pwrs0(pwrss(rp, pp, 0.)),
@@ -871,7 +871,7 @@ extern "C" {
 
         ppt->setTheta(theta);
 
-        ppt->updateXwts(rpt->sqrtXwt());
+        ppt->updateXwts(rpt->sqrtXwt(), false);  // L is refreshed by updateDecomp()
         ppt->updateDecomp();
         rpt->updateMu(ppt->linPred(0.));
         ppt->updateRes(rpt->wtres());

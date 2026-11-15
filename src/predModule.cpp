@@ -237,7 +237,7 @@ namespace lme4 {
   return d_CcNumer;
     }
 
-    void merPredD::updateXwts(const ArrayXd& sqrtXwt) {
+    void merPredD::updateXwts(const ArrayXd& sqrtXwt, bool refreshL) {
         if (d_Xwts.size() != sqrtXwt.size())
             throw invalid_argument("updateXwts: dimension mismatch");
         std::copy(sqrtXwt.data(), sqrtXwt.data() + sqrtXwt.size(), d_Xwts.data());
@@ -276,7 +276,7 @@ namespace lme4 {
         }
 	// avoid crossprod of n-by-0 matrix: GH #794
         if (d_V.cols() > 0) d_VtV.setZero().selfadjointView<Eigen::Upper>().rankUpdate(d_V.adjoint());
-        updateL();
+        if (refreshL) updateL();
     }
 
     void merPredD::updateDecomp() {
