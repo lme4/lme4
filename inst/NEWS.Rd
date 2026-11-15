@@ -38,6 +38,13 @@
       off by factors of up to 4. Fits whose permutation is the
       identity (usually those with a single grouping factor) and
       \code{vcov()} of the fixed effects are unchanged (GH #1013, @hdbt).
+      \item \code{predict(., newdata = )}, and hence
+      \code{simulate(., newdata = )}, now include an offset given through
+      the \code{offset} argument of \code{lmer}, \code{glmer} or
+      \code{glmer.nb}, evaluated in \code{newdata} as
+      \code{predict.lm()} does. Previously only \code{offset()} terms in
+      the formula were used, so these predictions omitted the offset
+      (GH #447).
     }
   }
 }
