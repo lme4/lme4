@@ -15,6 +15,8 @@ any width (`(1+x|g)`, `diag(x|g)`, `cs(x|g)`, ...). Quadrature rules come from `
   existing behaviour, not an AGQ bug. Likely causes: `Gamma()$aic` adds +2 and plugs in its own
   dispersion, dev/n, instead of the profiled phi, which uses dev/(n - qEff). This needs sorting
   out before AGQ log-likelihoods for these families can be compared with other software.
+  Diagnosis and a simulation study of the dispersion estimators are on branch
+  `GLMM_dispersion_redux` (`misc/TODO_dispersion.md`).
 - [ ] Validate Gamma/inverse-Gaussian vector AGQ against an independent reference once the
   offset above is understood. So far only binomial and Poisson are checked against the
   brute-force reference and GLMMadaptive.
