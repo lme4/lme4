@@ -38,6 +38,15 @@
       off by factors of up to 4. Fits whose permutation is the
       identity (usually those with a single grouping factor) and
       \code{vcov()} of the fixed effects are unchanged (GH #1013, @hdbt).
+      \item profiling the fixed effects of a weighted \code{lmer} fit,
+      and hence the default \code{confint()}, now uses the prior
+      weights for the model matrices as well as for the residuals.
+      Previously the fixed-effect profiles of any weighted fit were
+      wrong, giving confidence intervals far too narrow: with
+      \code{weights = rep(2, n)} on \code{sleepstudy} the 95\% interval
+      for the intercept was (251.35, 251.70) instead of (237.68,
+      265.13). Profiles of the variance parameters and unweighted fits
+      are unchanged (GH #192).
     }
   }
 }
