@@ -819,3 +819,23 @@ test_that("simulation works with 'par'", {
   expect_equal(s1, s2)
 
 })
+
+test_that("se.fit is padded like fit under na.exclude", {
+  d <- sleepstudy
+  d$Reaction[c(5, 77)] <- NA
+  fit_ex <- lmer(Reaction ~ Days + (Days | Subject), d, na.action = na.exclude)
+  fit_cc <- lmer(Reaction ~ Days + (Days | Subject), d[-c(5, 77), ])
+  p_ex <- predict(fit_ex, se.fit = TRUE)
+  p_cc <- predict(fit_cc, se.fit = TRUE)
+  expect_identical(lengths(p_ex), c(fit = 180L, se.fit = 180L))
+  expect_identical(which(is.na(p_ex$se.fit)), which(is.na(p_ex$fit)))
+  expect_equal(unname(p_ex$se.fit[-c(5, 77)]), unname(p_cc$se.fit))
+  ## NA in newdata, na.exclude at predict time
+  nd <- sleepstudy[1:10, ]
+  nd$Days[3] <- NA
+  p_nd <- predict(fit_cc, newdata = nd, se.fit = TRUE, na.action = na.exclude)
+  expect_identical(lengths(p_nd), c(fit = 10L, se.fit = 10L))
+  expect_identical(unname(which(is.na(p_nd$se.fit))), 3L)
+  expect_equal(unname(p_nd$se.fit[-3]),
+               unname(predict(fit_cc, newdata = nd[-3, ], se.fit = TRUE)$se.fit))
+})
