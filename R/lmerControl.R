@@ -168,9 +168,12 @@ merControl <-
             if (!is.numeric(maxPhiIter) || length(maxPhiIter) != 1 || maxPhiIter < 1)
                 stop("'maxPhiIter' must be a single positive integer")
             maxPhiIter <- as.integer(maxPhiIter)
-            if (!is.logical(disp_dof_correction) || length(disp_dof_correction) != 1 ||
-                is.na(disp_dof_correction))
-                stop("'disp_dof_correction' must be TRUE or FALSE")
+            if (length(disp_dof_correction) != 1 || is.na(disp_dof_correction))
+                stop("'disp_dof_correction' must be TRUE, FALSE, \"n\", \"n-p\" or \"n-q\"")
+            ## TRUE/FALSE are synonyms for "n-q"/"n"
+            if (is.logical(disp_dof_correction))
+                disp_dof_correction <- if (disp_dof_correction) "n-q" else "n"
+            disp_dof_correction <- match.arg(disp_dof_correction, c("n-q", "n-p", "n"))
             ret <- c(ret, namedList(tolPwrss,
                                     compDev,
                                     nAGQ0initStep,
