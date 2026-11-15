@@ -521,6 +521,10 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
                     for (i in off.num)
                         offset <- offset + eval(attr(tt,"variables")[[i + 1]], newdata)
                 }
+                ## an 'offset' argument, as in predict.lm()
+                if (!is.null(off.arg <- object@call$offset))
+                    offset <- offset + eval(off.arg, newdata,
+                                            environment(formula(object)))
                 ## FIXME?: simplify(no need for 'mfnew'): can this be different from 'na.action'?
                 fit.na.action <- attr(mfnew,"na.action")
                 ## only need to drop if new data specified ...
