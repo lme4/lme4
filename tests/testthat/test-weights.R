@@ -48,3 +48,46 @@ test_that("testing na.action", {
   expect_equal(length(weights(gm1.exclude)), nrow(cbpp))
   expect_equal(length(weights(gm1.omit)), nrow(cbpp) - 1)
 })
+
+test_that("a zero prior weight in lmer is the same as dropping the row (GH #880)", {
+  set.seed(1)
+  d <- sleepstudy
+  d$w <- runif(nrow(d), 0.5, 2)
+  drop <- c(3, 50, 120)
+  d$w0 <- replace(d$w, drop, 0)
+  for (reml in c(TRUE, FALSE)) {
+    mz <- lmer(Reaction ~ Days + (Days | Subject), d, weights = w0, REML = reml)
+    md <- lmer(Reaction ~ Days + (Days | Subject), d[-drop, ], weights = w, REML = reml)
+    expect_equal(fixef(mz), fixef(md), tolerance = 1e-6)
+    expect_equal(sigma(mz), sigma(md), tolerance = 1e-6)
+    expect_equal(getME(mz, "theta"), getME(md, "theta"), tolerance = 1e-5)
+    expect_equal(c(logLik(mz)), c(logLik(md)), tolerance = 1e-8)
+    expect_equal(deviance(mz, REML = !reml), deviance(md, REML = !reml),
+                 tolerance = 1e-8)
+    expect_equal(nobs(mz), nobs(md))
+    expect_equal(df.residual(mz), df.residual(md))
+    expect_equal(BIC(mz), BIC(md), tolerance = 1e-8)
+  }
+  mz <- lmer(Reaction ~ Days + (Days | Subject), d, weights = w0)
+  md <- lmer(Reaction ~ Days + (Days | Subject), d[-drop, ], weights = w)
+  expect_equal(c(logLik(refitML(mz))), c(logLik(refitML(md))), tolerance = 1e-8)
+  expect_equal(sigma(refitML(mz)), sigma(refitML(md)), tolerance = 1e-6)
+})
+
+test_that("deviance on the other REML scale is finite under na.exclude", {
+  d <- sleepstudy
+  d$Reaction[5] <- NA
+  m_excl <- lmer(Reaction ~ Days + (Days | Subject), d, na.action = na.exclude)
+  m_omit <- lmer(Reaction ~ Days + (Days | Subject), d, na.action = na.omit)
+  expect_equal(deviance(m_excl, REML = FALSE), deviance(m_omit, REML = FALSE))
+})
+
+test_that("nobs() of glmer leaves out zero prior weights, as nobs.glm() does", {
+  cb <- cbpp
+  cb$p <- cb$incidence / cb$size
+  cb$size0 <- replace(cb$size, c(2, 10), 0)
+  gz <- glmer(p ~ period + (1 | herd), cb, binomial, weights = size0)
+  gd <- glmer(p ~ period + (1 | herd), cb[-c(2, 10), ], binomial, weights = size)
+  expect_equal(nobs(gz), nobs(gd))
+  expect_equal(BIC(gz), BIC(gd), tolerance = 1e-6)
+})
