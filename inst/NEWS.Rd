@@ -38,6 +38,20 @@
       off by factors of up to 4. Fits whose permutation is the
       identity (usually those with a single grouping factor) and
       \code{vcov()} of the fixed effects are unchanged (GH #1013, @hdbt).
+      \item in \code{lmer}, an observation with prior weight zero is now
+      the same as an observation left out: it no longer counts towards
+      the number of observations in the likelihood, \code{nobs()},
+      \code{df.residual()} or \code{refitML()}, and the log-likelihood
+      is finite. Previously zero weights changed the variance and
+      fixed-effect estimates (in the example of the issue, the group
+      standard deviation was 3.18 instead of 4.24) and gave a
+      log-likelihood of \code{-Inf}. \code{nobs()} of a \code{glmer}
+      fit likewise leaves out zero prior weights, as \code{nobs.glm()}
+      does (GH #880).
+      \item \code{deviance(., REML = FALSE)} of a REML fit, and
+      \code{deviance(., REML = TRUE)} of an ML fit, are no longer
+      \code{NA} when the fit uses \code{na.action = na.exclude} and the
+      data have missing values.
     }
   }
 }
