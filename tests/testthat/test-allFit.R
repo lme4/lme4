@@ -168,3 +168,38 @@ if (testLevel>1) {
     })
 
 }  ## testLevel
+
+test_that("allFit() finds data that exist only inside a function", {
+    meth2 <- lme4:::meth.tab.0[1:2, ]
+    okfits <- function(a)
+        vapply(a, function(z) !inherits(z, "error"), NA)
+    ## data local to the function that fits the model (formula
+    ## environment = that function's frame)
+    f1 <- function() {
+        d <- cbpp
+        m <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
+                   data = d, family = binomial)
+        allFit(m, meth.tab = meth2, verbose = FALSE)
+    }
+    a1 <- suppressMessages(f1())
+    expect_true(all(okfits(a1)))
+    ## refitted models' calls refer to the control settings by name
+    expect_identical(getCall(a1[[1]])$control, quote(ctrl))
+    ## formula defined elsewhere, data local to the calling function
+    form <- cbind(incidence, size - incidence) ~ period + (1 | herd)
+    f2 <- function(form) {
+        d2 <- cbpp
+        m <- glmer(form, data = d2, family = binomial)
+        allFit(m, meth.tab = meth2, verbose = FALSE)
+    }
+    expect_true(all(okfits(suppressMessages(f2(form)))))
+    ## LMM
+    f3 <- function() {
+        s <- sleepstudy
+        allFit(lmer(Reaction ~ Days + (Days | Subject), s),
+               meth.tab = meth2, verbose = FALSE)
+    }
+    a3 <- f3()
+    expect_true(all(okfits(a3)))
+    expect_equal(unname(summary(a3)$llik[1]), unname(summary(a3)$llik[2]), tolerance = 1e-6)
+})

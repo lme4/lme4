@@ -93,6 +93,18 @@ allFit <- function(object, meth.tab = NULL,
                    catch.errs = TRUE,
                    start_from_mle = TRUE) {
 
+    ## environment the refits are evaluated in (via a child holding the
+    ## new control settings): the formula's environment if the model's
+    ## data can be found there, else the environment allFit() was called
+    ## from (e.g. for a model fitted by a function whose data argument
+    ## was a variable in the caller)
+    dataEnv <- environment(formula(object))
+    dataExpr <- getCall(object)$data
+    if (is.null(dataEnv) ||
+        (!is.null(dataExpr) &&
+         inherits(tryCatch(eval(dataExpr, dataEnv), error = function(e) e), "error")))
+        dataEnv <- parent.frame()
+
     if (is.null(meth.tab)) {
         meth.tab <- meth.tab.0
     }
@@ -126,6 +138,7 @@ allFit <- function(object, meth.tab = NULL,
         optimizer
         method
         maxfun
+        dataEnv
         function(..i) {
             if (verbose) cat(fit.names[..i],": ")
             ctrl <- getCall(object)$control
@@ -174,13 +187,6 @@ allFit <- function(object, meth.tab = NULL,
             ctrl$optCtrl <- sanitize(ctrl$optCtrl,
                                      opt.ctrls[[optimizer[..i]]])
             ctrl <- do.call(if(isGLMM(object)) glmerControl else lmerControl, ctrl)
-            ## need to stick ctrl in formula env so it can be found ...
-            form <- formula(object)
-            env <- environment(form)
-            tmp_env <- new.env(parent = env)
-            # temporarily changing the environment
-            environment(form) <- tmp_env
-            assign("ctrl", ctrl, envir = tmp_env, inherits = FALSE)
             # Using the MLE as a starting point
             if (start_from_mle) {
               if (isGLMM(object)) {
@@ -191,29 +197,35 @@ allFit <- function(object, meth.tab = NULL,
                   warning("results are not guaranteed when using nlmer")
                 }
               }
-              assign("pars", pars, envir = tmp_env, inherits = FALSE)
             }
-            
+
+            ## The refit call refers to 'ctrl' (and 'pars') by name, so
+            ## that the refitted models' calls stay readable. It must be
+            ## evaluated where those *and* the model's data can be found:
+            ## a new environment holding ctrl/pars, whose parent is
+            ## dataEnv (see below). update() itself would evaluate in the
+            ## formula's environment, the global environment or
+            ## allFit()'s own frame, none of which has both.
             fit_call <- if (start_from_mle) {
-              quote(update(object, start = pars, control = ctrl))
+              update(object, start = pars, control = ctrl, evaluate = FALSE)
             } else {
-              quote(update(object, control = ctrl))
+              update(object, control = ctrl, evaluate = FALSE)
             }
-            
+            eval_env <- new.env(parent = dataEnv)
+            eval_env$ctrl <- ctrl
+            if (start_from_mle) eval_env$pars <- pars
+
             tt <- system.time(
               rr <- if (catch.errs) {
-                      tryCatch(eval(fit_call), error = function(e) e)
+                      tryCatch(eval(fit_call, eval_env), error = function(e) e)
                     } else {
-                      eval(fit_call)
+                      eval(fit_call, eval_env)
                     }
             )
 
             attr(rr, "optCtrl") <- ctrl$optCtrl # contains crucial info here
             attr(rr, "time") <- tt  # store timing info
-            
-            ## restore original values to environment of the object
-            on.exit({ environment(form) <- env }, add = TRUE)
-            
+
             if (verbose) {
               if (inherits(rr,"error")) {
                 cat("[failed]\n")
