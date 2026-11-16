@@ -7,6 +7,17 @@
 \section{CHANGES IN VERSION 2.1-1}{
   \subsection{USER-VISIBLE CHANGES}{
     \itemize{
+      \item adaptive Gauss-Hermite quadrature (\code{glmer(nAGQ > 1)})
+      now works for a single vector-valued random-effects term (e.g.
+      \code{(1+x|g)}), not only for scalar random effects. New
+      \code{glmerControl()} options \code{AGQ_grid} (\code{"product"},
+      the default tensor-product rule, or \code{"sparse"}, an
+      experimental sparse grid, with a warning when its deviance looks
+      unreliable) and \code{AGQ_prune} control the quadrature rule.
+      Results for scalar random effects are unchanged.
+      \item \code{anova()} warns when comparing GLMMs fitted with
+      different values of \code{nAGQ}, whose log-likelihoods are
+      approximated differently.
       \item \code{glmer} and \code{lmer} fits are faster: the sparse
       Cholesky factor was computed twice with the same input in each PIRLS
       step and each \code{lmer} deviance evaluation. Results are unchanged.

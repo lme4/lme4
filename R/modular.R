@@ -875,7 +875,9 @@ mkGlmerDevfun <- function(fr, X, reTrms, family,
                          compDev = control$compDev,
                          dispProfile = identical(control$disp_method %||% "moment", "moment"),
                          maxPhiIter = as.integer(control$maxPhiIter %||% 100L),
-                         qEff = computeQEff(X, reTrms, control$disp_dof_correction %||% TRUE, family)),
+                         qEff = computeQEff(X, reTrms, control$disp_dof_correction %||% TRUE, family),
+                         AGQ_grid = control$AGQ_grid %||% "product",
+                         AGQ_prune = control$AGQ_prune %||% 0),
                     parent = parent.frame())
     rho$pp <- do.call(merPredD$new,
                       c(reTrms[c("Zt","theta","Lambdat","Lind")],
@@ -988,11 +990,12 @@ updateGlmerDevfun <- function(devfun, reTrms, nAGQ = 1L){
     stopifnot(length(nAGQ <- as.integer(nAGQ)) == 1L,
               0L <= nAGQ, nAGQ <= 100L)
     if (nAGQ > 1L) {
-        if (length(reTrms$flist) != 1L || length(reTrms$cnms[[1]]) != 1L)
-            stop("nAGQ > 1 is only available for models with a single, scalar random-effects term")
+        if (length(reTrms$flist) != 1L || length(reTrms$cnms) != 1L)
+            stop("nAGQ > 1 is only available for models with a single random-effects term")
     }
     rho <- environment(devfun)
     rho$nAGQ       <- nAGQ
+    rho$agqK       <- length(reTrms$cnms[[1]])
     rho$lower      <- c(reTrms$lower,
                         rep(-Inf, length(rho$pp$beta0)))
     rho$upper      <- c(reTrms$upper %||% rep(Inf, length(reTrms$lower)),
@@ -1000,7 +1003,11 @@ updateGlmerDevfun <- function(devfun, reTrms, nAGQ = 1L){
     rho$lp0        <- rho$pp$linPred(1)
     rho$dpars      <- seq_along(reTrms$lower)
     rho$baseOffset <- forceCopy(rho$resp$offset) # forcing a copy (!)
-    rho$GQmat      <- GHrule(nAGQ)
+    rho$GQmat      <- if (nAGQ > 1L)
+                          mkAGQmat(nAGQ, rho$agqK,
+                                   type = rho$AGQ_grid %||% "product",
+                                   prune = rho$AGQ_prune %||% 0)
+                      else GHrule(nAGQ)
     rho$fac        <- reTrms$flist[[1]]
     mkdevfun(rho, nAGQ)  # does this attach rho to devfun??
 }

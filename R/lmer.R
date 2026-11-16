@@ -207,11 +207,44 @@ glmer <- function(formula, data=NULL
                   ndim = npar)
     }
 
+    if (nAGQ > 1L) glmerAGQcheck(rho)
+
     ## prepare output
     mkMerMod(rho, opt, glmod$reTrms, fr = glmod$fr,
              mc = mcout, lme4conv=cc)
 
 }## {glmer}
+
+## Warn when adaptive quadrature at the estimates looks unreliable, using
+## the per-level log corrections to the Laplace approximation that
+## glmerAGQ() leaves in rho$AGQcorr (from the devfun's last evaluation,
+## which optwrap() makes at the optimum).
+##
+## Both checks target sparse grids, whose negative weights can make the
+## deviance far too low (not merely inaccurate) when the integrand is far
+## from Gaussian (binary data, small clusters): the optimizer then heads
+## for parameters where the error is largest. Non-positive per-level sums
+## (NA) can only occur with negative weights. A single level's
+## correction is not a useful signal (product-rule fits have
+## legitimately large ones); the mean is: in simulations
+## (misc/agq_checks/), runaway sparse fits had mean corrections of about
+## 0.4, all other fits (product or sparse) at most 0.15.
+glmerAGQcheck <- function(rho, maxMeanCorr = 0.2) {
+    corr <- rho$AGQcorr
+    if (is.null(corr) || !identical(rho$AGQ_grid, "sparse"))
+        return(invisible(NULL))
+    hint <- "; consider glmerControl(AGQ_grid = \"product\")"
+    if (anyNA(corr))
+        warning(gettextf(paste("sparse-grid quadrature: non-positive quadrature sum for",
+                               "%d grouping-factor level(s) at the estimates%s"),
+                         sum(is.na(corr)), hint), call. = FALSE)
+    else if (mean(corr) > maxMeanCorr)
+        warning(gettextf(paste("sparse-grid quadrature: the deviance is %.3g below the Laplace",
+                               "approximation at the estimates (%.2g per grouping-factor level)",
+                               "and may be unreliable%s"),
+                         2 * sum(corr), 2 * mean(corr), hint), call. = FALSE)
+    invisible(corr)
+}
 
 ## Fit a nonlinear mixed-effects model
 nlmer <- function(formula, data=NULL, control = nlmerControl(), start = NULL, verbose = 0L,
@@ -315,7 +348,8 @@ mkdevfun <- function(rho, nAGQ=1L, maxit = if(extends(rho.cld, "nlsResp")) 300L 
     ## (clearly preferred to using globalVariables() !]
     fac <- pp <- resp <- lp0 <- compDev <- dpars <- baseOffset <- tolPwrss <-
         pwrssUpdate <- ## <-- even though it's a function below
-        GQmat <- nlmerAGQ <- mkTheta <- dispProfile <- maxPhiIter <- qEff <- NULL
+        GQmat <- nlmerAGQ <- mkTheta <- dispProfile <- maxPhiIter <- qEff <- agqK <-
+        AGQcorr <- NULL
 
     ## The deviance function (to be returned, with 'rho' as its environment):
     ff <-
@@ -330,6 +364,11 @@ mkdevfun <- function(rho, nAGQ=1L, maxit = if(extends(rho.cld, "nlsResp")) 300L 
         if (!is.null(cd <- control$ compDev)) rho$compDev <- cd
         if (!is.null(dp <- control$disp_method)) rho$dispProfile <- identical(dp, "moment")
         if (!is.null(mpi <- control$maxPhiIter)) rho$maxPhiIter <- as.integer(mpi)
+        ## random effects per grouping-factor level, for AGQ; set by
+        ## updateGlmerDevfun() / refit(), scalar if absent
+        if (is.null(rho$agqK)) rho$agqK <- 1L
+        ## binding for the devfun's AGQcorr <<- (environments keep NULL values)
+        rho$AGQcorr <- NULL
         if (nAGQ == 0L)
             function(par) {
                 resp$updateMu(lp0)
@@ -350,9 +389,16 @@ mkdevfun <- function(rho, nAGQ=1L, maxit = if(extends(rho.cld, "nlsResp")) 300L 
                 offset <- if (length(spars)==0) baseOffset else baseOffset + pp$X %*% spars
                 resp$setOffset(offset)
                 p <- pwrssUpdate(pp, resp, tol=tolPwrss, GQmat=GQmat,
-                                 compDev=compDev, grpFac=fac, maxit=maxit, verbose=verbose,
+                                 compDev=compDev, grpFac=fac, agqK=agqK,
+                                 maxit=maxit, verbose=verbose,
                                  dispProfile=dispProfile, maxPhiIter=maxPhiIter, qEff=qEff)
                 resp$updateWts()
+                ## per-level AGQ corrections (glmerAGQ(), nAGQ > 1), kept
+                ## for glmerAGQcheck(); the optimizer only sees the number
+                if (!is.null(ac <- attr(p, "AGQcorr"))) {
+                    AGQcorr <<- ac
+                    attr(p, "AGQcorr") <- NULL
+                }
                 p
             }
     } else if (extends(rho.cld, "nlsResp")) {
@@ -433,6 +479,8 @@ RglmerWrkIter <- function(pp, resp, uOnly=FALSE) {
 ## @param GQmat matrix of Gauss-Hermite quad info
 ## @param compDev compute in C++ (as opposed to doing as much as possible in R)
 ## @param grpFac grouping factor (normally found in environment ..)
+## @param agqK number of random effects per level of \code{grpFac}
+##     (columns of the single random-effects term), for AGQ
 ## @param verbose verbosity, of course
 ## @param dispProfile for families with a free dispersion parameter (e.g.
 ##     Gamma), profile it via a nested fixed-point loop around PIRLS
@@ -444,7 +492,8 @@ RglmerWrkIter <- function(pp, resp, uOnly=FALSE) {
 ## @param qEff degrees-of-freedom correction to the moment estimator's
 ##     denominator (\code{glmerControl(disp_dof_correction=TRUE)}; see
 ##     \code{\link{glmerControl}}), or \code{NA_real_} for none
-glmerPwrssUpdate <- function(pp, resp, tol, GQmat, compDev=TRUE, grpFac=NULL, maxit = 70L, verbose=0,
+glmerPwrssUpdate <- function(pp, resp, tol, GQmat, compDev=TRUE, grpFac=NULL, agqK=1L,
+                              maxit = 70L, verbose=0,
                               dispProfile=TRUE, maxPhiIter=100L, qEff=NA_real_) {
     nAGQ <- nrow(GQmat)
     if (compDev) {
@@ -454,7 +503,7 @@ glmerPwrssUpdate <- function(pp, resp, tol, GQmat, compDev=TRUE, grpFac=NULL, ma
                          verbose, dispProfile, as.integer(maxPhiIter), qEff))
         return(.Call(glmerAGQ, pp$ptr(), resp$ptr(),
                      tol, as.integer(maxit),
-                     GQmat, grpFac, verbose,
+                     GQmat, grpFac, as.integer(agqK), verbose,
                      dispProfile, as.integer(maxPhiIter), qEff))
     }
  ### does this show anywhere ??? [i.e. is it ever used in our checks/examples/scripts/vignettes ?
@@ -566,6 +615,15 @@ anovaLmer <- function(object, ..., refit = TRUE, model.names=NULL) {
         if (length(mNms) != length(mods))
             stop("model names vector and model list have different lengths")
         names(mods) <- sub("@env$", '', mNms) # <- hack
+        ## log-likelihoods from different nAGQ use different approximations
+        nAGQs <- vapply(mods, function(x)
+            if (is(x, "merMod") && isGLMM(x)) x@devcomp$dims[["nAGQ"]] else NA_integer_,
+            1L)
+        if (length(unique(nAGQs[!is.na(nAGQs)])) > 1L)
+            warning(gettextf(paste("models were fitted with different values of nAGQ (%s),",
+                                   "so their log-likelihoods are approximated differently"),
+                             paste(nAGQs[!is.na(nAGQs)], collapse = ", ")),
+                    call. = FALSE)
         models.reml <- vapply(mods, function(x) is(x,"merMod") && isREML(x), NA)
         if (refit) {
             ## message only if at least one models is REML:
@@ -1473,7 +1531,15 @@ refit.merMod <- function(object,
     }
 
     if (haveGLMM) {
-        GQmat <- GHrule(nAGQ)
+        ## recover the original fit's AGQ rule (see mkMerMod(); falls
+        ## back to the default product rule for older fit objects)
+        agqK  <- if (nAGQ > 1L) length(object@cnms[[1]]) else 1L
+        AGQ_grid <- if (isTRUE(as.logical(dc$dims["AGQsparse"]))) "sparse" else "product"
+        AGQ_prune <- unname(dc$cmp["AGQprune"])
+        if (is.na(AGQ_prune)) AGQ_prune <- 0
+        GQmat <- if (nAGQ > 1L)
+            mkAGQmat(nAGQ, agqK, type = AGQ_grid, prune = AGQ_prune)
+        else GHrule(nAGQ)
 
         dispProfile <- identical(control$disp_method %||% "moment", "moment")
         maxPhiIter  <- as.integer(control$maxPhiIter %||% 100L)
@@ -1482,7 +1548,7 @@ refit.merMod <- function(object,
                              dispProfile=dispProfile, maxPhiIter=maxPhiIter)
         } else {
             glmerPwrssUpdate(pp,rr, control$tolPwrss, GQmat, maxit=maxit,
-                             grpFac = object@flist[[1]],
+                             grpFac = object@flist[[1]], agqK = agqK,
                              dispProfile=dispProfile, maxPhiIter=maxPhiIter)
         }
     }
@@ -1528,8 +1594,11 @@ refit.merMod <- function(object,
                  lp0 = pp$linPred(1), ## object@resp$eta - baseOffset,
                  baseOffset = baseOffset,
                  pwrssUpdate = glmerPwrssUpdate,
-                 ## save GQmat in the object and use that instead of nAGQ
-                 GQmat = GHrule(nAGQ),
+                 GQmat = GQmat,
+                 agqK = agqK,
+                 ## kept so that mkMerMod() records the same rule
+                 AGQ_grid = AGQ_grid,
+                 AGQ_prune = AGQ_prune,
                  fac = object@flist[[1]],
                  verbose=verbose,
                  dpars=seq_len(getParLength(object)))
@@ -1573,6 +1642,7 @@ refit.merMod <- function(object,
                     # ctrl = eval(object@call$control)$checkConv,
                     ctrl = control$checkConv,
                     lbound=lower, ubound=upper)
+    if (haveGLMM && nAGQ > 1L) glmerAGQcheck(rho)
     if (haveGLMM) rr$setOffset(baseOffset)
     mkMerMod(environment(ff), opt,
              list(flist=object@flist, cnms=object@cnms,
@@ -1743,9 +1813,19 @@ methTitle <- function(dims) { # dims == object@devcomp$dims
                          ## TODO? Use shorter wording here, for (new) 'long = FALSE' argument
                          if((nAGQ <- dims[["nAGQ"]]) == 1)
                              "(Laplace Approximation)"
-                         else
-                             sprintf("(Adaptive Gauss-Hermite Quadrature, nAGQ = %d)",
-                                     nAGQ)
+                         else {
+                             ## node count only shown when it differs
+                             ## from nAGQ (vector-valued, sparse or
+                             ## pruned rules); NA for old fit objects
+                             nn <- dims["AGQnodes"]
+                             sprintf("(Adaptive Gauss-Hermite Quadrature, nAGQ = %d%s)",
+                                     nAGQ,
+                                     if (is.na(nn) || nn == nAGQ) ""
+                                     else sprintf(", %s%d nodes",
+                                                  if (isTRUE(dims["AGQsparse"] == 1L))
+                                                      "sparse grid, " else "",
+                                                  nn))
+                         }
                          }))
 }
 
