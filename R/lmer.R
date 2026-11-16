@@ -207,11 +207,44 @@ glmer <- function(formula, data=NULL
                   ndim = npar)
     }
 
+    if (nAGQ > 1L) glmerAGQcheck(rho)
+
     ## prepare output
     mkMerMod(rho, opt, glmod$reTrms, fr = glmod$fr,
              mc = mcout, lme4conv=cc)
 
 }## {glmer}
+
+## Warn when adaptive quadrature at the estimates looks unreliable, using
+## the per-level log corrections to the Laplace approximation that
+## glmerAGQ() leaves in rho$AGQcorr (from the devfun's last evaluation,
+## which optwrap() makes at the optimum).
+##
+## Both checks target sparse grids, whose negative weights can make the
+## deviance far too low (not merely inaccurate) when the integrand is far
+## from Gaussian (binary data, small clusters): the optimizer then heads
+## for parameters where the error is largest. Non-positive per-level sums
+## (NA) can only occur with negative weights. A single level's
+## correction is not a useful signal (product-rule fits have
+## legitimately large ones); the mean is: in simulations
+## (misc/agq_checks/), runaway sparse fits had mean corrections of about
+## 0.4, all other fits (product or sparse) at most 0.15.
+glmerAGQcheck <- function(rho, maxMeanCorr = 0.2) {
+    corr <- rho$AGQcorr
+    if (is.null(corr) || !identical(rho$AGQ_grid, "sparse"))
+        return(invisible(NULL))
+    hint <- "; consider glmerControl(AGQ_grid = \"product\")"
+    if (anyNA(corr))
+        warning(gettextf(paste("sparse-grid quadrature: non-positive quadrature sum for",
+                               "%d grouping-factor level(s) at the estimates%s"),
+                         sum(is.na(corr)), hint), call. = FALSE)
+    else if (mean(corr) > maxMeanCorr)
+        warning(gettextf(paste("sparse-grid quadrature: the deviance is %.3g below the Laplace",
+                               "approximation at the estimates (%.2g per grouping-factor level)",
+                               "and may be unreliable%s"),
+                         2 * sum(corr), 2 * mean(corr), hint), call. = FALSE)
+    invisible(corr)
+}
 
 ## Fit a nonlinear mixed-effects model
 nlmer <- function(formula, data=NULL, control = nlmerControl(), start = NULL, verbose = 0L,
@@ -315,7 +348,8 @@ mkdevfun <- function(rho, nAGQ=1L, maxit = if(extends(rho.cld, "nlsResp")) 300L 
     ## (clearly preferred to using globalVariables() !]
     fac <- pp <- resp <- lp0 <- compDev <- dpars <- baseOffset <- tolPwrss <-
         pwrssUpdate <- ## <-- even though it's a function below
-        GQmat <- nlmerAGQ <- mkTheta <- dispProfile <- maxPhiIter <- qEff <- agqK <- NULL
+        GQmat <- nlmerAGQ <- mkTheta <- dispProfile <- maxPhiIter <- qEff <- agqK <-
+        AGQcorr <- NULL
 
     ## The deviance function (to be returned, with 'rho' as its environment):
     ff <-
@@ -333,6 +367,8 @@ mkdevfun <- function(rho, nAGQ=1L, maxit = if(extends(rho.cld, "nlsResp")) 300L 
         ## random effects per grouping-factor level, for AGQ; set by
         ## updateGlmerDevfun() / refit(), scalar if absent
         if (is.null(rho$agqK)) rho$agqK <- 1L
+        ## binding for the devfun's AGQcorr <<- (environments keep NULL values)
+        rho$AGQcorr <- NULL
         if (nAGQ == 0L)
             function(par) {
                 resp$updateMu(lp0)
@@ -357,6 +393,12 @@ mkdevfun <- function(rho, nAGQ=1L, maxit = if(extends(rho.cld, "nlsResp")) 300L 
                                  maxit=maxit, verbose=verbose,
                                  dispProfile=dispProfile, maxPhiIter=maxPhiIter, qEff=qEff)
                 resp$updateWts()
+                ## per-level AGQ corrections (glmerAGQ(), nAGQ > 1), kept
+                ## for glmerAGQcheck(); the optimizer only sees the number
+                if (!is.null(ac <- attr(p, "AGQcorr"))) {
+                    AGQcorr <<- ac
+                    attr(p, "AGQcorr") <- NULL
+                }
                 p
             }
     } else if (extends(rho.cld, "nlsResp")) {

@@ -20,12 +20,22 @@ any width (`(1+x|g)`, `diag(x|g)`, `cs(x|g)`, ...). Quadrature rules come from `
 - [ ] Validate Gamma/inverse-Gaussian vector AGQ against an independent reference once the
   offset above is understood. So far only binomial and Poisson are checked against the
   brute-force reference and GLMMadaptive.
-- [ ] Check binomial models with `cbind(successes, failures)` responses and prior weights.
-- [ ] Check models with offsets, and `nAGQ0initStep = FALSE`.
-- [ ] Check sparse grids on strongly non-Gaussian integrands (small clusters, binary data). With
-  negative weights the per-level sum can become non-positive. That currently returns the 1e10
-  sentinel deviance, which the optimizer could get stuck against; consider a warning, or
-  falling back to the product rule.
+- [x] Binomial `cbind(s, n - s)`, `s/n` + `weights = n` and disaggregated 0/1 data agree
+  (the last differs by the constant `2 * sum(lchoose(n, s))`) and converge to the brute-force
+  reference; Poisson with non-integer prior weights too (`misc/agq_checks/agq_checks.R`, tests).
+- [x] Offsets (formula `offset()` and `offset =` agree, match the reference; `refit()` OK) and
+  `nAGQ0initStep = FALSE` (same estimates as the default, product and sparse grids).
+- [x] Sparse grids on strongly non-Gaussian integrands (binary, 2-4 obs per level, k = 2-3;
+  `misc/agq_checks/`). The 1e10 sentinel (non-positive per-level sum) is rare and was never hit
+  during optimization. The real failure is a deviance that is far too low: devfun errors of 5-50
+  that often don't shrink with nAGQ, and 2 of 72 glmer fits ran away (deviance 28-39 below the
+  accurate value). Those two had mean per-level log corrections of about 0.4 against at most 0.15 for
+  all other fits, so `glmerAGQcheck()` (`R/lmer.R`) warns for sparse grids when the mean exceeds
+  0.2 or any sum is non-positive (from the `AGQcorr` attribute that `glmerAGQ()` now returns).
+  Also, sparse grids only have fewer nodes than the product rule for k >= 4 (for k = 2 they
+  have more). Docs now call them experimental.
+- [ ] `refit()`/`bootMer()` don't run `glmerAGQcheck()`. Consider whether sparse grids are
+  worth keeping at all, or a better rule (e.g. nested Kronrod-Patterson / pruned product).
 
 ### Scope extensions
 - [ ] **Several terms with the same single grouping factor**, e.g. `(1|g) + (0+x|g)`, including

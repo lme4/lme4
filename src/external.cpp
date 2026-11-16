@@ -683,11 +683,20 @@ extern "C" {
         }
         pp->setU0(Vec::Zero(q)); // restore settings from pwrssUpdate;
         rp->updateMu(pp->linPred(1.));
+        // per-level log quadrature corrections to the Laplace
+        // approximation (NA where the sum is non-positive), returned as
+        // attribute "AGQcorr" for diagnostics (see glmerAGQcheck() in
+        // R/lmer.R)
+        Rcpp::NumericVector corr(nlev);
+        for (int j = 0; j < nlev; ++j)
+            corr[j] = (s[j] > 0) ? m[j] + std::log(s[j]) : NA_REAL;
         if ((s <= 0).any()) {
             // only possible for rules with negative weights (sparse grids)
             if (verb > 0)
                 Rcpp::Rcout << "glmerAGQ: non-positive quadrature sum" << std::endl;
-            return ::Rf_ScalarReal(1e10);
+            Rcpp::NumericVector ans = Rcpp::NumericVector::create(1e10);
+            ans.attr("AGQcorr") = corr;
+            return ans;
         }
         // devc0.sum() (the raw, phi-free deviance-based term) is
         // replaced by rp->Laplace(ldL2, 0., sqrL) -- the same density-
@@ -696,8 +705,10 @@ extern "C" {
         // (via aic(), self-consistent with the profiled phi at this
         // converged mode -- see profilePhi()/misc/Gamma_GLMM/
         // README_Gamma_GLMMs.md) that a bare deviance sum omits.
-        return ::Rf_ScalarReal(rp->Laplace(pp->ldL2(), 0., pp->sqrL(1.)) -
-                                2 * (m + s.log()).sum());
+        Rcpp::NumericVector ans = Rcpp::NumericVector::create(
+            rp->Laplace(pp->ldL2(), 0., pp->sqrL(1.)) - 2 * (m + s.log()).sum());
+        ans.attr("AGQcorr") = corr;
+        return ans;
         END_RCPP;
     }
 

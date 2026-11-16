@@ -141,10 +141,17 @@ glmer(formula, data = NULL, family = gaussian
   using a sparse (Smolyak) grid (\code{glmerControl(AGQ_grid =
   "sparse")}, available for up to 20 dimensions), which, like the
   product rule, integrates polynomials of total degree up to
-  \code{2*nAGQ - 1} exactly, but has far fewer nodes (53 rather than 125 for \code{k = 2, nAGQ = 5}).  Because
-  sparse grids have some negative weights they can be less reliable when
-  the integrand is far from Gaussian.  A warning is given when the rule
-  has more than 1000 nodes.
+  \code{2*nAGQ - 1} exactly.  Sparse grids only have fewer nodes than
+  the product rule for \code{k >= 4} (e.g. 385 rather than 625 for
+  \code{k = 4, nAGQ = 5}; for \code{k = 2} they have more), and they
+  are experimental: because they have negative weights, the
+  approximate deviance can be far too low when the integrand is far
+  from Gaussian (e.g. binary responses with few observations per
+  level), and the optimizer may then converge to badly wrong
+  estimates.  \code{glmer} warns when the sparse-grid deviance at the
+  estimates is far below the Laplace approximation; prefer the product
+  rule (with \code{AGQ_prune} if necessary).  A warning is given when
+  the rule has more than 1000 nodes.
 
 %  The default approximation is the Laplace approximation,
 %  corresponding to \code{nAGQ=1}.

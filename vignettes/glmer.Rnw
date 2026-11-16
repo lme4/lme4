@@ -843,8 +843,10 @@ A reasonable strategy for choosing the number of nodes is to re-fit the model wi
 At present, AGQ is only available 
 for models with a single random-effects term (scalar or vector-valued).
 For a $k$-dimensional random effect the default rule is a tensor product of $k$ one-dimensional
-Gauss-Hermite rules, with \code{nAGQ}$^k$ nodes; for larger $k$, \code{glmerControl(AGQ\_grid = "sparse")}
-uses a sparse (Smolyak) grid with many fewer nodes.
+Gauss-Hermite rules, with \code{nAGQ}$^k$ nodes; for $k \ge 4$, \code{glmerControl(AGQ\_grid = "sparse")}
+uses a sparse (Smolyak) grid with fewer nodes. Sparse grids are experimental: their negative weights
+can make the approximate deviance far too low for strongly non-Gaussian integrands (e.g.\ binary
+responses in small clusters).
 Each level's integral is centred at the conditional mode $\tilde{\bm u}_j$ found by PIRLS and scaled by
 the Cholesky factor of the corresponding diagonal block of $\bm\Lambda_\theta^\top\bm Z^\top\bm W\bm Z\bm\Lambda_\theta + \bm I$,
 so that \code{nAGQ = 1} reproduces the Laplace approximation.

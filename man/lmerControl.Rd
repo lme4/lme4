@@ -198,7 +198,10 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
     vector-valued random effect: \code{"product"} (the default), the
     tensor product of \code{nAGQ}-point Gauss-Hermite rules
     (\code{nAGQ^k} nodes for a \eqn{k}-dimensional random effect), or
-    \code{"sparse"}, the sparse grid \code{\link{GQdk}(k, nAGQ)}.  Both
+    \code{"sparse"} (experimental), the sparse grid
+    \code{\link{GQdk}(k, nAGQ)}, which has fewer nodes only for
+    \eqn{k \ge 4}{k >= 4} and can give badly wrong fits when the
+    integrand is far from Gaussian (see \code{\link{glmer}}).  Both
     are identical to \code{\link{GHrule}(nAGQ)} for scalar random
     effects.}
   \item{AGQ_prune}{(GLMMs only) number in [0, 1) - for
