@@ -17,6 +17,9 @@
   }
   \subsection{BUG FIXES}{
     \itemize{
+      \item \code{allFit()} no longer fails (\dQuote{object not found})
+      when the model's data exist only inside a function, e.g. when the
+      model was fitted to a local data frame within a user's function.
       \item \code{glmer} now handles non-integer responses for the
       binomial and Poisson families consistently: the log-likelihood
       uses the continuous extension of the binomial/Poisson density
