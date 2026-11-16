@@ -15,6 +15,9 @@
       experimental sparse grid, with a warning when its deviance looks
       unreliable) and \code{AGQ_prune} control the quadrature rule.
       Results for scalar random effects are unchanged.
+      \item \code{anova()} warns when comparing GLMMs fitted with
+      different values of \code{nAGQ}, whose log-likelihoods are
+      approximated differently.
       \item \code{glmer} and \code{lmer} fits are faster: the sparse
       Cholesky factor was computed twice with the same input in each PIRLS
       step and each \code{lmer} deviance evaluation. Results are unchanged.

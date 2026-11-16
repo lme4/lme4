@@ -176,9 +176,7 @@ xyplot(incidence/size ~ period|herd, cbpp, type=c('g','p','l'),
 (gm1a <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
                cbpp, binomial, nAGQ = 0))
 ## using  nAGQ = 9  provides a better evaluation of the deviance
-## Currently the internal calculations use the sum of deviance residuals,
-## which is not directly comparable with the nAGQ=0 or nAGQ=1 result.
-## 'verbose = 1' monitors iteratin a bit; (verbose = 2 does more):
+## 'verbose = 1' monitors iteration a bit; (verbose = 2 does more):
 (gm1a <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
                cbpp, binomial, verbose = 1, nAGQ = 9))
 
@@ -199,6 +197,21 @@ gm0 <- glm(cbind(incidence, size - incidence) ~ period,
 gm1Dev0 <- gm1Devfun(c(0,coef(gm0)))
 ## compare
 stopifnot(all.equal(gm1Dev0,c(-2*logLik(gm0))))
+## adaptive quadrature with a vector-valued random effect (random
+## slope, so nAGQ^2 quadrature nodes per district); the estimates
+## change little from nAGQ = 1 (Laplace) to 5 to 9
+\donttest{
+if (requireNamespace("mlmRev", quietly = TRUE)) {
+    data(Contraception, package = "mlmRev")
+    Contraception <- transform(Contraception, age_s = age / (2 * sd(age)),
+                               ch = factor(livch != 0, labels = c("N", "Y")))
+    cm1 <- glmer(use ~ age_s * ch + I(age_s^2) + urban + (1 + urban | district),
+                 Contraception, binomial)
+    cm_agq <- lapply(c(5, 9), function(n) update(cm1, nAGQ = n))
+    sapply(c(list(cm1), cm_agq), function(m)
+        c(fixef(m), getME(m, "theta"), logLik = logLik(m)))
+}
+}
 ## the toenail oncholysis data from Backer et al 1998
 ## these data are notoriously difficult to fit
 \dontrun{

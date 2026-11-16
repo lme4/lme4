@@ -615,6 +615,15 @@ anovaLmer <- function(object, ..., refit = TRUE, model.names=NULL) {
         if (length(mNms) != length(mods))
             stop("model names vector and model list have different lengths")
         names(mods) <- sub("@env$", '', mNms) # <- hack
+        ## log-likelihoods from different nAGQ use different approximations
+        nAGQs <- vapply(mods, function(x)
+            if (is(x, "merMod") && isGLMM(x)) x@devcomp$dims[["nAGQ"]] else NA_integer_,
+            1L)
+        if (length(unique(nAGQs[!is.na(nAGQs)])) > 1L)
+            warning(gettextf(paste("models were fitted with different values of nAGQ (%s),",
+                                   "so their log-likelihoods are approximated differently"),
+                             paste(nAGQs[!is.na(nAGQs)], collapse = ", ")),
+                    call. = FALSE)
         models.reml <- vapply(mods, function(x) is(x,"merMod") && isREML(x), NA)
         if (refit) {
             ## message only if at least one models is REML:
@@ -1525,13 +1534,12 @@ refit.merMod <- function(object,
         ## recover the original fit's AGQ rule (see mkMerMod(); falls
         ## back to the default product rule for older fit objects)
         agqK  <- if (nAGQ > 1L) length(object@cnms[[1]]) else 1L
-        GQmat <- if (nAGQ > 1L) {
-            v <- dc$dims["AGQsparse"]
-            pr <- dc$cmp["AGQprune"]
-            mkAGQmat(nAGQ, agqK,
-                     type = if (!is.na(v) && v) "sparse" else "product",
-                     prune = if (is.na(pr)) 0 else pr)
-        } else GHrule(nAGQ)
+        AGQ_grid <- if (isTRUE(as.logical(dc$dims["AGQsparse"]))) "sparse" else "product"
+        AGQ_prune <- unname(dc$cmp["AGQprune"])
+        if (is.na(AGQ_prune)) AGQ_prune <- 0
+        GQmat <- if (nAGQ > 1L)
+            mkAGQmat(nAGQ, agqK, type = AGQ_grid, prune = AGQ_prune)
+        else GHrule(nAGQ)
 
         dispProfile <- identical(control$disp_method %||% "moment", "moment")
         maxPhiIter  <- as.integer(control$maxPhiIter %||% 100L)
@@ -1588,6 +1596,9 @@ refit.merMod <- function(object,
                  pwrssUpdate = glmerPwrssUpdate,
                  GQmat = GQmat,
                  agqK = agqK,
+                 ## kept so that mkMerMod() records the same rule
+                 AGQ_grid = AGQ_grid,
+                 AGQ_prune = AGQ_prune,
                  fac = object@flist[[1]],
                  verbose=verbose,
                  dpars=seq_len(getParLength(object)))
@@ -1631,6 +1642,7 @@ refit.merMod <- function(object,
                     # ctrl = eval(object@call$control)$checkConv,
                     ctrl = control$checkConv,
                     lbound=lower, ubound=upper)
+    if (haveGLMM && nAGQ > 1L) glmerAGQcheck(rho)
     if (haveGLMM) rr$setOffset(baseOffset)
     mkMerMod(environment(ff), opt,
              list(flist=object@flist, cnms=object@cnms,

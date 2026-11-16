@@ -141,6 +141,26 @@ test_that("sparse-grid fits warn when the quadrature looks unreliable", {
     expect_silent(chk("product", rep(0.5, 10)))
 })
 
+test_that("refit() keeps the AGQ rule and checks sparse-grid fits", {
+    ms <- glmer(yb ~ x + (x|g), dd, binomial, nAGQ = 5,
+                control = glmerControl(AGQ_grid = "sparse"))
+    r2 <- refit(refit(ms))
+    expect_equal(r2@devcomp$dims[c("AGQsparse", "AGQnodes")],
+                 ms@devcomp$dims[c("AGQsparse", "AGQnodes")])
+    expect_match(summary(r2)$methTitle, "sparse grid", fixed = TRUE)
+    mp <- glmer(yb ~ x + (x|g), dd, binomial, nAGQ = 5,
+                control = glmerControl(AGQ_prune = 0.01))
+    rp <- refit(refit(mp))
+    expect_equal(rp@devcomp$cmp[["AGQprune"]], 0.01)
+    expect_equal(rp@devcomp$dims[["AGQnodes"]], mp@devcomp$dims[["AGQnodes"]])
+    ## refit() (and hence bootMer()) runs the check on its own estimates
+    corr <- NULL
+    local_mocked_bindings(glmerAGQcheck = function(rho, ...) corr <<- rho$AGQcorr,
+                          .package = "lme4")
+    refit(ms, simulate(ms, seed = 1)[[1]])
+    expect_length(corr, nlevels(dd$g))
+})
+
 test_that("vector-valued AGQ fits, prints and refits", {
     m1 <- glmer(yb ~ x + (x|g), dd, binomial)
     m5 <- glmer(yb ~ x + (x|g), dd, binomial, nAGQ = 5)
@@ -155,6 +175,31 @@ test_that("vector-valued AGQ fits, prints and refits", {
     ## scalar fits keep the old title
     m0 <- glmer(yb ~ x + (1|g), dd, binomial, nAGQ = 5)
     expect_match(summary(m0)$methTitle, "nAGQ = 5)", fixed = TRUE)
+})
+
+test_that("profile(), confint(), allFit(), drop1() and anova() work with vector AGQ", {
+    ## do.call() puts the data itself in the call, so that the update()s
+    ## inside allFit() and drop1() can re-evaluate it from any environment
+    m5 <- do.call(glmer, list(yb ~ x + (x|g), dd, binomial, nAGQ = 5))
+    ## the profile is built from the AGQ deviance: zeta is 0 at the estimate
+    p <- profile(m5, which = "x")
+    px <- p[p$.par == "x", ]
+    sp <- splines::interpSpline(px$.zeta ~ px$x)
+    expect_equal(predict(sp, fixef(m5)[["x"]])$y, 0, tolerance = 1e-6)
+    ci <- confint(p)
+    expect_true(ci[1] < fixef(m5)[["x"]] && fixef(m5)[["x"]] < ci[2])
+    expect_equal(c(ci), c(confint(m5, parm = "x", method = "Wald")), tolerance = 0.2)
+    ## drop1() and anova() refit with the same nAGQ and agree with each other
+    m5b <- update(m5, . ~ . - x)
+    expect_equal(m5b@devcomp$dims[["nAGQ"]], 5L)
+    a <- anova(m5b, m5)
+    expect_equal(a$Chisq[2], c(2 * (logLik(m5) - logLik(m5b))))
+    expect_warning(anova(update(m5b, nAGQ = 1), m5), "different values of nAGQ \\(1, 5\\)")
+    d1 <- drop1(m5, test = "Chisq")
+    expect_equal(d1["x", "LRT"], a$Chisq[2], tolerance = 1e-5)
+    ## allFit(): optimizers agree
+    af <- suppressMessages(allFit(m5, meth.tab = lme4:::meth.tab.0[1:2, ], verbose = FALSE))
+    expect_equal(unname(summary(af)$llik), rep(c(logLik(m5)), 2), tolerance = 1e-5)
 })
 
 test_that("AGQ checks the random-effects structure and grid size", {

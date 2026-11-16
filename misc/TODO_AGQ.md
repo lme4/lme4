@@ -34,8 +34,11 @@ any width (`(1+x|g)`, `diag(x|g)`, `cs(x|g)`, ...). Quadrature rules come from `
   0.2 or any sum is non-positive (from the `AGQcorr` attribute that `glmerAGQ()` now returns).
   Also, sparse grids only have fewer nodes than the product rule for k >= 4 (for k = 2 they
   have more). Docs now call them experimental.
-- [ ] `refit()`/`bootMer()` don't run `glmerAGQcheck()`. Consider whether sparse grids are
-  worth keeping at all, or a better rule (e.g. nested Kronrod-Patterson / pruned product).
+- [x] `refit()` (and so `bootMer()`, which collects the warnings in `attr(, "boot.all.msgs")`)
+  runs `glmerAGQcheck()`. `refit()` also now keeps `AGQ_grid`/`AGQ_prune`; before, a refitted
+  sparse or pruned fit was recorded as a plain product rule, so a second refit changed rule.
+- [ ] Consider whether sparse grids are worth keeping at all, or a better rule (e.g. nested
+  Kronrod-Patterson / pruned product).
 
 ### Scope extensions
 - [ ] **Several terms with the same single grouping factor**, e.g. `(1|g) + (0+x|g)`, including
@@ -67,7 +70,13 @@ any width (`(1+x|g)`, `diag(x|g)`, `cs(x|g)`, ...). Quadrature rules come from `
 - [ ] The scaling uses the expected (Fisher/PIRLS) Hessian rather than the observed Hessian, as
   GLMMadaptive does. These are equivalent for canonical links. For non-canonical links this
   only affects efficiency at finite nAGQ, but it should be documented, and maybe made optional.
-- [ ] `profile()`, `confint(method = "profile")`, `allFit()` and `drop1()`/`anova()` with vector
-  AGQ fits are untested.
-- [ ] Add a worked example (e.g. a random-slope binomial model) to `?glmer` or the glmer
-  vignette, comparing nAGQ = 1, 5 and 9.
+- [x] `profile()`, `confint()` (profile, Wald, boot), `allFit()`, `drop1()` and `anova()` work
+  with vector AGQ fits (test in test-agq-vector.R). `anova()` now warns when the models were
+  fitted with different nAGQ.
+- [x] Worked example in `?glmer` (`\donttest{}`): Contraception (mlmRev),
+  `(1 + urban | district)`, nAGQ = 1, 5, 9; about 9 s.
+- [ ] Not AGQ-specific: `allFit()` fails ("object 'd' not found") when the model's data are
+  visible only inside a function (also in CRAN lme4 2.1.1). It refits with
+  `update(object, control = ctrl)` and puts `ctrl` in an environment attached to a *copy* of the
+  formula, so `update.merMod()` can't find both `ctrl` and the data in one environment. Likely
+  fix: inline the values, `bquote(update(object, control = .(ctrl)))` (and `start = .(pars)`).
