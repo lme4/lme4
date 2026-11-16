@@ -5,7 +5,7 @@
 ## independent reference for -2 log L: per-level adaptive product
 ## Gauss-Hermite quadrature on the b scale, with modes from optim() and
 ## the observed Hessian from optimHess()
-refDev <- function(theta, beta, X, Z, y, g, ll_fun, nq = 20) {
+refDev <- function(theta, beta, X, Z, y, g, ll_fun, nq = 20, offset = 0) {
     k <- ncol(Z)
     L <- matrix(0, k, k); L[lower.tri(L, TRUE)] <- theta
     Sig <- tcrossprod(L)
@@ -13,7 +13,7 @@ refDev <- function(theta, beta, X, Z, y, g, ll_fun, nq = 20) {
     gh <- GHrule(nq)
     zz <- as.matrix(expand.grid(rep(list(gh[, "z"]), k)))
     ww <- apply(as.matrix(expand.grid(rep(list(gh[, "w"]), k))), 1, prod)
-    eta0 <- drop(X %*% beta)
+    eta0 <- drop(X %*% beta) + offset
     tot <- 0
     for (lev in levels(g)) {
         i <- g == lev
@@ -74,6 +74,71 @@ test_that("vector-valued AGQ deviance converges to an independent reference", {
         expect_lt(err[2], err[1])
         expect_lt(abs(dev(9, control = glmerControl(AGQ_grid = "sparse")) - ref), 0.01)
     }
+})
+
+## do.call() so that weights/offset vectors passed through ... reach
+## model.frame() as values (glmer() evaluates them non-standardly)
+devAt <- function(formula, data, family, nAGQ, ...)
+    do.call(glmer, list(formula, data, family, nAGQ = nAGQ, devFunOnly = TRUE,
+                        ...))(c(theta0, beta0))
+
+test_that("vector-valued AGQ handles binomial sizes and prior weights", {
+    set.seed(102)
+    db <- dd
+    db$n <- sample(1:6, nrow(db), replace = TRUE)
+    db$s <- rbinom(nrow(db), db$n, plogis(eta))
+    db$p <- db$s / db$n
+    long <- db[rep(seq_len(nrow(db)), db$n), ]
+    long$y <- unlist(lapply(seq_len(nrow(db)), function(i)
+        rep(1:0, c(db$s[i], db$n[i] - db$s[i]))))
+    ref <- refDev(theta0, beta0, XX, XX, seq_len(nrow(db)), db$g,
+                  function(i, eta) dbinom(db$s[i], db$n[i], plogis(eta), log = TRUE))
+    for (nq in c(3, 15)) {
+        d_cbind <- devAt(cbind(s, n - s) ~ x + (x|g), db, binomial, nq)
+        expect_equal(devAt(p ~ x + (x|g), db, binomial, nq, weights = db$n), d_cbind)
+        ## the 0/1 data differ only by the binomial coefficients
+        expect_equal(devAt(y ~ x + (x|g), long, binomial, nq) - d_cbind,
+                     2 * sum(lchoose(db$n, db$s)))
+    }
+    expect_lt(abs(d_cbind - ref), 1e-4)
+})
+
+test_that("vector-valued AGQ handles offsets", {
+    set.seed(103)
+    do <- dd
+    do$expo <- runif(nrow(do), 0.5, 3)
+    do$y <- rpois(nrow(do), do$expo * exp(eta))
+    ref <- refDev(theta0, beta0, XX, XX, do$y, do$g,
+                  function(y, eta) dpois(y, exp(eta), log = TRUE),
+                  offset = log(do$expo))
+    d_form <- devAt(y ~ x + offset(log(expo)) + (x|g), do, poisson, 15)
+    expect_equal(devAt(y ~ x + (x|g), do, poisson, 15, offset = log(do$expo)), d_form)
+    expect_lt(abs(d_form - ref), 1e-4)
+    m <- glmer(y ~ x + offset(log(expo)) + (x|g), do, poisson, nAGQ = 5)
+    expect_equal(deviance(refit(m)), deviance(m), tolerance = 1e-5)
+})
+
+test_that("vector-valued AGQ works with nAGQ0initStep = FALSE", {
+    fit <- function(init) glmer(yp ~ x + (x|g), dd, poisson, nAGQ = 5,
+                                control = glmerControl(nAGQ0initStep = init))
+    m_t <- fit(TRUE); m_f <- fit(FALSE)
+    expect_equal(c(getME(m_f, "theta"), fixef(m_f)),
+                 c(getME(m_t, "theta"), fixef(m_t)), tolerance = 1e-3)
+    expect_equal(deviance(m_f), deviance(m_t), tolerance = 1e-5)
+})
+
+test_that("sparse-grid fits warn when the quadrature looks unreliable", {
+    df <- glmer(yb ~ x + (x|g), dd, binomial, nAGQ = 5, devFunOnly = TRUE,
+                control = glmerControl(AGQ_grid = "sparse"))
+    df(c(theta0, beta0))
+    corr <- environment(df)$AGQcorr
+    expect_length(corr, nlevels(dd$g))
+    expect_silent(lme4:::glmerAGQcheck(environment(df)))
+    chk <- function(grid, corr)
+        lme4:::glmerAGQcheck(list2env(list(AGQ_grid = grid, AGQcorr = corr)))
+    expect_warning(chk("sparse", rep(0.5, 10)), "below the Laplace")
+    expect_warning(chk("sparse", c(NA, rep(0, 9))), "non-positive")
+    expect_silent(chk("product", rep(0.5, 10)))
 })
 
 test_that("vector-valued AGQ fits, prints and refits", {
