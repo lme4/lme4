@@ -28,7 +28,11 @@
       the rounded data for \code{nAGQ >= 1} (since 2.1-0, also for
       \code{nAGQ > 1}). Non-integer Poisson responses now give a single
       warning, as non-integer binomial counts already did. Results for
-      integer data are unchanged (GH #180, #682, #1011, @avehtari).
+      integer data are unchanged. For non-integer responses, the
+      log-likelihoods no longer match those from base-R \code{glm()},
+      which rounds non-integer binomial counts and returns \code{-Inf}
+      for non-integer Poisson responses (GH #180, #682, #1011,
+      @avehtari).
       \item \code{vcov(., full = TRUE)}, and hence the standard errors
       from \code{predict(., se.fit = TRUE)}, now apply the fill-reducing
       permutation of the sparse Cholesky factor. They could be wrong
