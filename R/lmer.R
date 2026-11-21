@@ -2611,8 +2611,9 @@ optwrap <- function(optimizer, fn, par, lower = -Inf, upper = Inf,
     if ((optconv <- getConv(opt)) != 0) {
         wmsg <- paste("convergence code",optconv,"from",optName)
         if (!is.null(getMsg(opt))) wmsg <- paste0(wmsg,": ",getMsg(opt))
+        ## not added to curWarnings: the code and message are already stored
+        ## in optinfo$conv and optinfo$message, and .prt.warn() prints them
         warning(wmsg)
-        curWarnings <<- append(curWarnings,list(wmsg))
     }
     ## pp_before <- environment(fn)$pp
     ## save(pp_before,file="pp_before.RData")

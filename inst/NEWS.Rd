@@ -42,6 +42,9 @@
       off by factors of up to 4. Fits whose permutation is the
       identity (usually those with a single grouping factor) and
       \code{vcov()} of the fixed effects are unchanged (GH #1013, @hdbt).
+      \item A fit whose optimizer returned a non-zero convergence code
+      no longer creates a variable \code{curWarnings} in the global
+      environment.
     }
   }
 }
