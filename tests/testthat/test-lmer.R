@@ -500,3 +500,26 @@ test_that("parameter counting", {
   expect_equal(attr(logLik(m1), "df"), 18L)
   expect_equal(attr(logLik(m2), "df"), 4L)
 })
+
+test_that("optimizer returning NA parameters gives an informative error (GH #1019)", {
+    ## custom optimizer that fails the way optimx does when the objective throws
+    na_opt <- function(fn, par, lower, upper, control) {
+        list(par = rep(NA_real_, length(par)), fval = NA_real_,
+             conv = 9999, message = "none")
+    }
+    for (cd in c(TRUE, FALSE)) {
+        expect_error(suppressWarnings(
+            lmer(Yield ~ 1 | Batch, Dyestuff,
+                 control = lmerControl(optimizer = na_opt, calc.derivs = cd))),
+            "optimizer \\(user-supplied function\\) returned NA parameters \\(convergence code 9999\\)")
+    }
+    skip_if_not_installed("optimx")
+    fn <- function(x) {
+        if (x[1] > 1) stop("objective failed")
+        (x[1] - 2)^2
+    }
+    expect_error(suppressWarnings(
+        lme4:::optwrap("optimx", fn, par = 0.5, lower = 0, upper = Inf,
+                       control = list(method = "nlminb"))),
+        "optimizer optimx \\(nlminb\\) returned NA parameters \\(convergence code 9999\\)")
+})
