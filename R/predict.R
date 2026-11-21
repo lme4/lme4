@@ -300,9 +300,14 @@ mkNewReTrms <- function(object, newdata,
         bb1 <- bb1[reTrms$ord] # reorder to match mkReTrms internal ordering
         reTrms <- upReTrms(reTrms, bb1) # local calc.lambdat=TRUE step
 
-        ## ReTrms <- reformulas::mkReTrms(reformulas::findbars(re.form[[2]]), rfd)
-        ## update Lambdat (ugh, better way to do this?)
-        reTrms <- within(reTrms,Lambdat@x <- unname(getME(object,"theta")[Lind]))
+        ## Lind indexes the theta vector of the *rebuilt* term list, which
+        ## differs from the fitted theta when re.form omits terms (GH #1025)
+        theta_sub <- subsetTheta(object, reTrms)
+        if (is.null(theta_sub)) {
+            reTrms$Lambdat <- NULL
+        } else {
+            reTrms$Lambdat@x <- theta_sub[reTrms$Lind]
+        }
         if (!allow.new.levels && any(vapply(reTrms$flist, anyNA, NA)))
             stop("NAs are not allowed in prediction data",
                  " for grouping variables unless allow.new.levels is TRUE")
@@ -341,6 +346,31 @@ mkNewReTrms <- function(object, newdata,
     Zt <- reTrms$Zt
     attr(Zt, "na.action") <- attr(re_new, "na.action") <- fixed.na.action
     list(Zt=Zt, b=re_new, Lambdat = reTrms$Lambdat, flist = reTrms$flist)
+}
+
+## theta for a rebuilt (possibly partial) list of random-effects terms,
+## assembled from the fitted model's theta blocks: each rebuilt term is
+## matched to the fitted term with the same grouping factor and columns.
+## Returns NULL if some term has no unique match (e.g. its columns changed
+## with new data); only simulate() needs the result.
+## @param object fitted model object
+## @param reTrms rebuilt terms (from mkReTrms() and upReTrms())
+subsetTheta <- function(object, reTrms) {
+    termKey <- function(cnms)
+        paste(names(cnms), vapply(cnms, paste, "", collapse = "\r"), sep = "\n")
+    fitKeys <- termKey(object@cnms)
+    newKeys <- termKey(reTrms$cnms)
+    m <- match(newKeys, fitKeys)
+    if (anyNA(m) || anyDuplicated(m) ||
+        anyDuplicated(fitKeys[fitKeys %in% newKeys]))
+        return(NULL)
+    fitLen <- vapply(getReCovs(object), getThetaLength, 0L, USE.NAMES = FALSE)
+    newLen <- vapply(reTrms$reCovs, getThetaLength, 0L, USE.NAMES = FALSE)
+    if (!identical(newLen, fitLen[m]))
+        return(NULL)
+    theta <- unname(getME(object, "theta"))
+    thetaIndex <- split(seq_along(theta), rep(seq_along(fitLen), fitLen))
+    theta[unlist(thetaIndex[m], use.names = FALSE)]
 }
 
 ## @param x a random effect (i.e., data frame with rows equal to levels, columns equal to terms
@@ -891,6 +921,9 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
         ## <obsolete> paranoia ...
         ## <obsolete> stopifnot(!is.null(newdata) ||
         ##       isTRUE(all.equal(newRE$Lambdat,getME(object,"Lambdat"))))
+        if (is.null(newRE$Lambdat))
+            stop("can't match the random-effects terms to be simulated ",
+                 "to terms of the fitted model", call. = FALSE)
         U <- t(newRE$Lambdat %*% newRE$Zt) # == Z Lambda
         u <- cluster.rand(ncol(U)*nsim)
         ## UNSCALED random-effects contribution:
