@@ -17,6 +17,11 @@
   }
   \subsection{BUG FIXES}{
     \itemize{
+      \item When the optimizer returns \code{NA} parameters (e.g.
+      \code{optimx} with convergence code 9999 after the objective
+      function throws an error), fitting now stops with an error
+      saying so, rather than "missing value where TRUE/FALSE needed"
+      (GH #1019, @avehtari).
       \item \code{glmer} now handles non-integer responses for the
       binomial and Poisson families consistently: the log-likelihood
       uses the continuous extension of the binomial/Poisson density
