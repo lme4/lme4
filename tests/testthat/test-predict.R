@@ -819,3 +819,45 @@ test_that("simulation works with 'par'", {
   expect_equal(s1, s2)
 
 })
+
+test_that("partial re.form rebuilds each term with its own theta (GH #1025)", {
+    ## the Lambdat block of each rebuilt term must equal that term's block of
+    ## the fitted Lambdat; simulate() scales the draws of omitted terms by it.
+    ## cs() and ar1() 3x3 terms have length(par) < length(theta).
+    set.seed(20261121)
+    d <- expand.grid(a = factor(1:15), b = factor(1:10), r = 1:3)
+    d$x <- rnorm(nrow(d)); d$z <- rnorm(nrow(d)); d$tf <- factor(d$r)
+    d$y <- rnorm(15)[d$a] + rnorm(10, sd = 0.5)[d$b] * (1 + d$x) + rnorm(nrow(d))
+    d$cnt <- rpois(nrow(d), exp(0.5 + rnorm(15, sd = 0.5)[d$a] +
+                                rnorm(10, sd = 0.3)[d$b]))
+    fits <- suppressWarnings(suppressMessages(list(
+        us    = lmer(y ~ x + (1 | a) + (1 + x | b), d),
+        usrev = lmer(y ~ x + (1 + x | b) + (1 | a), d),
+        cs    = lmer(y ~ x + (1 | a) + cs(1 + x + z | b), d),
+        ar1   = lmer(y ~ x + (1 | a) + ar1(0 + tf | b), d),
+        pois  = glmer(cnt ~ 1 + (1 | a) + (1 + x | b), d, family = poisson))))
+    for (nm in names(fits)) {
+        fit <- fits[[nm]]
+        L <- getME(fit, "Lambdat"); Gp <- getME(fit, "Gp")
+        bars <- reformulas::findbars_x(formula(fit), specials = lme4:::lme4_specials,
+                                       default.special = "us", target = "|")
+        for (b in bars) {
+            nr <- lme4:::mkNewReTrms(fit, NULL, as.formula(call("~", b)))
+            ## each grouping factor has a single term in these models
+            j <- match(names(nr$flist), names(fit@cnms))
+            idx <- (Gp[j] + 1):Gp[j + 1]
+            expect_equal(as.matrix(nr$Lambdat), as.matrix(L[idx, idx]),
+                         ignore_attr = TRUE,
+                         label = paste(nm, deparse(b)))
+        }
+    }
+})
+
+test_that("subsetTheta() returns NULL for terms not in the fit (GH #1025)", {
+    fm <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
+    rt <- list(cnms = list(Subject = "(Intercept)"),
+               reCovs = lme4:::getReCovs(fm)[1])
+    expect_null(lme4:::subsetTheta(fm, rt))
+    rt$cnms <- fm@cnms
+    expect_equal(lme4:::subsetTheta(fm, rt), unname(getME(fm, "theta")))
+})

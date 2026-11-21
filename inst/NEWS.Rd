@@ -17,6 +17,13 @@
   }
   \subsection{BUG FIXES}{
     \itemize{
+      \item \code{simulate()} with a \code{re.form} that omits some
+      random-effects terms now draws each omitted term from its own
+      estimated covariance matrix. Previously the omitted terms were
+      scaled by the covariance parameters at the same position in the
+      fitted model's \code{theta} vector, which belonged to a different
+      term unless the omitted terms came first in the fitted order
+      (GH #1025, @numero-uno-jpn).
       \item When the optimizer returns \code{NA} parameters (e.g.
       \code{optimx} with convergence code 9999 after the objective
       function throws an error), fitting now stops with an error
