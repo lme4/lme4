@@ -10,6 +10,10 @@
       \item \code{glmer} and \code{lmer} fits are faster: the sparse
       Cholesky factor was computed twice with the same input in each PIRLS
       step and each \code{lmer} deviance evaluation. Results are unchanged.
+      \item \code{glmer} fits are faster again: PIRLS steps no longer copy
+      \code{Lambdat*Ut} before each factorization, compute the weights only
+      once, and skip the cross-products the step does not use. Results are
+      unchanged.
       \item modified the check of non-monotonicity to count nearly
       flat profiles (within floating-point error) as non-monotonic and
       revert to linear interpolation
