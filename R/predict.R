@@ -351,18 +351,24 @@ mkNewReTrms <- function(object, newdata,
 ## theta for a rebuilt (possibly partial) list of random-effects terms,
 ## assembled from the fitted model's theta blocks: each rebuilt term is
 ## matched to the fitted term with the same grouping factor and columns.
-## Returns NULL if some term has no unique match (e.g. its columns changed
-## with new data); only simulate() needs the result.
+## Repeated terms, e.g. (1|g) + (1|g), are matched in order of occurrence.
+## gamm4 renames the columns of smooth terms in the fitted object, so if the
+## columns don't match, terms are matched by grouping factor alone, but only
+## when each grouping factor has a single term in the fit.
+## Returns NULL if some term has no match; only simulate() needs the result.
 ## @param object fitted model object
 ## @param reTrms rebuilt terms (from mkReTrms() and upReTrms())
 subsetTheta <- function(object, reTrms) {
     termKey <- function(cnms)
         paste(names(cnms), vapply(cnms, paste, "", collapse = "\r"), sep = "\n")
-    fitKeys <- termKey(object@cnms)
-    newKeys <- termKey(reTrms$cnms)
-    m <- match(newKeys, fitKeys)
-    if (anyNA(m) || anyDuplicated(m) ||
-        anyDuplicated(fitKeys[fitKeys %in% newKeys]))
+    ## append occurrence number: the i-th copy of a key matches the i-th copy
+    occKey <- function(key)
+        paste(key, ave(seq_along(key), key, FUN = seq_along), sep = "#")
+    fitCnms <- object@cnms
+    m <- match(occKey(termKey(reTrms$cnms)), occKey(termKey(fitCnms)))
+    if (anyNA(m) && !anyDuplicated(names(fitCnms)))
+        m <- match(names(reTrms$cnms), names(fitCnms))
+    if (anyNA(m) || anyDuplicated(m))
         return(NULL)
     fitLen <- vapply(getReCovs(object), getThetaLength, 0L, USE.NAMES = FALSE)
     newLen <- vapply(reTrms$reCovs, getThetaLength, 0L, USE.NAMES = FALSE)

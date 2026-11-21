@@ -559,7 +559,9 @@ test_that("vcov(full = TRUE) and se.fit with a permuted Cholesky factor (GH #101
   for (nm in names(fits)) {
     fit <- fits[[nm]]
     C <- dense_vcov_full(fit)
-    expect_equal(as.matrix(vcov(fit, full = TRUE)), C,
+    ## call lme4's method explicitly: merDeriv (loaded by earlier tests)
+    ## registers vcov.lmerMod/vcov.glmerMod with a different 'full'
+    expect_equal(as.matrix(vcov.merMod(fit, full = TRUE)), C,
                  check.attributes = FALSE, tolerance = 1e-8, info = nm)
     ZX <- cbind(as.matrix(getME(fit, "Z")), getME(fit, "X"))
     expect_equal(suppressWarnings(predict(fit, se.fit = TRUE))$se.fit,
@@ -853,11 +855,27 @@ test_that("partial re.form rebuilds each term with its own theta (GH #1025)", {
     }
 })
 
-test_that("subsetTheta() returns NULL for terms not in the fit (GH #1025)", {
-    fm <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
-    rt <- list(cnms = list(Subject = "(Intercept)"),
-               reCovs = lme4:::getReCovs(fm)[1])
+test_that("subsetTheta() matching rules (GH #1025)", {
+    ## two terms for Subject, so no fallback to grouping factors
+    fm <- lmer(Reaction ~ Days + (1 | Subject) + (0 + Days | Subject), sleepstudy)
+    th <- unname(getME(fm, "theta"))
+    rc <- lme4:::getReCovs(fm)
+    ## term identified by its columns, not position
+    rt <- list(cnms = fm@cnms[2], reCovs = rc[2])
+    expect_equal(lme4:::subsetTheta(fm, rt), th[2])
+    ## columns not in the fit
+    rt <- list(cnms = list(Subject = "x"), reCovs = rc[1])
     expect_null(lme4:::subsetTheta(fm, rt))
-    rt$cnms <- fm@cnms
-    expect_equal(lme4:::subsetTheta(fm, rt), unname(getME(fm, "theta")))
+    ## repeated identical terms are matched in order
+    fm2 <- suppressWarnings(
+        lmer(diameter ~ (1 | plate) + (1 | plate) + (1 | sample), Penicillin,
+             control = lmerControl(check.conv.hess = "ignore",
+                                   check.conv.grad = "ignore")))
+    rt <- list(cnms = fm2@cnms, reCovs = lme4:::getReCovs(fm2))
+    expect_equal(lme4:::subsetTheta(fm2, rt), unname(getME(fm2, "theta")))
+    ## renamed columns (as in gamm4 fits): matched by the grouping factor
+    ## when it has a single term
+    fm3 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
+    rt <- list(cnms = list(Subject = c("a", "b")), reCovs = lme4:::getReCovs(fm3))
+    expect_equal(lme4:::subsetTheta(fm3, rt), unname(getME(fm3, "theta")))
 })
