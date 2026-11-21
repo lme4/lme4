@@ -523,3 +523,17 @@ test_that("optimizer returning NA parameters gives an informative error (GH #101
                        control = list(method = "nlminb"))),
         "optimizer optimx \\(nlminb\\) returned NA parameters \\(convergence code 9999\\)")
 })
+
+test_that("non-zero convergence code doesn't assign in the global environment", {
+    if (exists("curWarnings", envir = globalenv(), inherits = FALSE))
+        rm("curWarnings", envir = globalenv())
+    fm <- suppressWarnings(
+        lmer(Reaction ~ Days + (Days | Subject), sleepstudy,
+             control = lmerControl(optimizer = "bobyqa",
+                                   optCtrl = list(maxfun = 10))))
+    expect_equal(fm@optinfo$conv$opt, 1)
+    expect_false(exists("curWarnings", envir = globalenv(), inherits = FALSE))
+    ## the convergence code is stored in optinfo$conv, not as a warning
+    expect_equal(unlist(fm@optinfo$warnings),
+                 "maxfun < 10 * length(par)^2 is not recommended.")
+})
