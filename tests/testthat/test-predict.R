@@ -824,6 +824,29 @@ test_that("simulation works with 'par'", {
 
 })
 
+test_that("predict with newdata uses an offset given as an argument (GH #447)", {
+  set.seed(101)
+  d <- sleepstudy
+  d$o <- rnorm(nrow(d))
+  nd <- d
+  nd$o <- nd$o + 5
+  m_arg  <- lmer(Reaction ~ Days + (Days | Subject), d, offset = o)
+  m_term <- lmer(Reaction ~ Days + offset(o) + (Days | Subject), d)
+  expect_equal(predict(m_arg, newdata = d), fitted(m_arg))
+  expect_equal(predict(m_arg, newdata = nd), predict(m_term, newdata = nd))
+  expect_equal(predict(m_arg, newdata = nd, re.form = NA),
+               predict(m_term, newdata = nd, re.form = NA))
+  expect_equal(simulate(m_arg, newdata = nd, seed = 1),
+               simulate(m_term, newdata = nd, seed = 1))
+  dp <- data.frame(g = factor(rep(1:20, each = 6)), x = rnorm(120),
+                   t = rexp(120) + 0.5)
+  dp$y <- rpois(120, dp$t * exp(0.3 * dp$x + rnorm(20, sd = 0.5)[dp$g]))
+  g_arg <- glmer(y ~ x + (1 | g), dp, poisson, offset = log(t))
+  g_term <- glmer(y ~ x + offset(log(t)) + (1 | g), dp, poisson)
+  expect_equal(predict(g_arg, newdata = dp, type = "response"), fitted(g_arg))
+  dp2 <- dp
+  dp2$t <- 2 * dp2$t
+  expect_equal(predict(g_arg, newdata = dp2), predict(g_term, newdata = dp2))
 test_that("partial re.form rebuilds each term with its own theta (GH #1025)", {
     ## the Lambdat block of each rebuilt term must equal that term's block of
     ## the fitted Lambdat; simulate() scales the draws of omitted terms by it.
