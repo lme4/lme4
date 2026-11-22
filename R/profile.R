@@ -368,8 +368,10 @@ profile.merMod <- function(fitted,
                        theta = pp$theta,
                        n = nrow(Xdrop))
 ### FIXME Change this to use the deep copy and setWeights, setOffset, etc.
-            rr <- new(Class=class(fitted@resp), y=fitted@resp$y)
-            rr$setWeights(fitted@resp$weights)
+            ## pass the weights to the constructor: setWeights() does not
+            ## update sqrtXwt, so X and Z would be left unweighted
+            rr <- new(Class=class(fitted@resp), y=fitted@resp$y,
+                      weights=fitted@resp$weights)
             fe.zeta <- function(fw, start) {
                 ## (start parameter ignored)
                 rr$setOffset(Xw * fw + offset.orig)

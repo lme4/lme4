@@ -451,6 +451,31 @@ test_that("near-flat profile steps count as non-monotone", {
   expect_false(inherits(lme4:::profSplines(form, pp)$backward, "error"))
 })
 
+test_that("profiling fixed effects uses the prior weights", {
+  ## constant weights only rescale sigma: same fixed-effect profile
+  fu <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
+  f2 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy,
+             weights = rep(2, nrow(sleepstudy)))
+  expect_equal(confint(f2, parm = "beta_", quiet = TRUE),
+               confint(fu, parm = "beta_", quiet = TRUE), tolerance = 1e-5)
+  ## varying weights: zeta at each profiled intercept value equals the
+  ## signed root deviance difference of a refit with the intercept fixed
+  ## through an offset
+  set.seed(101)
+  d <- sleepstudy
+  d$w <- runif(nrow(d), 0.5, 2)
+  fw <- lmer(Reaction ~ Days + (Days | Subject), d, weights = w, REML = FALSE)
+  pr <- profile(fw, which = "(Intercept)")
+  pr <- pr[pr$.par == "(Intercept)", ]
+  b <- pr[["(Intercept)"]][c(2, nrow(pr) - 1)]
+  zeta <- vapply(b, function(bb) {
+    fo <- lmer(Reaction ~ 0 + Days + (Days | Subject), d, weights = w,
+               REML = FALSE, offset = rep(bb, nrow(d)))
+    sign(bb - fixef(fw)[[1]]) * sqrt(deviance(fo) - deviance(fw))
+  }, 0)
+  expect_equal(pr$.zeta[c(2, nrow(pr) - 1)], zeta, tolerance = 1e-4)
+})
+
 if (testLevel>1) {
 ## slow (~40 s): profiling the correlation
 test_that("confint.thpr uses the right bounds for a subset of parameters", {
@@ -781,7 +806,9 @@ if (testLevel>1) {
     ## (now the default), which applies an n-qEff degrees-of-freedom
     ## correction on top -- see misc/Gamma_GLMM/README_Gamma_GLMMs.md,
     ## Gamma_GLMM branch -- so the simulated y2 (and hence g2) shifts too
-    expect_equal(fixef(g2), tolerance = 4e-7, # 32-bit windows showed 1.34e-7
+    ## platform differences (BLAS, 32-bit) reach ~1e-6; switching optimizer
+    ## moves the estimates by ~1e-5
+    expect_equal(fixef(g2), tolerance = 1e-5,
                  c(`(Intercept)` = 2.97872455138837, x = 1.05320649158952))
 ##                 c("(Intercept)" = 2.81887136759369, x= 1.06543222163626))
 
@@ -1045,14 +1072,16 @@ test_that("cooks distance on glmer models", {
   skip_on_cran()
   inf <- influence(gm1)
   inf.h <- influence(gm1, "herd", ncpus=1)
+  ## each value comes from a refit, so it carries the optimizer's convergence
+  ## error: values differ by ~5e-5 (relative) between BLAS implementations
   cook <- cooks.distance(inf)
   expect_equal(unname(head(cook, 3)),
                c(0.0524063139071626, 0.0396850631091166, 0.246678190526733),
-               tolerance = 1e-6)
+               tolerance = 1e-4)
   cook.h <- cooks.distance(inf.h)
   expect_equal(unname(head(cook.h, 3)),
                c(0.251033719710455, 0.00519895610205458, 0.101113708827459),
-               tolerance = 1e-6)
+               tolerance = 1e-4)
 })
 
 ## tweaked example so estimated var = 0

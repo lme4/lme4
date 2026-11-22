@@ -2611,11 +2611,26 @@ optwrap <- function(optimizer, fn, par, lower = -Inf, upper = Inf,
     if ((optconv <- getConv(opt)) != 0) {
         wmsg <- paste("convergence code",optconv,"from",optName)
         if (!is.null(getMsg(opt))) wmsg <- paste0(wmsg,": ",getMsg(opt))
+        ## not added to curWarnings: the code and message are already stored
+        ## in optinfo$conv and optinfo$message, and .prt.warn() prints them
         warning(wmsg)
-        curWarnings <<- append(curWarnings,list(wmsg))
     }
     ## pp_before <- environment(fn)$pp
     ## save(pp_before,file="pp_before.RData")
+
+    ## e.g. optimx returns NA parameters (code 9999) when the objective
+    ## throws an error; there is no fit to return, and the checks below
+    ## (singularity, derivatives, checkConv()) fail on NA
+    if (anyNA(opt$par)) {
+        ## optName of a function is deparsed from the caller's argument, usually
+        ## just "optimizer", so don't use it in the message
+        optLabel <- if (!is.character(optimizer)) "(user-supplied function)"
+                    else if (optName == "optimx") paste0("optimx (", method, ")")
+                    else optName
+        stop(gettextf("optimizer %s returned NA parameters (convergence code %s)",
+                      optLabel, format(getConv(opt))),
+             call. = FALSE, domain = NA)
+    }
 
     singular <- min(opt$par - lower, upper - opt$par) < getSingTol()
     if (force.calc.derivs || (calc.derivs && !singular)){
