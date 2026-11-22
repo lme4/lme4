@@ -99,7 +99,13 @@ namespace lme4 {
         void              updateL();
         void         updateLamtUt();
         void            updateRes(const VectorXd&);
-        void           updateXwts(const  ArrayXd&, bool refreshL = true);
+        // refreshL = false skips the L update at the end; callers must then
+        // run updateL() or updateDecomp() before L is used (updateDecomp()
+        // calls updateL() itself).  refreshVtV = false also skips V'V; only
+        // callers that do not use VtV (or RX, which is built from it) before
+        // the next full updateXwts()/updateDecomp() may do that.
+        void           updateXwts(const  ArrayXd&, bool refreshL = true,
+                                  bool refreshVtV = true);
     };
 }
 

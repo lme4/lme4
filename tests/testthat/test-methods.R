@@ -1070,14 +1070,16 @@ test_that("cooks distance on glmer models", {
   skip_on_cran()
   inf <- influence(gm1)
   inf.h <- influence(gm1, "herd", ncpus=1)
+  ## each value comes from a refit, so it carries the optimizer's convergence
+  ## error: values differ by ~5e-5 (relative) between BLAS implementations
   cook <- cooks.distance(inf)
   expect_equal(unname(head(cook, 3)),
                c(0.0524063139071626, 0.0396850631091166, 0.246678190526733),
-               tolerance = 1e-6)
+               tolerance = 1e-4)
   cook.h <- cooks.distance(inf.h)
   expect_equal(unname(head(cook.h, 3)),
                c(0.251033719710455, 0.00519895610205458, 0.101113708827459),
-               tolerance = 1e-6)
+               tolerance = 1e-4)
 })
 
 ## tweaked example so estimated var = 0
