@@ -559,7 +559,9 @@ test_that("vcov(full = TRUE) and se.fit with a permuted Cholesky factor (GH #101
   for (nm in names(fits)) {
     fit <- fits[[nm]]
     C <- dense_vcov_full(fit)
-    expect_equal(as.matrix(vcov(fit, full = TRUE)), C,
+    ## call lme4's method explicitly: merDeriv (loaded by earlier tests)
+    ## registers vcov.lmerMod/vcov.glmerMod with a different 'full'
+    expect_equal(as.matrix(vcov.merMod(fit, full = TRUE)), C,
                  check.attributes = FALSE, tolerance = 1e-8, info = nm)
     ZX <- cbind(as.matrix(getME(fit, "Z")), getME(fit, "X"))
     expect_equal(suppressWarnings(predict(fit, se.fit = TRUE))$se.fit,
@@ -794,7 +796,9 @@ test_that("simulation works with AR1", {
                                   sigma = 0.1),
                  seed = 101)
   dd$Reaction <- s2[[1]]
-  m1 <- lmer(form, data = dd)
+  ## the finite-difference Hessian can be indefinite here on some platforms,
+  ## giving spurious convergence warnings; skip the derivative checks
+  m1 <- lmer(form, data = dd, control = lmerControl(calc.derivs = FALSE))
   expect_equal(getME(m1, "par"),
                c(`Subject.*` = 41.51375093795063, Subject.rho = 0.47173954902469345),
                tolerance = 1e-3)
@@ -838,4 +842,83 @@ test_that("se.fit is padded like fit under na.exclude", {
   expect_identical(unname(which(is.na(p_nd$se.fit))), 3L)
   expect_equal(unname(p_nd$se.fit[-3]),
                unname(predict(fit_cc, newdata = nd[-3, ], se.fit = TRUE)$se.fit))
+test_that("predict with newdata uses an offset given as an argument (GH #447)", {
+  set.seed(101)
+  d <- sleepstudy
+  d$o <- rnorm(nrow(d))
+  nd <- d
+  nd$o <- nd$o + 5
+  m_arg  <- lmer(Reaction ~ Days + (Days | Subject), d, offset = o)
+  m_term <- lmer(Reaction ~ Days + offset(o) + (Days | Subject), d)
+  expect_equal(predict(m_arg, newdata = d), fitted(m_arg))
+  expect_equal(predict(m_arg, newdata = nd), predict(m_term, newdata = nd))
+  expect_equal(predict(m_arg, newdata = nd, re.form = NA),
+               predict(m_term, newdata = nd, re.form = NA))
+  expect_equal(simulate(m_arg, newdata = nd, seed = 1),
+               simulate(m_term, newdata = nd, seed = 1))
+  dp <- data.frame(g = factor(rep(1:20, each = 6)), x = rnorm(120),
+                   t = rexp(120) + 0.5)
+  dp$y <- rpois(120, dp$t * exp(0.3 * dp$x + rnorm(20, sd = 0.5)[dp$g]))
+  g_arg <- glmer(y ~ x + (1 | g), dp, poisson, offset = log(t))
+  g_term <- glmer(y ~ x + offset(log(t)) + (1 | g), dp, poisson)
+  expect_equal(predict(g_arg, newdata = dp, type = "response"), fitted(g_arg))
+  dp2 <- dp
+  dp2$t <- 2 * dp2$t
+  expect_equal(predict(g_arg, newdata = dp2), predict(g_term, newdata = dp2))
+test_that("partial re.form rebuilds each term with its own theta (GH #1025)", {
+    ## the Lambdat block of each rebuilt term must equal that term's block of
+    ## the fitted Lambdat; simulate() scales the draws of omitted terms by it.
+    ## cs() and ar1() 3x3 terms have length(par) < length(theta).
+    set.seed(20261121)
+    d <- expand.grid(a = factor(1:15), b = factor(1:10), r = 1:3)
+    d$x <- rnorm(nrow(d)); d$z <- rnorm(nrow(d)); d$tf <- factor(d$r)
+    d$y <- rnorm(15)[d$a] + rnorm(10, sd = 0.5)[d$b] * (1 + d$x) + rnorm(nrow(d))
+    d$cnt <- rpois(nrow(d), exp(0.5 + rnorm(15, sd = 0.5)[d$a] +
+                                rnorm(10, sd = 0.3)[d$b]))
+    fits <- suppressWarnings(suppressMessages(list(
+        us    = lmer(y ~ x + (1 | a) + (1 + x | b), d),
+        usrev = lmer(y ~ x + (1 + x | b) + (1 | a), d),
+        cs    = lmer(y ~ x + (1 | a) + cs(1 + x + z | b), d),
+        ar1   = lmer(y ~ x + (1 | a) + ar1(0 + tf | b), d),
+        pois  = glmer(cnt ~ 1 + (1 | a) + (1 + x | b), d, family = poisson))))
+    for (nm in names(fits)) {
+        fit <- fits[[nm]]
+        L <- getME(fit, "Lambdat"); Gp <- getME(fit, "Gp")
+        bars <- reformulas::findbars_x(formula(fit), specials = lme4:::lme4_specials,
+                                       default.special = "us", target = "|")
+        for (b in bars) {
+            nr <- lme4:::mkNewReTrms(fit, NULL, as.formula(call("~", b)))
+            ## each grouping factor has a single term in these models
+            j <- match(names(nr$flist), names(fit@cnms))
+            idx <- (Gp[j] + 1):Gp[j + 1]
+            expect_equal(as.matrix(nr$Lambdat), as.matrix(L[idx, idx]),
+                         ignore_attr = TRUE,
+                         label = paste(nm, deparse(b)))
+        }
+    }
+})
+
+test_that("subsetTheta() matching rules (GH #1025)", {
+    ## two terms for Subject, so no fallback to grouping factors
+    fm <- lmer(Reaction ~ Days + (1 | Subject) + (0 + Days | Subject), sleepstudy)
+    th <- unname(getME(fm, "theta"))
+    rc <- lme4:::getReCovs(fm)
+    ## term identified by its columns, not position
+    rt <- list(cnms = fm@cnms[2], reCovs = rc[2])
+    expect_equal(lme4:::subsetTheta(fm, rt), th[2])
+    ## columns not in the fit
+    rt <- list(cnms = list(Subject = "x"), reCovs = rc[1])
+    expect_null(lme4:::subsetTheta(fm, rt))
+    ## repeated identical terms are matched in order
+    fm2 <- suppressWarnings(
+        lmer(diameter ~ (1 | plate) + (1 | plate) + (1 | sample), Penicillin,
+             control = lmerControl(check.conv.hess = "ignore",
+                                   check.conv.grad = "ignore")))
+    rt <- list(cnms = fm2@cnms, reCovs = lme4:::getReCovs(fm2))
+    expect_equal(lme4:::subsetTheta(fm2, rt), unname(getME(fm2, "theta")))
+    ## renamed columns (as in gamm4 fits): matched by the grouping factor
+    ## when it has a single term
+    fm3 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
+    rt <- list(cnms = list(Subject = c("a", "b")), reCovs = lme4:::getReCovs(fm3))
+    expect_equal(lme4:::subsetTheta(fm3, rt), unname(getME(fm3, "theta")))
 })

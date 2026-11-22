@@ -122,7 +122,11 @@ namespace lme4 {
     }
 
     double  glmResp::aic() const {
-        return d_fam.aic(d_y, d_n, d_mu, d_weights, resDev());
+        return aic(resDev());
+    }
+
+    double  glmResp::aic(double dev) const {
+        return d_fam.aic(d_y, d_n, d_mu, d_weights, dev);
     }
 
     ArrayXd glmResp::devResid() const {
@@ -149,7 +153,20 @@ namespace lme4 {
         return wrkResp() * sqrtWrkWt();
     }
 
+    // Same operations, in the same order, as wrkResp() * sqrtWrkWt() above
+    // (wrkResp() = (eta - offset) + (y - mu)/muEta), with muEta and the
+    // working weights supplied by the caller instead of recomputed.
+    ArrayXd glmResp::wtWrkResp(const ArrayXd& me, const ArrayXd& sqrtWW) const {
+        const ArrayXd wrkResids((d_y - d_mu).array() / me);
+        const ArrayXd wrkResp((d_eta - d_offset).array() + wrkResids);
+        return wrkResp * sqrtWW;
+    }
+
     ArrayXd glmResp::sqrtWrkWt() const {
+        return sqrtWrkWt(muEta());
+    }
+
+    ArrayXd glmResp::sqrtWrkWt(const ArrayXd& me) const {
         int debug=0;
         if (debug) Rcpp::Rcout << "(sqrtWrkWt) min muEta: " <<
                        muEta().minCoeff() <<
@@ -160,10 +177,15 @@ namespace lme4 {
                                 // original formula exactly); the
                                 // random-effects prior penalty is untouched
                                 // -- see misc/README_Gamma_GLMMs.md
-        return muEta() * (d_weights.array() / (d_phi * variance())).sqrt();
+        return me * (d_weights.array() / (d_phi * variance())).sqrt();
     }
 
     double glmResp::Laplace(double ldL2, double ldRX2, double sqrL) const {
+        return LaplaceAtDev(ldL2, ldRX2, sqrL, resDev());
+    }
+
+    // dev must be resDev() at the current mean
+    double glmResp::LaplaceAtDev(double ldL2, double ldRX2, double sqrL, double dev) const {
         // aic() dispatches to the family's aic() method (glmFamily.cpp),
         // a direct C++ port of the base R family$aic() convention (e.g.
         // Gamma()$aic, gaussian()$aic, inverse.gaussian()$aic). For
@@ -174,7 +196,7 @@ namespace lme4 {
         // the dispersion parameter when useSc/hasFreeDispersion is TRUE).
         // Fixed-dispersion families (Poisson, binomial) have no such
         // constant in their aic() to begin with, so are unaffected.
-        double ans = ldL2 + sqrL + aic();
+        double ans = ldL2 + sqrL + aic(dev);
         if (hasFreeDispersion()) ans -= 2.;
         return ans;
     }

@@ -104,8 +104,11 @@ glmer(formula, data = NULL, family = gaussian
   methods are available (e.g. \code{methods(class="merMod")})
 }
 \note{
-  In earlier version of the \pkg{lme4} package, a \code{method} argument was
-  used.  Its functionality has been replaced by the \code{nAGQ} argument.
+  Binomial and Poisson fits with non-integer response values use the
+  continuous extension of the density, so the reported log-likelihood
+  does not match that from \code{glm()}, which rounds non-integer
+  binomial counts and returns \code{-Inf} for non-integer Poisson
+  responses.
 }
 \details{
   Fit a generalized linear mixed model, which incorporates both
