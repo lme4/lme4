@@ -842,6 +842,8 @@ test_that("se.fit is padded like fit under na.exclude", {
   expect_identical(unname(which(is.na(p_nd$se.fit))), 3L)
   expect_equal(unname(p_nd$se.fit[-3]),
                unname(predict(fit_cc, newdata = nd[-3, ], se.fit = TRUE)$se.fit))
+})
+
 test_that("predict with newdata uses an offset given as an argument (GH #447)", {
   set.seed(101)
   d <- sleepstudy
