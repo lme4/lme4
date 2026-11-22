@@ -500,3 +500,40 @@ test_that("parameter counting", {
   expect_equal(attr(logLik(m1), "df"), 18L)
   expect_equal(attr(logLik(m2), "df"), 4L)
 })
+
+test_that("optimizer returning NA parameters gives an informative error (GH #1019)", {
+    ## custom optimizer that fails the way optimx does when the objective throws
+    na_opt <- function(fn, par, lower, upper, control) {
+        list(par = rep(NA_real_, length(par)), fval = NA_real_,
+             conv = 9999, message = "none")
+    }
+    for (cd in c(TRUE, FALSE)) {
+        expect_error(suppressWarnings(
+            lmer(Yield ~ 1 | Batch, Dyestuff,
+                 control = lmerControl(optimizer = na_opt, calc.derivs = cd))),
+            "optimizer \\(user-supplied function\\) returned NA parameters \\(convergence code 9999\\)")
+    }
+    skip_if_not_installed("optimx")
+    fn <- function(x) {
+        if (x[1] > 1) stop("objective failed")
+        (x[1] - 2)^2
+    }
+    expect_error(suppressWarnings(
+        lme4:::optwrap("optimx", fn, par = 0.5, lower = 0, upper = Inf,
+                       control = list(method = "nlminb"))),
+        "optimizer optimx \\(nlminb\\) returned NA parameters \\(convergence code 9999\\)")
+})
+
+test_that("non-zero convergence code doesn't assign in the global environment", {
+    if (exists("curWarnings", envir = globalenv(), inherits = FALSE))
+        rm("curWarnings", envir = globalenv())
+    fm <- suppressWarnings(
+        lmer(Reaction ~ Days + (Days | Subject), sleepstudy,
+             control = lmerControl(optimizer = "bobyqa",
+                                   optCtrl = list(maxfun = 10))))
+    expect_equal(fm@optinfo$conv$opt, 1)
+    expect_false(exists("curWarnings", envir = globalenv(), inherits = FALSE))
+    ## the convergence code is stored in optinfo$conv, not as a warning
+    expect_equal(unlist(fm@optinfo$warnings),
+                 "maxfun < 10 * length(par)^2 is not recommended.")
+})

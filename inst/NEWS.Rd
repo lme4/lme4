@@ -10,6 +10,10 @@
       \item \code{glmer} and \code{lmer} fits are faster: the sparse
       Cholesky factor was computed twice with the same input in each PIRLS
       step and each \code{lmer} deviance evaluation. Results are unchanged.
+      \item \code{glmer} fits are faster again: PIRLS steps no longer copy
+      \code{Lambdat*Ut} before each factorization, compute the weights only
+      once, and skip the cross-products the step does not use. Results are
+      unchanged.
       \item modified the check of non-monotonicity to count nearly
       flat profiles (within floating-point error) as non-monotonic and
       revert to linear interpolation
@@ -17,6 +21,18 @@
   }
   \subsection{BUG FIXES}{
     \itemize{
+      \item \code{simulate()} with a \code{re.form} that omits some
+      random-effects terms now draws each omitted term from its own
+      estimated covariance matrix. Previously the omitted terms were
+      scaled by the covariance parameters at the same position in the
+      fitted model's \code{theta} vector, which belonged to a different
+      term unless the omitted terms came first in the fitted order
+      (GH #1025, @numero-uno-jpn).
+      \item When the optimizer returns \code{NA} parameters (e.g.
+      \code{optimx} with convergence code 9999 after the objective
+      function throws an error), fitting now stops with an error
+      saying so, rather than "missing value where TRUE/FALSE needed"
+      (GH #1019, @avehtari).
       \item \code{glmer} now handles non-integer responses for the
       binomial and Poisson families consistently: the log-likelihood
       uses the continuous extension of the binomial/Poisson density
@@ -28,7 +44,11 @@
       the rounded data for \code{nAGQ >= 1} (since 2.1-0, also for
       \code{nAGQ > 1}). Non-integer Poisson responses now give a single
       warning, as non-integer binomial counts already did. Results for
-      integer data are unchanged (GH #180, #682, #1011, @avehtari).
+      integer data are unchanged. For non-integer responses, the
+      log-likelihoods no longer match those from base-R \code{glm()},
+      which rounds non-integer binomial counts and returns \code{-Inf}
+      for non-integer Poisson responses (GH #180, #682, #1011,
+      @avehtari).
       \item \code{vcov(., full = TRUE)}, and hence the standard errors
       from \code{predict(., se.fit = TRUE)}, now apply the fill-reducing
       permutation of the sparse Cholesky factor. They could be wrong
@@ -43,8 +63,7 @@
       the number of observations in the likelihood, \code{nobs()},
       \code{df.residual()} or \code{refitML()}, and the log-likelihood
       is finite. Previously zero weights changed the variance and
-      fixed-effect estimates (in the example of the issue, the group
-      standard deviation was 3.18 instead of 4.24) and gave a
+      fixed-effect estimates and gave a
       log-likelihood of \code{-Inf}. \code{nobs()} of a \code{glmer}
       fit likewise leaves out zero prior weights, as \code{nobs.glm()}
       does (GH #880).
@@ -52,6 +71,23 @@
       \code{deviance(., REML = TRUE)} of an ML fit, are no longer
       \code{NA} when the fit uses \code{na.action = na.exclude} and the
       data have missing values.
+      \item \code{predict(., newdata = )}, and hence
+      \code{simulate(., newdata = )}, now includes an offset given through
+      the \code{offset} argument of \code{lmer}, \code{glmer} or
+      \code{glmer.nb}, evaluated in \code{newdata} as
+      \code{predict.lm()} does. Previously only \code{offset()} terms in
+      the formula were used, so these predictions omitted the offset
+      (GH #447).
+      \item profiling the fixed effects of a weighted \code{lmer} fit,
+      and hence the default \code{confint()}, now uses the prior
+      weights for the model matrices as well as for the residuals.
+      Previously the fixed-effect profiles of any weighted fit were
+      wrong, giving confidence intervals far too narrow. 
+      Profiles of the variance parameters and unweighted fits
+      are unchanged (GH #192).
+      \item A fit whose optimizer returned a non-zero convergence code
+      no longer creates a variable \code{curWarnings} in the global
+      environment.
     }
   }
 }

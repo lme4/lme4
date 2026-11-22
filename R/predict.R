@@ -300,9 +300,14 @@ mkNewReTrms <- function(object, newdata,
         bb1 <- bb1[reTrms$ord] # reorder to match mkReTrms internal ordering
         reTrms <- upReTrms(reTrms, bb1) # local calc.lambdat=TRUE step
 
-        ## ReTrms <- reformulas::mkReTrms(reformulas::findbars(re.form[[2]]), rfd)
-        ## update Lambdat (ugh, better way to do this?)
-        reTrms <- within(reTrms,Lambdat@x <- unname(getME(object,"theta")[Lind]))
+        ## Lind indexes the theta vector of the *rebuilt* term list, which
+        ## differs from the fitted theta when re.form omits terms (GH #1025)
+        theta_sub <- subsetTheta(object, reTrms)
+        if (is.null(theta_sub)) {
+            reTrms$Lambdat <- NULL
+        } else {
+            reTrms$Lambdat@x <- theta_sub[reTrms$Lind]
+        }
         if (!allow.new.levels && any(vapply(reTrms$flist, anyNA, NA)))
             stop("NAs are not allowed in prediction data",
                  " for grouping variables unless allow.new.levels is TRUE")
@@ -341,6 +346,37 @@ mkNewReTrms <- function(object, newdata,
     Zt <- reTrms$Zt
     attr(Zt, "na.action") <- attr(re_new, "na.action") <- fixed.na.action
     list(Zt=Zt, b=re_new, Lambdat = reTrms$Lambdat, flist = reTrms$flist)
+}
+
+## theta for a rebuilt (possibly partial) list of random-effects terms,
+## assembled from the fitted model's theta blocks: each rebuilt term is
+## matched to the fitted term with the same grouping factor and columns.
+## Repeated terms, e.g. (1|g) + (1|g), are matched in order of occurrence.
+## gamm4 renames the columns of smooth terms in the fitted object, so if the
+## columns don't match, terms are matched by grouping factor alone, but only
+## when each grouping factor has a single term in the fit.
+## Returns NULL if some term has no match; only simulate() needs the result.
+## @param object fitted model object
+## @param reTrms rebuilt terms (from mkReTrms() and upReTrms())
+subsetTheta <- function(object, reTrms) {
+    termKey <- function(cnms)
+        paste(names(cnms), vapply(cnms, paste, "", collapse = "\r"), sep = "\n")
+    ## append occurrence number: the i-th copy of a key matches the i-th copy
+    occKey <- function(key)
+        paste(key, ave(seq_along(key), key, FUN = seq_along), sep = "#")
+    fitCnms <- object@cnms
+    m <- match(occKey(termKey(reTrms$cnms)), occKey(termKey(fitCnms)))
+    if (anyNA(m) && !anyDuplicated(names(fitCnms)))
+        m <- match(names(reTrms$cnms), names(fitCnms))
+    if (anyNA(m) || anyDuplicated(m))
+        return(NULL)
+    fitLen <- vapply(getReCovs(object), getThetaLength, 0L, USE.NAMES = FALSE)
+    newLen <- vapply(reTrms$reCovs, getThetaLength, 0L, USE.NAMES = FALSE)
+    if (!identical(newLen, fitLen[m]))
+        return(NULL)
+    theta <- unname(getME(object, "theta"))
+    thetaIndex <- split(seq_along(theta), rep(seq_along(fitLen), fitLen))
+    theta[unlist(thetaIndex[m], use.names = FALSE)]
 }
 
 ## @param x a random effect (i.e., data frame with rows equal to levels, columns equal to terms
@@ -521,6 +557,10 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
                     for (i in off.num)
                         offset <- offset + eval(attr(tt,"variables")[[i + 1]], newdata)
                 }
+                ## an 'offset' argument, as in predict.lm()
+                if (!is.null(off.arg <- object@call$offset))
+                    offset <- offset + eval(off.arg, newdata,
+                                            environment(formula(object)))
                 ## FIXME?: simplify(no need for 'mfnew'): can this be different from 'na.action'?
                 fit.na.action <- attr(mfnew,"na.action")
                 ## only need to drop if new data specified ...
@@ -891,6 +931,9 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
         ## <obsolete> paranoia ...
         ## <obsolete> stopifnot(!is.null(newdata) ||
         ##       isTRUE(all.equal(newRE$Lambdat,getME(object,"Lambdat"))))
+        if (is.null(newRE$Lambdat))
+            stop("can't match the random-effects terms to be simulated ",
+                 "to terms of the fitted model", call. = FALSE)
         U <- t(newRE$Lambdat %*% newRE$Zt) # == Z Lambda
         u <- cluster.rand(ncol(U)*nsim)
         ## UNSCALED random-effects contribution:

@@ -74,7 +74,8 @@ jobs:
 
       - name: Install extra LaTeX packages
         if: runner.os == 'Linux'
-        run: sudo apt-get install texlive-science texlive-latex-extra texlive-bibtex-extra
+        ## lmodern provides lmodern.sty (used by the vignettes)
+        run: sudo apt-get install texlive-science texlive-latex-extra texlive-bibtex-extra lmodern
 
       - uses: r-lib/actions/check-r-package@v2
         env:

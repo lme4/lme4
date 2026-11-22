@@ -6,6 +6,9 @@
 \title{Generator objects for the response classes}
 \usage{
   lmResp(...)
+  lmerResp(...)
+  glmResp(...)
+  nlsResp(...)
 }
 \arguments{
   \item{...}{List of arguments (see Note).}
