@@ -56,6 +56,9 @@ jobs:
         with:
           extra-packages: any::rcmdcheck
           needs: check
+          ## save the package cache even if the check fails: R-devel has no
+          ## binaries, so a cache miss means building every dependency from source
+          cache: always
 
       - name: Install LaTeX etc.
         if: runner.os == 'Linux'

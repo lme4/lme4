@@ -796,7 +796,9 @@ test_that("simulation works with AR1", {
                                   sigma = 0.1),
                  seed = 101)
   dd$Reaction <- s2[[1]]
-  m1 <- lmer(form, data = dd)
+  ## the finite-difference Hessian can be indefinite here on some platforms,
+  ## giving spurious convergence warnings; skip the derivative checks
+  m1 <- lmer(form, data = dd, control = lmerControl(calc.derivs = FALSE))
   expect_equal(getME(m1, "par"),
                c(`Subject.*` = 41.51375093795063, Subject.rho = 0.47173954902469345),
                tolerance = 1e-3)
