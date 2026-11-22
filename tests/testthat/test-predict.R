@@ -847,6 +847,8 @@ test_that("predict with newdata uses an offset given as an argument (GH #447)", 
   dp2 <- dp
   dp2$t <- 2 * dp2$t
   expect_equal(predict(g_arg, newdata = dp2), predict(g_term, newdata = dp2))
+})
+
 test_that("partial re.form rebuilds each term with its own theta (GH #1025)", {
     ## the Lambdat block of each rebuilt term must equal that term's block of
     ## the fitted Lambdat; simulate() scales the draws of omitted terms by it.
