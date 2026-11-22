@@ -703,6 +703,8 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
       ## pred0 (linear predictor) will have been stored previously in this case ...  
       res$se.fit <- res$se.fit*abs(family(object)$mu.eta(eta))
     }
+    ## pad like 'fit' (rows dropped under na.exclude become NA)
+    res$se.fit <- napredict(fit.na.action, res$se.fit)
     res
 
 } # end {predict.merMod}

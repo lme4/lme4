@@ -58,6 +58,10 @@
       off by factors of up to 4. Fits whose permutation is the
       identity (usually those with a single grouping factor) and
       \code{vcov()} of the fixed effects are unchanged (GH #1013, @hdbt).
+      \item \code{predict(., se.fit = TRUE)} now pads \code{se.fit}
+      with \code{NA} at the rows dropped under \code{na.exclude}, as it
+      already did for \code{fit}. Previously \code{se.fit} was shorter
+      than \code{fit}, so its values did not line up with their rows.
       \item \code{predict(., newdata = )}, and hence
       \code{simulate(., newdata = )}, now includes an offset given through
       the \code{offset} argument of \code{lmer}, \code{glmer} or
