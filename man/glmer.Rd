@@ -137,7 +137,10 @@ glmer(formula, data = NULL, family = gaussian
   deviance per evaluation of the approximate GLMM deviance; e.g. a
   3-dimensional random effect with \code{nAGQ = 5} needs 125
   evaluations.  The number of nodes can be reduced by dropping nodes
-  with negligible weight (\code{glmerControl(AGQ_prune = )}) or by
+  whose weight is less than a fraction of the largest weight
+  (e.g., \code{glmerControl(AGQ_prune = 1e-4)}; this sacrifices the
+  rule's exactness for polynomials, so reducing \code{nAGQ} is often
+  more accurate for the same number of nodes) or by
   using a sparse (Smolyak) grid (\code{glmerControl(AGQ_grid =
   "sparse")}, available for up to 20 dimensions), which, like the
   product rule, integrates polynomials of total degree up to
@@ -149,8 +152,10 @@ glmer(formula, data = NULL, family = gaussian
   from Gaussian (e.g. binary responses with few observations per
   level), and the optimizer may then converge to badly wrong
   estimates.  \code{glmer} warns when the sparse-grid deviance at the
-  estimates is far below the Laplace approximation; prefer the product
-  rule (with \code{AGQ_prune} if necessary).  A warning is given when
+  estimates is far below the Laplace approximation; in this case,
+  prefer the default \code{glmerControl(AGQ_grid = "product")}
+  (decreasing \code{nAGQ}, or using
+  \code{AGQ_prune}, if necessary).  A warning is given when
   the rule has more than 1000 nodes.
 
 %  The default approximation is the Laplace approximation,
