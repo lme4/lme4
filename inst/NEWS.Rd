@@ -33,6 +33,9 @@
       function throws an error), fitting now stops with an error
       saying so, rather than "missing value where TRUE/FALSE needed"
       (GH #1019, @avehtari).
+      \item \code{allFit()} no longer fails (\dQuote{object not found})
+      when the model's data exist only inside a function, e.g. when the
+      model was fitted to a local data frame within a user's function.
       \item \code{glmer} now handles non-integer responses for the
       binomial and Poisson families consistently: the log-likelihood
       uses the continuous extension of the binomial/Poisson density
@@ -71,6 +74,10 @@
       \code{deviance(., REML = TRUE)} of an ML fit, are no longer
       \code{NA} when the fit uses \code{na.action = na.exclude} and the
       data have missing values.
+      \item \code{predict(., se.fit = TRUE)} now pads \code{se.fit}
+      with \code{NA} at the rows dropped under \code{na.exclude}, as it
+      already did for \code{fit}. Previously \code{se.fit} was shorter
+      than \code{fit}, so its values did not line up with their rows.
       \item \code{predict(., newdata = )}, and hence
       \code{simulate(., newdata = )}, now includes an offset given through
       the \code{offset} argument of \code{lmer}, \code{glmer} or
