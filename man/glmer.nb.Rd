@@ -32,7 +32,8 @@ glmer.nb(\dots, interval = log(th) + c(-3, 3),
     \item{initCtrl}{(\emph{\bold{experimental}, do not rely on this}:) a
     \code{\link{list}} with named components as in the default, passed to
     \code{\link[MASS]{theta.ml}} (package \CRANpkg{MASS}) for the initial
-    value of the negative binomial parameter \code{theta}.
+    value of the negative binomial parameter \code{theta}. Omitted components
+    use their defaults.
     May also include a \code{theta} component, in which case the
     initial estimation step is skipped}
 }

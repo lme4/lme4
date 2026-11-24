@@ -105,27 +105,29 @@ glmer.nb <- function(..., interval = log(th) + c(-3,3),
     ## dots <- list(...)
 
     mc <- match.call()
+    mc[[1L]] <- quote(lme4::glmer)
+    mc$interval <- NULL
+    mc$tol <- NULL
+    mc$nb.control <- NULL
+    mc$initCtrl <- NULL
+    mc$verbose <- (verbose >= 2)
 
     if (is.null(th <- initCtrl$theta)) {
-        mc[[1]] <- quote(lme4::glmer)
         mc$family <- quote(stats::poisson)
-        mc$verbose <- (verbose>=2)
-        mc$nb.control <- NULL
         ## ** FIXME: specifically add check.conv.singular="ignore"?
         ##  suppress other warnings unless explicitly specified?
         g0 <- suppressMessages(
             eval(mc, parent.frame(1L))
         )
 
-        th <- est_theta(g0, limit = initCtrl$limit,
-                        eps = initCtrl$eps, trace = initCtrl$trace)
+        th <- est_theta(g0, limit = initCtrl$limit %||% 20,
+                        eps = initCtrl$eps %||% (2*tol),
+                        trace = initCtrl$trace %||% verbose)
 
         ## using format() on purpose, influenced by options(digits = *) :
         if(verbose) cat("th := est_theta(glmer(..)) =", format(th))
     }
 
-    mc$initCtrl <- NULL ## clear to prevent infinite recursion
-                        ##  in initCtrl$theta reference above ...
     mc$family <- bquote(MASS::negative.binomial(theta=.(th)))
     ## ** see FIXME above
     g1 <- suppressMessages(

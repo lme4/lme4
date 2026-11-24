@@ -7,6 +7,17 @@ dd <- expand.grid(f1 = factor(1:3),
 mu <- 5*(-4 + with(dd, as.integer(f1) + 4*as.numeric(f2)))
 dd$y <- rnbinom(nrow(dd), mu = mu, size = 0.5)
 
+test_that("glmer.nb accepts partial initialization controls", {
+    fit <- glmer.nb(y ~ f1*f2 + (1|g), data = dd, initCtrl = list(limit = 1000),
+                    interval = c(-2, 2), tol = 1e-4)
+    full <- glmer.nb(y ~ f1*f2 + (1|g), data = dd,
+                     initCtrl = list(limit = 1000, eps = 2e-4, trace = FALSE),
+                     interval = c(-2, 2), tol = 1e-4)
+
+    expect_equal(logLik(fit), logLik(full))
+    expect_equal(getME(fit, "glmer.nb.theta"), getME(full, "glmer.nb.theta"))
+})
+
 ## mimic glmer.nb protocol
 if (testLevel>1) {
 test_that("most messages suppressed", {
