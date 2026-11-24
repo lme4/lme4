@@ -21,6 +21,9 @@
   }
   \subsection{BUG FIXES}{
     \itemize{
+      \item \code{glmer.nb()} accepts partial initialization settings in
+      \code{initCtrl} and custom values of \code{interval} and \code{tol}
+      (GH #705).
       \item \code{simulate()} with a \code{re.form} that omits some
       random-effects terms now draws each omitted term from its own
       estimated covariance matrix. Previously the omitted terms were
