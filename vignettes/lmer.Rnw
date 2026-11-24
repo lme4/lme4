@@ -2398,8 +2398,7 @@ and quantile-quantile plots (from \pkg{lattice}),
 <<diagplot3,fig.keep="none">>=
 qqmath(fm1, id = 0.05)
 @
-In contrast to \code{plot.lm}, these scale-location and Q-Q plots
-are based on raw rather than standardized residuals.
+The scale-location example plots the square root of the absolute response residuals. The Q-Q plot divides the Pearson residuals by the estimated residual standard deviation. Both plots use residuals without a leverage adjustment.
 
 In addition to these standard diagnostic plots, which
 examine the validity of various assumptions (linearity,
