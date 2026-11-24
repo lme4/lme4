@@ -122,20 +122,45 @@ glmer(formula, data = NULL, family = gaussian
   model (LMM), as fit by \code{\link{lmer}}, this integral can be
   evaluated exactly.  For a GLMM the integral must be approximated.  The
   most reliable approximation for GLMMs
-  is adaptive Gauss-Hermite quadrature,
+  is adaptive Gauss-Hermite quadrature (AGQ),
   at present implemented only for models with
-  a single scalar random effect.  The
-  \code{nAGQ} argument controls the number of nodes in the quadrature
-  formula.  A model with a single, scalar random-effects term could
-  reasonably use up to 25 quadrature points per scalar integral (although
-  the code allows for up to 100 quadrature points).
+  a single random-effects term, which may be scalar (e.g. \code{(1|g)})
+  or vector-valued (e.g. \code{(1+x|g)}, or a structured term such as
+  \code{diag(1+x|g)}), but not for models with several terms (including
+  \code{(1+x||g)}, which expands into several terms) or with nested or
+  crossed grouping factors.  The
+  \code{nAGQ} argument controls the number of nodes per dimension in
+  the quadrature formula.  A model with a single, scalar random-effects
+  term could reasonably use up to 25 quadrature points per scalar
+  integral (although the code allows for up to 100 quadrature points).
 
-%  With vector-valued random effects the complexity of the Gauss-Hermite
-%  quadrature formulas increases dramatically with the dimension.  For a
-%  3-dimensional vector-valued random effect \code{nAGQ=5} requires 93
-%  evaluations of the GLM deviance per evaluation of the approximate GLMM
-%  deviance.  For 20-dimensional evaluations of the GLM deviance per
-%  evaluation of the approximate GLMM deviance.
+  With a \eqn{k}-dimensional vector-valued random effect the default
+  (\code{glmerControl(AGQ_grid = "product")}) is a tensor-product rule
+  with \code{nAGQ^k} nodes, each requiring one evaluation of the GLM
+  deviance per evaluation of the approximate GLMM deviance; e.g. a
+  3-dimensional random effect with \code{nAGQ = 5} needs 125
+  evaluations.  The number of nodes can be reduced by dropping nodes
+  whose weight is less than a fraction of the largest weight
+  (e.g., \code{glmerControl(AGQ_prune = 1e-4)}; this sacrifices the
+  rule's exactness for polynomials, so reducing \code{nAGQ} is often
+  more accurate for the same number of nodes) or by
+  using a sparse (Smolyak) grid (\code{glmerControl(AGQ_grid =
+  "sparse")}, available for up to 20 dimensions), which, like the
+  product rule, integrates polynomials of total degree up to
+  \code{2*nAGQ - 1} exactly.  Sparse grids only have fewer nodes than
+  the product rule for \code{k >= 4} (e.g. 385 rather than 625 for
+  \code{k = 4, nAGQ = 5}; for \code{k = 2} they have more), and they
+  are experimental: because they have negative weights, the
+  approximate deviance can be far too low when the integrand is far
+  from Gaussian (e.g. binary responses with few observations per
+  level), and the optimizer may then converge to badly wrong
+  estimates.  \code{glmer} warns when the sparse-grid deviance at the
+  estimates is far below the Laplace approximation; in this case,
+  prefer the default \code{glmerControl(AGQ_grid = "product")}
+  (decreasing \code{nAGQ}, or using
+  \code{AGQ_prune}, if necessary).  A warning is given when
+  the rule has more than 1000 nodes.
+
 %  The default approximation is the Laplace approximation,
 %  corresponding to \code{nAGQ=1}.
 
@@ -159,9 +184,7 @@ xyplot(incidence/size ~ period|herd, cbpp, type=c('g','p','l'),
 (gm1a <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
                cbpp, binomial, nAGQ = 0))
 ## using  nAGQ = 9  provides a better evaluation of the deviance
-## Currently the internal calculations use the sum of deviance residuals,
-## which is not directly comparable with the nAGQ=0 or nAGQ=1 result.
-## 'verbose = 1' monitors iteratin a bit; (verbose = 2 does more):
+## 'verbose = 1' monitors iteration a bit; (verbose = 2 does more):
 (gm1a <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
                cbpp, binomial, verbose = 1, nAGQ = 9))
 
@@ -182,6 +205,21 @@ gm0 <- glm(cbind(incidence, size - incidence) ~ period,
 gm1Dev0 <- gm1Devfun(c(0,coef(gm0)))
 ## compare
 stopifnot(all.equal(gm1Dev0,c(-2*logLik(gm0))))
+## adaptive quadrature with a vector-valued random effect (random
+## slope, so nAGQ^2 quadrature nodes per district); the estimates
+## change little from nAGQ = 1 (Laplace) to 5 to 9
+\donttest{
+if (requireNamespace("mlmRev", quietly = TRUE)) {
+    data(Contraception, package = "mlmRev")
+    Contraception <- transform(Contraception, age_s = age / (2 * sd(age)),
+                               ch = factor(livch != 0, labels = c("N", "Y")))
+    cm1 <- glmer(use ~ age_s * ch + I(age_s^2) + urban + (1 + urban | district),
+                 Contraception, binomial)
+    cm_agq <- lapply(c(5, 9), function(n) update(cm1, nAGQ = n))
+    sapply(c(list(cm1), cm_agq), function(m)
+        c(fixef(m), getME(m, "theta"), logLik = logLik(m)))
+}
+}
 ## the toenail oncholysis data from Backer et al 1998
 ## these data are notoriously difficult to fit
 \dontrun{
