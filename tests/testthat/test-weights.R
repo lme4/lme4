@@ -91,3 +91,11 @@ test_that("nobs() of glmer leaves out zero prior weights, as nobs.glm() does", {
   expect_equal(nobs(gz), nobs(gd))
   expect_equal(BIC(gz), BIC(gd), tolerance = 1e-6)
 })
+
+test_that("nobs() of nlmer keeps zero prior weights to match its likelihood", {
+  or <- Orange
+  or$wo <- replace(rep(1, nrow(or)), 1:2, 0)
+  nz <- nlmer(circumference ~ SSlogis(age, Asym, xmid, scal) ~ Asym | Tree,
+              or, start = c(Asym = 200, xmid = 725, scal = 350), weights = wo)
+  expect_equal(nobs(nz), nrow(or))
+})

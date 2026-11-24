@@ -1144,8 +1144,14 @@ dummy <- function(f, levelsToKeep){
 }
 
 
-## observations with prior weight zero are not counted, as in nobs.lm()
-nobs.merMod <- function(object, ...) sum(object@resp$weights != 0)
+## For LMMs and GLMMs, observations with prior weight zero are not counted,
+## as in nobs.lm()/nobs.glm(). For nlmer, nlsResp::Laplace() (missing
+## nPosWeights() and -d_ldW) and mkMerMod() (dims[["n"]]) still count
+## zero-weight rows, so keep nrow(object@frame) here until those are updated.
+nobs.merMod <- function(object, ...) {
+    if (isLMM(object) || isGLMM(object)) sum(object@resp$weights != 0)
+    else nrow(object@frame)
+}
 
 ## used in  summary.merMod():
 ngrps <- function(object, ...) UseMethod("ngrps")

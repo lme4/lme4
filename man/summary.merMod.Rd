@@ -66,6 +66,13 @@
   fixed and random effect estimates along with other standard model summary 
   information.
 }
+\note{
+  For GLMMs (and NLMMs), the reported number of observations includes
+  observations with zero prior weight, unlike \code{\link{nobs}} (which
+  drops zero-weight observations for LMMs and GLMMs). For all model
+  types, groups whose observations all have zero weight are still
+  included when counting the number of groups.
+}
 \examples{
 fm1 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
 smry <- summary(fm1)
