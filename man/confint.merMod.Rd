@@ -76,7 +76,9 @@
   \describe{
     \item{\code{"profile"}:}{computing a
       likelihood profile and finding the appropriate cutoffs
-      based on the likelihood ratio test;}
+      based on the likelihood ratio test. For models fitted by restricted
+      maximum likelihood (REML), profiling first refits the model by maximum
+      likelihood (ML);}
     \item{\code{"Wald"}:}{approximating
       the confidence intervals (of fixed-effect parameters
       only; all variance-covariance parameters
