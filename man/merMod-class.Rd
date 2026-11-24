@@ -9,7 +9,9 @@
 \alias{family.merMod}
 \alias{fitted.merMod}
 \alias{formula.merMod}
+\alias{glmerMod}
 \alias{glmerMod-class}
+\alias{lmerMod}
 \alias{lmerMod-class}
 \alias{logLik.merMod}
 \alias{merMod}
@@ -19,6 +21,7 @@
 \alias{ngrps.merMod}
 \alias{nobs.merMod}
 \alias{nobs}
+\alias{nlmerMod}
 \alias{nlmerMod-class}
 \alias{print.merMod}
 \alias{show,merMod-method}
@@ -125,6 +128,12 @@ REMLcrit(object)
 \section{Objects from the Class}{
   Objects of class \code{merMod} are created by calls to
   \code{\link{lmer}}, \code{\link{glmer}} or \code{\link{nlmer}}.
+
+  The fitted classes \code{lmerMod}, \code{glmerMod}, and \code{nlmerMod}
+  inherit from \code{merMod}. Use \code{\link[utils]{methods}(class = "merMod")}
+  to list methods registered for the common superclass. You can open this
+  help page by looking up the fitted class directly, for example with
+  \code{help("lmerMod")}.
 }
 \section{S3 methods}{
 The following S3 methods with arguments given above exist (this list is currently not complete):
