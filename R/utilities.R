@@ -494,6 +494,9 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc, lme4conv=NULL) {
               is.list(reTrms), c("flist", "cnms", "Gp", "lower") %in% names(reTrms),
               length(rcl <- class(resp)) == 1)
     n    <- nrow(pp$V)
+    ## observations with prior weight zero contribute nothing to an LMM
+    ## likelihood; leave them out of n, as lmerResp::Laplace() does
+    if (rcl == "lmerResp") n <- n - sum(resp$weights == 0)
     p    <- ncol(pp$V)
     isGLMM <- (rcl == "glmResp")
     dims <- c(N = nrow(pp$X), n=n, p=p, nmp = n-p, q = nrow(pp$Zt),

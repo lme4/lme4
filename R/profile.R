@@ -524,6 +524,8 @@ devfun2 <- function(fm,
     if(hasSc) np <- np + 1L # was  if(!isGLMM(fm)) np <- np + 1L
     n <- nrow(pp$V) # use V, not X so it works with nlmer
     if (isLMM(fm)) { # ==> hasSc
+        ## zero prior weights: not counted, as in lmerResp::Laplace()
+        n <- n - sum(fm@resp$weights == 0)
         ans <- function(pars)
         {
           pp <- fm@pp$copy() ## fresh copy of predictor object
@@ -537,7 +539,8 @@ devfun2 <- function(fm,
           sigsq <- if (scale=="varcov") sig else sig^2
           pp$ldL2() - ldW + (resp$wrss() + pp$sqrL(1))/sigsq + n * log(2 * pi * sigsq)
         }
-        ldW <- sum(log(environment(ans)$resp$weights))
+        w <- environment(ans)$resp$weights
+        ldW <- sum(log(w[w > 0]))
         assign("ldW", ldW, envir = environment(ans))
     } else { # GLMM *and* NLMMs
         d0 <- getME(fm, "devfun")

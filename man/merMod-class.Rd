@@ -157,7 +157,11 @@ The following S3 methods with arguments given above exist (this list is currentl
   \item{\code{model.frame}:}{returns the \code{frame} slot of \code{\linkS4class{merMod}}.}
   \item{\code{model.matrix}:}{returns the fixed effects model matrix.}
   \item{\code{nobs}, \code{ngrps}:}{Number of observations and vector of
-    the numbers of levels in each grouping factor.  See \code{\link{ngrps}}.}
+    the numbers of levels in each grouping factor.  For LMMs and GLMMs,
+    \code{nobs} drops observations with zero prior weight (matching
+    \code{\link[stats]{nobs}} for \code{lm}/\code{glm}); for NLMMs
+    (\code{nlmer}), zero-weight observations are currently still included.
+    See \code{\link{ngrps}}.}
    \item{\code{update}:}{See \code{\link{update}}.}
  }
 }

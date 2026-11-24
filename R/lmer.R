@@ -783,7 +783,7 @@ devCrit <- function(object, REML = NULL) {
             lnum <- log(2*pi*cmp[["pwrss"]])
             n <- object@devcomp$dims[["n"]]
             nmp <- n - length(object@beta)
-            ldW <- sum(log(weights(object, method = "prior")))
+            w <- object@resp$weights; ldW <- sum(log(w[w > 0]))
             - ldW + cmp[["ldL2"]] + cmp[["ldRX2"]] + nmp*(1 + lnum - log(nmp))
         }
     } else {
@@ -793,7 +793,7 @@ devCrit <- function(object, REML = NULL) {
             ## adjust REML results to ML
             n <- object@devcomp$dims[["n"]]
             lnum <- log(2*pi*cmp[["pwrss"]])
-            ldW <- sum(log(weights(object, method = "prior")))
+            w <- object@resp$weights; ldW <- sum(log(w[w > 0]))
             - ldW + cmp[["ldL2"]] + n*(1 + lnum - log(n))
         }
     }
@@ -1144,7 +1144,14 @@ dummy <- function(f, levelsToKeep){
 }
 
 
-nobs.merMod <- function(object, ...) nrow(object@frame)
+## For LMMs and GLMMs, observations with prior weight zero are not counted,
+## as in nobs.lm()/nobs.glm(). For nlmer, nlsResp::Laplace() (missing
+## nPosWeights() and -d_ldW) and mkMerMod() (dims[["n"]]) still count
+## zero-weight rows, so keep nrow(object@frame) here until those are updated.
+nobs.merMod <- function(object, ...) {
+    if (isLMM(object) || isGLMM(object)) sum(object@resp$weights != 0)
+    else nrow(object@frame)
+}
 
 ## used in  summary.merMod():
 ngrps <- function(object, ...) UseMethod("ngrps")
@@ -1603,10 +1610,11 @@ refitML.merMod <- function (x, optimizer="bobyqa", ...) {
         else
             optwrap(optimizer, devfun, rho$mkPar(rho$pp$theta), lower=getLower(x), upper=getUpper(x), ...)
     ## FIXME: Should be able to call mkMerMod() here, and be done
-    n <- length(rr$y)
+    N <- length(rr$y)
+    n <- N - sum(rr$weights == 0) # zero prior weights not counted, as in mkMerMod()
     pp <- rho$pp
     p <- ncol(pp$X)
-    dims <- c(N=n, n=n, p=p, nmp=n-p, q=nrow(pp$Zt), nth=length(pp$theta),
+    dims <- c(N=N, n=n, p=p, nmp=n-p, q=nrow(pp$Zt), nth=length(pp$theta),
               useSc=1L, reTrms=length(x@cnms),
               spFe=0L, REML=0L, GLMM=0L, NLMM=0L)#, nAGQ=NA_integer_)
     wrss <- rho$resp$wrss()
