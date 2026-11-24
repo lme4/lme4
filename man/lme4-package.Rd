@@ -60,6 +60,23 @@
   (see \code{\link{pvalues}} for more details).
 }
 }
+\section{Matrix ABI version warnings}{
+  When \pkg{lme4} loads, it compares the Matrix application binary
+  interface (ABI) version recorded at build time with the ABI version
+  of the Matrix package in use. Several Matrix releases can share the
+  same ABI version. A warning can appear after updating \pkg{Matrix}
+  or switching R libraries.
+
+  To keep your intended Matrix installation, start a fresh R session
+  without loading either package. Check the selected Matrix library with
+  \code{find.package("Matrix")} and rebuild \pkg{lme4} using
+  \code{install.packages("lme4", type = "source")}. Source installation
+  requires the build tools for your platform. You can also install an
+  \pkg{lme4} binary built for that Matrix ABI if one is available, or
+  restore a Matrix release with the ABI version that the warning reports
+  for your installed \pkg{lme4}. Load \pkg{lme4} again in a fresh R
+  session using the same library paths.
+}
 \section{Caveats and trouble-shooting}{
 \itemize{
     \item Some users who have previously installed versions of the

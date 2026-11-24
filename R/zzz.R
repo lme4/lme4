@@ -99,7 +99,8 @@ check_dep_version <- function(this_pkg = "lme4",  dep_pkg = "Matrix", dep_type =
                     dep_pkg, dep_type, cur_version),
             sprintf("Please re-install %s from source ", this_pkg),
             "or restore original ",
-            sQuote(dep_pkg), " package"
+            sQuote(dep_pkg), " package.",
+            '\nFor details, see help("lme4-package", package = "lme4").'
         )
     }
     return(result_ok)
