@@ -21,6 +21,10 @@
   }
   \subsection{BUG FIXES}{
     \itemize{
+      \item \code{refit()} saves the supplied \code{newweights} in the model
+      call before filtering rows so \code{update()} can use the full vector.
+      It preserves the formula environment bindings when saving these weights
+      (GH #1009).
       \item \code{simulate()} with a \code{re.form} that omits some
       random-effects terms now draws each omitted term from its own
       estimated covariance matrix. Previously the omitted terms were

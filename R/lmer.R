@@ -1431,6 +1431,8 @@ refit.merMod <- function(object,
     }
 
     if (!is.null(newweights)) {
+        ## Keep the weights for the original data available to update().
+        object@call$weights <- newweights
         ## DRY ...
         if (!is.null(na.act <- attr(object@frame,"na.action")) &&
             is.null(attr(newweights, "na.action")) &&
@@ -1440,13 +1442,6 @@ refit.merMod <- function(object,
         object@frame[["(weights)"]] <- newweights
         oc <- attr(attr(object@frame, "terms"), "dataClasses")
         attr(attr(object@frame, "terms"), "dataClasses") <- c(oc, `(weights)` = "numeric")
-
-        object@call$weights <- substitute(newweights)
-
-        ## try to make sure new weights are findable later
-        assign(deparse(substitute(newweights)),
-               newweights,
-               environment(formula(object)))
     }
 
     rr <-

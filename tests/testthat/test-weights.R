@@ -49,6 +49,47 @@ test_that("testing na.action", {
   expect_equal(length(weights(gm1.omit)), nrow(cbpp) - 1)
 })
 
+test_that("refit preserves weights for update after omitting rows (GH #1009)", {
+  d <- sleepstudy
+  d$Reaction[5] <- NA
+  w <- seq(1, 2, length.out = nrow(d))
+  fit <- lmer(Reaction ~ Days + (1 | Subject), d, na.action = na.omit)
+
+  expect_no_warning(refitted <- refit(fit, newweights = w))
+  expect_equal(weights(refitted), w[-5])
+  updated <- update(refitted)
+  expect_equal(weights(updated), w[-5])
+  expect_equal(fixef(updated), fixef(refitted), tolerance = 1e-6)
+})
+
+test_that("refit leaves the formula environment alone when changing weights", {
+  fit_env <- new.env()
+  fit_env$w <- 7
+  fit <- evalq(lmer(Reaction ~ Days + (1 | Subject), sleepstudy), fit_env)
+  w <- rep(2, nrow(sleepstudy))
+
+  refitted <- refit(fit, newweights = w)
+  expect_equal(weights(refitted), w)
+  expect_identical(fit_env$w, 7)
+
+  lockEnvironment(fit_env, bindings = TRUE)
+  expect_no_error(refit(fit, newweights = rep(2, nrow(sleepstudy))))
+})
+
+test_that("refit preserves computed weights when updating a binomial model", {
+  d <- cbpp
+  d$incidence[5] <- NA
+  fit <- glmer(incidence / size ~ period + (1 | herd), d, binomial,
+               weights = size, na.action = na.exclude)
+
+  expect_no_warning(refitted <- refit(fit, newweights = 2 * d$size))
+  updated <- update(refitted)
+  direct <- update(fit, weights = 2 * size)
+  expect_equal(model.weights(model.frame(refitted)), 2 * d$size[-5])
+  expect_equal(weights(updated), weights(direct))
+  expect_equal(fixef(updated), fixef(direct))
+})
+
 test_that("a zero prior weight in lmer is the same as dropping the row (GH #880)", {
   set.seed(1)
   d <- sleepstudy
