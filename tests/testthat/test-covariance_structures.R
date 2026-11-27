@@ -847,3 +847,86 @@ test_that("correct ordering of cov strucs", {
     expect_equal(class(vv[["f1"]]), c("vcmat_homcs", "matrix", "array"))
     expect_equal(class(vv[["f2"]]), c("vcmat_diag", "matrix", "array"))
 })
+
+test_that("unit tests for Toeplitz covariances", {
+  for (hom in c(TRUE, FALSE)) {
+    for (nc in c(0:5, 12L)) {
+      set.seed(101 + nc)
+      x <- new("Covariance.toep", nc = nc, hom = hom, simulate = TRUE)
+      expect_s4_class(x, "Covariance.toep")
+      expect_true(validObject(x))
+      ns <- if (hom) as.integer(nc > 0) else nc
+      expect_equal(getParLength(x), ns + max(nc - 1L, 0L))
+      expect_equal(getThetaLength(x), nc * (nc + 1) / 2)
+      expect_equal(getThetaLength(x), length(getTheta(x)))
+      expect_equal(length(getThetaIndex(x)), getThetaIndexLength(x))
+      vc <- getVC(x)
+      expect_equal(getPar(x), c(vc$vcomp, vc$ccomp))
+      expect_equal(getLower(x), c(rep(0, ns), rep(-1, max(nc - 1L, 0L))))
+      expect_equal(getUpper(x), c(rep(Inf, ns), rep(1, max(nc - 1L, 0L))))
+      expect_equal(getLambdat.dp(x), seq_len(nc))
+      expect_equal(getProfPar(x), unname(unlist(vc)))
+      if (nc == 0L) next
+      ## covariance is Toeplitz in the correlations, with the right variances
+      L <- getLambda(x)
+      S <- tcrossprod(L)
+      sd <- sqrt(diag(S))
+      expect_equal(unname(sd), if (hom) rep(vc$vcomp, nc) else unname(vc$vcomp))
+      R <- S / outer(sd, sd)
+      if (nc > 1L) expect_equal(R, toeplitz(R[1L, ]))
+      ## setTheta inverts getTheta
+      y <- setTheta(new("Covariance.toep", nc = nc, hom = hom), getTheta(x))
+      expect_equal(getPar(y), getPar(x))
+      ## the box [-1, 1] is the PSD region: boundary values stay finite
+      if (nc > 1L) {
+          z <- x
+          z@par[length(z@par) - 0:(min(2, nc - 1L) - 1L)] <- c(1, -1)[seq_len(min(2, nc - 1L))]
+          expect_true(all(is.finite(getTheta(z))))
+          expect_true(isSingular(z))
+      }
+    }
+  }
+  ## agrees with a direct Cholesky factorization
+  x <- new("Covariance.toep", nc = 4L, hom = TRUE, par = c(2, 0.6, -0.2, 0.3))
+  rho <- lme4:::.toepChol(c(0.6, -0.2, 0.3))$rho
+  expect_equal(getLambda(x), 2 * t(chol(toeplitz(c(1, rho)))))
+  expect_equal(lme4:::.toepRhoToPacf(rho), c(0.6, -0.2, 0.3))
+  ## nc = 2 coincides with cs/ar1/us
+  x2 <- new("Covariance.toep", nc = 2L, hom = FALSE, par = c(1, 2, 0.5))
+  c2 <- new("Covariance.cs", nc = 2L, hom = FALSE, par = c(1, 2, 0.5))
+  expect_equal(getLambda(x2), getLambda(c2))
+})
+
+test_that("toep() terms can be fitted", {
+  set.seed(1)
+  ss <- sleepstudy[sleepstudy$Days < 4, ]
+  ## replicate observations (with noise) so the residual variance is identifiable
+  ss <- rbind(ss, transform(ss, Reaction = Reaction + rnorm(nrow(ss), sd = 10)))
+  ss$f <- factor(ss$Days)
+  ctl <- lmerControl()
+  m1 <- lmer(Reaction ~ 1 + toep(0 + f | Subject), ss, REML = FALSE, control = ctl)
+  expect_s4_class(getReCovs(m1)[[1]], "Covariance.toep")
+  expect_equal(getParLength(m1), 4L + 3L)
+  expect_equal(length(getME(m1, "theta")), 10L)
+  ## nested between ar1 (het) and us
+  m.ar1 <- lmer(Reaction ~ 1 + ar1(0 + f | Subject, hom = FALSE), ss,
+                REML = FALSE, control = ctl)
+  m.us <- lmer(Reaction ~ 1 + us(0 + f | Subject), ss, REML = FALSE,
+               control = ctl)
+  expect_lte(c(logLik(m1)), c(logLik(m.us)) + 1e-4)
+  expect_gte(c(logLik(m1)), c(logLik(m.ar1)) - 1e-3)
+  ## VarCorr reports Toeplitz correlations
+  vc <- VarCorr(m1)$Subject
+  expect_s3_class(vc, "vcmat_toep")
+  R <- attr(vc, "correlation")
+  expect_equal(R, toeplitz(R[1, ]), check.attributes = FALSE)
+  ## homogeneous variant: common sd
+  m2 <- lmer(Reaction ~ 1 + toep(0 + f | Subject, hom = TRUE), ss,
+             REML = FALSE, control = ctl)
+  expect_equal(length(unique(round(attr(VarCorr(m2)$Subject, "stddev"), 8))), 1L)
+  ## GLMM
+  g1 <- suppressWarnings(
+      glmer(cbind(incidence, size - incidence) ~ period + toep(0 + period | herd),
+            cbpp, family = binomial))
+  expect_s4_class(getReCovs(g1)[[1]], "Covariance.toep")
+})

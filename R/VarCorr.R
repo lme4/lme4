@@ -57,7 +57,7 @@ function(sc, cnms, nc = lengths(cnms, use.names = FALSE),
 
 ## MJ:
 ## Maintain this list manually as prefixing convention is inconsistent.
-for (.nm in c("us", "diag", "cs", "homcs", "ar1", "hetar1"))
+for (.nm in c("us", "diag", "cs", "homcs", "ar1", "hetar1", "toep"))
     setOldClass(c(paste0("vcmat_", .nm), "matrix", "array"))
 rm(.nm)
                              

@@ -19,7 +19,7 @@ knitr::opts_chunk$set(
 
 ## Introduction
 
-The current version of `lme4` offers four covariance classes/structures: `Covariance.us` (unstructured), `Covariance.diag` (diagonal), `Covariance.cs` (compound symmetry), and `Covariance.ar1` (autoregressive order 1). The syntax for use is similar to the `glmmTMB` package (see [covariance structures in glmmTMB](https://glmmtmb.github.io/glmmTMB/articles/covstruct.html)), although the results are slightly different.
+The current version of `lme4` offers five covariance classes/structures: `Covariance.us` (unstructured), `Covariance.diag` (diagonal), `Covariance.cs` (compound symmetry), `Covariance.ar1` (autoregressive order 1), and `Covariance.toep` (Toeplitz). The syntax for use is similar to the `glmmTMB` package (see [covariance structures in glmmTMB](https://glmmtmb.github.io/glmmTMB/articles/covstruct.html)), although the results are slightly different.
 
 This vignette provides a detailed mathematical exposition of the new machinery, along with brief notes on the appropriate syntax. In a separate document, we provide comparisons of results between `glmmTMB` and `lme4` (the computations are too slow to satisfy CRAN timing requirements; if we tried to store and re-load saved fits, they would be too big to satisfy CRAN package size requirements).
 
@@ -47,7 +47,7 @@ linear mixed model. In `lme4`, the variance-covariance matrix is constructed by:
 For generalized linear mixed models, $\mathbf \Lambda_\theta$ instead represents the *unscaled* Cholesky factor; that is,
 the scaling term $\sigma^2$ is omitted from the equation above.
 
-The major difference between the four covariance classes (`Covariance.us` (unstructured), `Covariance.diag` (diagonal), `Covariance.cs` (compound symmetry), and `Covariance.ar1` (autoregressive order 1)) is in the construction of the the relative Cholesky factor $\mathbf \Lambda_{\mathbf \theta}$.
+The major difference between the five covariance classes (`Covariance.us` (unstructured), `Covariance.diag` (diagonal), `Covariance.cs` (compound symmetry), `Covariance.ar1` (autoregressive order 1), and `Covariance.toep` (Toeplitz)) is in the construction of the the relative Cholesky factor $\mathbf \Lambda_{\mathbf \theta}$.
 
 ### Covariance Structures
 
@@ -134,6 +134,27 @@ Unlike the diagonal and compound symmetric structures, by default we assume a
 homogeneous ar1 covariance structure.
 
 Use `ar1(f|g)` or `ar1(f|g, het = TRUE)` to specify an AR1 structure.
+
+### Toeplitz
+
+The Toeplitz structure lets the correlation depend only on the lag between
+components, with a free parameter for each lag:
+\[
+\Sigma_{ij} = \sigma_i\sigma_j \rho_{|i-j|}, \qquad \rho_0 = 1 .
+\]
+Compound symmetry (all $\rho_k$ equal) and AR1 ($\rho_k = \rho^k$) are special cases.
+Because the set of $(\rho_1, \ldots, \rho_{p-1})$ giving a positive semi-definite matrix is
+not a box, `par` stores instead the $p-1$ *partial autocorrelations*
+$\phi_1 = \rho_1, \phi_2, \ldots, \phi_{p-1}$ (Durbin-Levinson), each constrained to $[-1,1]$;
+any such values give a valid correlation matrix, and $|\phi_k| = 1$ is the singular boundary.
+The Cholesky factor is computed directly from the $\phi_k$.
+`par` is `c(sigma, phi)`; as with the other structures the variance part is a single
+$\sigma$ if `hom = TRUE` and $p$ values otherwise. Unlike `ar1`, Toeplitz models
+are heterogeneous by default.
+
+Use `toep(f|g)` or `toep(f|g, hom = TRUE)` to specify a Toeplitz structure.
+The relative co-factor has no repeated entries, so `theta` has the same
+$p(p+1)/2$ length (and layout) as in the unstructured case.
 
 ### Construction of the Relative Co-factor
 

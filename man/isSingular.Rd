@@ -7,6 +7,7 @@
 \alias{isSingular,Covariance.diag-method}
 \alias{isSingular,Covariance.cs-method}
 \alias{isSingular,Covariance.ar1-method}
+\alias{isSingular,Covariance.toep-method}
 \alias{getSingTol}
 \concept{boundary}
 \description{
