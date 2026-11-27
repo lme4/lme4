@@ -45,6 +45,10 @@ lmer(formula, data = NULL, REML = TRUE, control = lmerControl(),
 	\item \code{ar1}: autoregressive order 1. Note that AR1 models
 	are homogeneous by default; specify \code{ar1(f|g, hom = FALSE)}
 	for heterogeneous variances.
+	\item \code{toep}: Toeplitz (correlation depends only on the lag
+	between components, with a separate parameter per lag). Toeplitz
+	models are heterogeneous by default; specify
+	\code{toep(f|g, hom = TRUE)} for homogeneous variances.
       } % itemize (cov struct types)
     } % itemize (cov struct info)
   } % formula
@@ -90,7 +94,13 @@ lmer(formula, data = NULL, REML = TRUE, control = lmerControl(),
     \item for compound-symmetry
     (\code{cs}) and AR(1) (\code{ar1}) terms, entries are the standard
     deviation parameter(s) followed by the correlation parameter
-    \eqn{\rho} (specified on the [0,1] scale).
+    \eqn{\rho} (specified on the [0,1] scale);
+    \item for Toeplitz (\code{toep}) terms, entries are the standard
+    deviation parameter(s) followed by the \eqn{n-1} partial
+    autocorrelations \eqn{\phi_1, \ldots, \phi_{n-1}} (each in
+    [-1,1]) of the correlation sequence \eqn{\rho_1, \ldots, \rho_{n-1}},
+    which keep the correlation matrix positive semi-definite for any
+    values within the bounds (\eqn{\phi_1 = \rho_1}).
   }
   See the \href{../doc/covariance_structures.html}{covariance structures vignette} for more detail on covariance matrix 
   parameterizations.

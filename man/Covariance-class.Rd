@@ -5,6 +5,27 @@
 \alias{Covariance.diag-class}
 \alias{Covariance.cs-class}
 \alias{Covariance.ar1-class}
+\alias{Covariance.toep-class}
+\alias{initialize,Covariance.toep-method}
+\alias{getParNames,Covariance.toep,character,character-method}
+\alias{getTheta,Covariance.toep-method}
+\alias{getThetaLength,Covariance.toep-method}
+\alias{getThetaNames,Covariance.toep,character,character-method}
+\alias{getThetaIndex,Covariance.toep-method}
+\alias{getThetaIndexLength,Covariance.toep-method}
+\alias{setTheta,Covariance.toep,numeric-method}
+\alias{getLower,Covariance.toep-method}
+\alias{getUpper,Covariance.toep-method}
+\alias{getLambda,Covariance.toep-method}
+\alias{getLambdat.dp,Covariance.toep-method}
+\alias{getLambdat.i,Covariance.toep-method}
+\alias{getVC,Covariance.toep-method}
+\alias{getVCNames,Covariance.toep,character,character-method}
+\alias{setVC,Covariance.toep,numeric,numeric-method}
+\alias{getProfPar,Covariance.toep-method}
+\alias{setProfPar,Covariance.toep,numeric-method}
+\alias{getProfLower,Covariance.toep-method}
+\alias{getProfUpper,Covariance.toep-method}
 \alias{initialize,Covariance.us-method}
 \alias{initialize,Covariance.diag-method}
 \alias{initialize,Covariance.cs-method}
@@ -132,9 +153,10 @@
   similar to the \CRANpkg{glmmTMB} package. See the \emph{Examples} section 
   on how to use.
   
-  There are four main covariance classes: \code{Covariance.us} (unstructured), 
+  There are five main covariance classes: \code{Covariance.us} (unstructured), 
   \code{Covariance.diag} (diagonal), \code{Covariance.cs} (compound symmetry),
-  and \code{Covariance.ar1} (autoregressive order 1).
+  \code{Covariance.ar1} (autoregressive order 1), and \code{Covariance.toep}
+  (Toeplitz).
 }
 
 \usage{
@@ -198,6 +220,12 @@ Available standard classes:
     nonzero, indicating no covariances between variables.}
     \item{\code{Covariance.cs}}{Compound symmetry.}
     \item{\code{Covariance.ar1}}{Autoregressive process of order 1.}
+    \item{\code{Covariance.toep}}{Toeplitz: the correlation between
+    components \eqn{i} and \eqn{j} depends only on \eqn{|i-j|}.  The
+    \eqn{n-1} correlation parameters are the partial autocorrelations
+    (Durbin-Levinson parameterization), so that the box constraint
+    \eqn{[-1,1]^{n-1}} is exactly the set of valid correlation
+    matrices.  Heterogeneous (\code{hom = FALSE}) by default.}
   }
 Besides \code{Covariance.us}, the remaining classes contain a logical slot 
 called \code{hom}, described in the \emph{Slots} section.
@@ -225,6 +253,7 @@ parameters of the correlation component of the covariance matrix. That is,
   correlation matrix in column-major order.
   \item \code{diag}: should be empty; we only care about the standard deviations.
   \item \code{cs}, \code{ar1}: \eqn{\rho}
+  \item \code{toep}: the partial autocorrelations \eqn{\phi_1, \ldots, \phi_{n-1}}
   }
 Methods that obtain names (i.e., \code{getParNames}, \code{getThetaNames}, 
 and \code{getVCNames}), \code{cnm} represents the column (of the model matrix) 

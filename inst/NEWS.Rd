@@ -7,6 +7,12 @@
 \section{CHANGES IN VERSION 2.1-1}{
   \subsection{USER-VISIBLE CHANGES}{
     \itemize{
+      \item new Toeplitz covariance structure, \code{toep(f|g)}
+      (heterogeneous by default; \code{hom = TRUE} for a common
+      variance), implemented as class \code{Covariance.toep}.  The
+      lag-correlations are parameterized by partial autocorrelations
+      so the box bounds \eqn{[-1,1]} give exactly the valid
+      correlation matrices.
       \item \code{glmer} and \code{lmer} fits are faster: the sparse
       Cholesky factor was computed twice with the same input in each PIRLS
       step and each \code{lmer} deviance evaluation. Results are unchanged.

@@ -156,7 +156,7 @@ export(.prt.VC,		.prt.aictab,	.prt.call,	.prt.family,
 exportClasses(glmerMod, lmerMod, nlmerMod, merMod)
 exportClasses(lmList4)
 exportClasses(Covariance, Covariance.us, Covariance.diag, Covariance.cs, 
-              Covariance.ar1)
+              Covariance.ar1, Covariance.toep)
 
 ##------ Our S4 Generics / Methods --------------
 exportMethods(getL)

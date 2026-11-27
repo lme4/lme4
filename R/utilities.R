@@ -1,4 +1,4 @@
-lme4_specials <- c("us", "diag", "cs", "ar1")
+lme4_specials <- c("us", "diag", "cs", "ar1", "toep")
 
 ## From Matrix package  isDiagonal(.) :
 all0 <- function(x) !anyNA(x) && all(!x)

@@ -93,6 +93,29 @@ setClass("Covariance.ar1",
 
 rm(.fn)
 
+## Toeplitz: S[i, j] = sigma[i] * sigma[j] * rho[|i - j|], with
+## 'rho' parametrized by the nc-1 partial autocorrelations phi[1:(nc-1)]
+## (Durbin-Levinson), so that the box constraint -1 <= phi <= 1 is
+## *exactly* the set of positive semidefinite Toeplitz correlation
+## matrices.  par = c(sigma, phi), where length(sigma) is 1 if hom and
+## nc otherwise.
+setClass("Covariance.toep",
+         contains = "Covariance",
+         slots = c(hom = "logical"),
+         prototype = list(hom = FALSE),
+         validity =
+         function (object) {
+             nc <- object@nc
+             if (length(hom <- object@hom) != 1L || is.na(hom))
+                 gettextf("'%s' is not %s or %s",
+                          "hom", "TRUE", "FALSE")
+             else if (length(object@par) !=
+                      (if (hom) nc > 0L else nc) + max(nc - 1L, 0L))
+                 gettextf("length of '%s' is not %s",
+                          "par", if (hom) "(nc>0)+max(nc-1,0)" else "nc+max(nc-1,0)")
+             else TRUE
+         })
+
 
 ## .... GENERIC FUNCTIONS ..............................................
 
@@ -283,6 +306,27 @@ setMethod("initialize",
               else callNextMethod()
           })
 
+setMethod("initialize",
+          c(.Object = "Covariance.toep"),
+          function (.Object, nc = .Object@nc, hom = .Object@hom,
+                    par, simulate = FALSE, ...) {
+              if (missing(par) &&
+                  is.integer(nc) && length(nc) == 1L && !is.na(nc) &&
+                  nc >= 0L &&
+                  is.logical(hom) && length(hom) == 1L && !is.na(hom)) {
+                  .Object@nc <- nc
+                  .Object@hom <- hom
+                  .Object@par <-
+                  c((if (simulate) rlnorm else function (n) rep(1, n))(
+                        if (hom) 1L * (nc > 0L) else nc),
+                    if (nc > 1L)
+                        (if (simulate) function (n) runif(n, -1, 1)
+                         else function (n) double(n))(nc - 1L))
+                  .Object
+              }
+              else callNextMethod()
+          })
+
 setMethod("getPar",
           c(object = "Covariance"),
           function (object)
@@ -357,6 +401,22 @@ setMethod("getParNames",
           .fn)
 
 rm(.fn)
+
+setMethod("getParNames",
+          c(object = "Covariance.toep", cnm = "character", gnm = "character"),
+          function (object, cnm, gnm, prf = NULL, old = TRUE) {
+              nc <- object@nc
+              stopifnot(length(cnm) == nc, length(gnm) == 1L)
+              if (object@hom && nc > 0L)
+                  cnm <- "*"
+              phi <- if (nc > 1L) paste0("pacf", seq_len(nc - 1L))
+              if (old)
+                  paste0(gnm, ".", c(cnm, phi))
+              else if (is.null(prf))
+                  paste0(c(cnm, phi), "|", gnm)
+              else c(paste0(prf[[1L]], "_", cnm, "|", gnm),
+                     if (nc > 1L) paste0(prf[[2L]], "_", phi, "|", gnm))
+          })
 
 setMethod("setPar",
           c(object = "Covariance", value = "numeric"),
@@ -439,6 +499,65 @@ setMethod("getTheta",
                       c(v1, v2[sequence.default(from = 1L, nvec = (nc - 1L):1L)])
           })
 
+## Lambda = diag(sigma) %*% Lc, where Lc is the lower triangular
+## Cholesky factor of the Toeplitz correlation matrix, computed
+## directly from the partial autocorrelations by Durbin-Levinson
+## (no factorization, so it is exact at the boundary |phi| == 1):
+##     R = A^{-1} diag(v) A^{-T}, Lc = A^{-1} diag(sqrt(v)),
+## with A[k + 1, 1:k] = -rev(a_k) [a_k := order-k AR coefficients] and
+## v[k + 1] = v[k] * (1 - phi[k]^2), v[1] = 1.
+## Returns Lc together with the autocorrelations rho[1:(nc-1)].
+.toepChol <-
+function (phi) {
+    nc <- length(phi) + 1L
+    A <- diag(1, nc, nc)
+    v <- double(nc); v[1L] <- 1
+    rho <- double(nc - 1L)
+    a <- double(0L)
+    for (k in seq_len(nc - 1L)) {
+        rho[k] <- phi[k] * (1 - sum(a * rho[seq_len(k - 1L)])) +
+            sum(a * rho[(k - 1L):1L][seq_len(k - 1L)])
+        a <- c(a - phi[k] * rev(a), phi[k])
+        A[k + 1L, seq_len(k)] <- -rev(a)
+        v[k + 1L] <- v[k] * (1 - phi[k]^2)
+    }
+    ## some optimizers (bobyqa?) will violate bounds, try abs(phi)>1:
+    ## suppress warnings (NaN values will be handled downstream)
+    list(Lc = forwardsolve(A, diag(suppressWarnings(sqrt(v)), nc, nc)),
+         rho = rho)
+}
+
+## inverse map rho -> phi (Durbin-Levinson); a zero denominator means
+## the process is already degenerate at lag k - 1, so phi[k] is not
+## identifiable and is set to zero
+.toepRhoToPacf <-
+function (rho) {
+    phi <- double(length(rho))
+    a <- double(0L)
+    for (k in seq_along(rho)) {
+        den <- 1 - sum(a * rho[seq_len(k - 1L)])
+        phi[k] <-
+            if (is.na(den) || den == 0) 0
+            else (rho[k] - sum(a * rho[(k - 1L):1L][seq_len(k - 1L)]))/den
+        a <- c(a - phi[k] * rev(a), phi[k])
+    }
+    phi
+}
+
+setMethod("getTheta",
+          c(object = "Covariance.toep"),
+          function (object) {
+              nc <- object@nc
+              par <- object@par
+              if (nc <= 1L)
+                  return(par)
+              Lc <- .toepChol(par[length(par) - ((nc - 2L):0L)])$Lc
+              ij <- lower.tri(Lc, diag = TRUE)
+              if (object@hom)
+                  par[1L] * Lc[ij]
+              else par[seq_len(nc)][row(Lc)[ij]] * Lc[ij]
+          })
+
 setMethod("getThetaLength",
           c(object = "Covariance.us"),
           .fn <-
@@ -466,6 +585,13 @@ setMethod("getThetaLength",
           .fn)
 
 rm(.fn)
+
+setMethod("getThetaLength",
+          c(object = "Covariance.toep"),
+          function (object) {
+              nc <- object@nc
+              (nc * (nc - 1L)) %/% 2L + nc
+          })
 
 setMethod("getThetaNames",
           c(object = "Covariance.us", cnm = "character", gnm = "character"),
@@ -495,6 +621,11 @@ setMethod("getThetaNames",
               }
               else getParNames.us(object, cnm, gnm, prf, old)
           })
+
+setMethod("getThetaNames",
+          c(object = "Covariance.toep", cnm = "character", gnm = "character"),
+          function (object, cnm, gnm, prf = NULL, old = TRUE)
+              getParNames.us(object, cnm, gnm, prf, old))
 
 setMethod("getThetaNames",
           c(object = "Covariance.ar1", cnm = "character", gnm = "character"),
@@ -533,6 +664,11 @@ setMethod("getThetaIndex",
           })
 
 setMethod("getThetaIndex",
+          c(object = "Covariance.toep"),
+          function (object)
+              getThetaIndex.us(object))
+
+setMethod("getThetaIndex",
           c(object = "Covariance.diag"),
           function (object) {
               nc <- object@nc
@@ -567,6 +703,13 @@ setMethod("getThetaIndex",
 
 setMethod("getThetaIndexLength",
           c(object = "Covariance.us"),
+          function (object) {
+              nc <- object@nc
+              (nc * (nc - 1L)) %/% 2L + nc
+          })
+
+setMethod("getThetaIndexLength",
+          c(object = "Covariance.toep"),
           function (object) {
               nc <- object@nc
               (nc * (nc - 1L)) %/% 2L + nc
@@ -743,6 +886,43 @@ setMethod("setTheta",
               object
           })
 
+setMethod("setTheta",
+          c(object = "Covariance.toep", value = "numeric"),
+          function (object, value, pos = 0L) {
+              nc <- object@nc
+              hom <- object@hom
+              nt <- (nc * (nc - 1L)) %/% 2L + nc
+              validValuePos(nt, value, pos)
+              object@par <-
+              if (nc <= 1L)
+                  value[if (nc > 0L) pos + 1L]
+              else {
+                  L <- matrix(0, nc, nc)
+                  L[lower.tri(L, diag = TRUE)] <- value[pos + seq_len(nt)]
+                  ## row norms of L equal sigma exactly (for hom, the
+                  ## rows of Lc have unit norm and sigma = L[1, 1])
+                  d <- sqrt(rowSums(L * L))
+                  S <- tcrossprod(L)
+                  ## rho[k] from any pair of rows (i, i + k) with nonzero
+                  ## norms, as Toeplitz structure makes them all equal
+                  rho <- vapply(seq_len(nc - 1L), function (k) {
+                      i <- seq_len(nc - k)
+                      ok <- which(d[i] * d[i + k] != 0)
+                      if (length(ok) == 0L)
+                          return(NA_real_)
+                      i <- ok[1L]
+                      S[i + k, i]/(d[i] * d[i + k])
+                  }, 0)
+                  if (anyNA(rho))
+                      warning(gettextf("'%s' is not identifiable as there is no pair of nonzero standard deviations",
+                                       "rho"),
+                              domain = NA)
+                  c(if (hom) d[1L] else d,
+                    .toepRhoToPacf(rho))
+              }
+              object
+          })
+
 setMethod("getLower",
           c(object = "Covariance.us"),
           function (object) {
@@ -774,6 +954,14 @@ setMethod("getLower",
                 if (nc > 1L) -1)
           })
 
+setMethod("getLower",
+          c(object = "Covariance.toep"),
+          function (object) {
+              nc <- object@nc
+              c(double(if (object@hom) 1L * (nc > 0L) else nc),
+                rep(-1, max(nc - 1L, 0L)))
+          })
+
 setMethod("getUpper",
           c(object = "Covariance.us"),
           function (object)
@@ -798,6 +986,24 @@ setMethod("getUpper",
               nc <- object@nc
               c(rep(Inf, if (object@hom) 1L * (nc > 0L) else nc),
                 if (nc > 1L) 1)
+          })
+
+setMethod("getUpper",
+          c(object = "Covariance.toep"),
+          function (object) {
+              nc <- object@nc
+              c(rep(Inf, if (object@hom) 1L * (nc > 0L) else nc),
+                rep(1, max(nc - 1L, 0L)))
+          })
+
+setMethod("getLambda",
+          c(object = "Covariance.toep"),
+          function (object) {
+              nc <- object@nc
+              ans <- matrix(0, nc, nc)
+              if (nc > 0L)
+              ans[lower.tri(ans, diag = TRUE)] <- getTheta(object)
+              ans
           })
 
 setMethod("getLambda",
@@ -863,6 +1069,16 @@ setMethod("getLambdat.dp",
           function (object)
               seq_len(object@nc))
 
+setMethod("getLambdat.dp",
+          c(object = "Covariance.toep"),
+          function (object)
+              seq_len(object@nc))
+
+setMethod("getLambdat.i",
+          c(object = "Covariance.toep"),
+          function (object)
+              sequence.default(from = 0L, nvec = seq_len(object@nc)))
+
 setMethod("getLambdat.i",
           c(object = "Covariance.us"),
           function (object)
@@ -926,6 +1142,36 @@ setMethod("getVC",
           .fn)
 
 rm(.fn)
+
+setMethod("getVC",
+          c(object = "Covariance.toep"),
+          function (object) {
+              nc <- object@nc
+              ns <- if (object@hom) 1L * (nc > 0L) else nc
+              par <- object@par
+              list(vcomp = par[seq_len(ns)],
+                   ccomp = par[ns + seq_len(max(nc - 1L, 0L))])
+          })
+
+setMethod("getVCNames",
+          c(object = "Covariance.toep", cnm = "character", gnm = "character"),
+          function (object, cnm, gnm, prf = NULL, old = TRUE) {
+              nms <- getParNames(object, cnm, gnm, prf, old)
+              ns <- if (object@hom) 1L * (object@nc > 0L) else object@nc
+              list(vcomp = nms[seq_len(ns)], ccomp = nms[-seq_len(ns)])
+          })
+
+setMethod("setVC",
+          c(object = "Covariance.toep", vcomp = "numeric", ccomp = "numeric"),
+          function (object, vcomp, ccomp) {
+              nc <- object@nc
+              stopifnot(is.double(vcomp),
+                        length(vcomp) == if (object@hom) 1L * (nc > 0L) else nc,
+                        is.double(ccomp),
+                        length(ccomp) == max(nc - 1L, 0L))
+              object@par <- c(vcomp, ccomp)
+              object
+          })
 
 setMethod("getVCNames",
           c(object = "Covariance.us", cnm = "character", gnm = "character"),
@@ -1065,6 +1311,10 @@ setMethod("getProfPar",
           c(object = "Covariance.ar1"),
           .fn)
 
+setMethod("getProfPar",
+          c(object = "Covariance.toep"),
+          .fn)
+
 rm(.fn)
 
 setMethod("setProfPar",
@@ -1129,6 +1379,10 @@ setMethod("setProfPar",
           c(object = "Covariance.ar1", value = "numeric"),
           .fn)
 
+setMethod("setProfPar",
+          c(object = "Covariance.toep", value = "numeric"),
+          .fn)
+
 rm(.fn)
 
 setMethod("getProfLower",
@@ -1159,6 +1413,10 @@ setMethod("getProfLower",
           c(object = "Covariance.ar1"),
           .fn)
 
+setMethod("getProfLower",
+          c(object = "Covariance.toep"),
+          .fn)
+
 rm(.fn)
 
 setMethod("getProfUpper",
@@ -1187,6 +1445,10 @@ setMethod("getProfUpper",
 
 setMethod("getProfUpper",
           c(object = "Covariance.ar1"),
+          .fn)
+
+setMethod("getProfUpper",
+          c(object = "Covariance.toep"),
           .fn)
 
 rm(.fn)
@@ -1233,6 +1495,19 @@ setMethod("isSingular",
                   vcomp <- vc$vcomp
                   ccomp <- vc$ccomp # rho
                   min(vcomp) < tol || (nc > 1L && 1 - abs(ccomp) < tol)
+              }
+              else FALSE
+          })
+
+setMethod("isSingular",
+          c(object = "Covariance.toep"),
+          function (object, tol = getSingTol()) {
+              nc <- object@nc
+              if (nc > 0L) {
+                  vc <- getVC(object)
+                  vcomp <- vc$vcomp
+                  ccomp <- vc$ccomp # partial autocorrelations
+                  min(vcomp) < tol || (nc > 1L && min(1 - abs(ccomp)) < tol)
               }
               else FALSE
           })
